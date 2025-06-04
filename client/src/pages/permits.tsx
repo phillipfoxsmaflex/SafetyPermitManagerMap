@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Filter } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
+import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
 import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,8 @@ import type { Permit } from "@shared/schema";
 
 export default function Permits() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -119,7 +122,14 @@ export default function Permits() {
         </div>
 
         {/* Permits Table */}
-        <PermitTable permits={filteredPermits} isLoading={isLoading} />
+        <PermitTable 
+          permits={filteredPermits} 
+          isLoading={isLoading}
+          onEdit={(permit) => {
+            setSelectedPermit(permit);
+            setEditModalOpen(true);
+          }}
+        />
       </main>
 
       {/* Mobile Floating Action Button */}
@@ -134,6 +144,12 @@ export default function Permits() {
       <CreatePermitModal 
         open={createModalOpen} 
         onOpenChange={setCreateModalOpen} 
+      />
+
+      <EditPermitModalEnhanced
+        permit={selectedPermit}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
       />
     </div>
   );

@@ -15,9 +15,10 @@ import { useLocation } from "wouter";
 interface PermitTableProps {
   permits: Permit[];
   isLoading?: boolean;
+  onEdit?: (permit: Permit) => void;
 }
 
-export function PermitTable({ permits, isLoading }: PermitTableProps) {
+export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
   const [, setLocation] = useLocation();
 
   const formatDateTime = (date: Date | string) => {

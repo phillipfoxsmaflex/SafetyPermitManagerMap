@@ -16,8 +16,10 @@ import {
   MapPin,
   Building,
   Phone,
-  Shield
+  Shield,
+  Eye
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
