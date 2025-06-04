@@ -231,6 +231,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple session storage (in production, use Redis or database)
+  const sessions = new Map<string, number>();
+
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -241,7 +244,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // In a real app, create a session here
+      // Create session
+      const sessionId = `session_${Date.now()}_${Math.random()}`;
+      sessions.set(sessionId, user.id);
+      
+      // Set session cookie
+      res.cookie('sessionId', sessionId, { 
+        httpOnly: true, 
+        secure: false, // In production, set to true with HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      
       res.json({ 
         success: true, 
         user: { 
@@ -259,7 +272,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", async (req, res) => {
     try {
-      // In a real app, destroy session here
+      const sessionId = req.cookies?.sessionId;
+      if (sessionId) {
+        sessions.delete(sessionId);
+      }
+      res.clearCookie('sessionId');
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Logout failed" });
@@ -268,11 +285,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", async (req, res) => {
     try {
-      // Mock current user - in real app, get from session
-      const user = await storage.getUser(1);
-      if (!user) {
+      const sessionId = req.cookies?.sessionId;
+      if (!sessionId || !sessions.has(sessionId)) {
         return res.status(401).json({ message: "Not authenticated" });
       }
+      
+      const userId = sessions.get(sessionId);
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        sessions.delete(sessionId);
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       res.json(user);
     } catch (error) {
       res.status(401).json({ message: "Not authenticated" });

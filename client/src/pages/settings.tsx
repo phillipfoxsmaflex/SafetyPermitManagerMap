@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -29,6 +30,7 @@ import { apiRequest } from "@/lib/queryClient";
 export default function Settings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { user: currentUser } = useAuth();
   
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -36,11 +38,6 @@ export default function Settings() {
     currentPassword: "",
     newPassword: "",
     confirmPassword: ""
-  });
-  
-  // Get current user
-  const { data: currentUser } = useQuery<UserType>({
-    queryKey: ["/api/auth/user"],
   });
 
   const [settings, setSettings] = useState({

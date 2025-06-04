@@ -47,6 +47,7 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       
       if (!response.ok) {
@@ -55,7 +56,9 @@ export default function Login() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update the auth context with the logged-in user
+      login(data.user);
       toast({
         title: "Erfolgreich angemeldet",
         description: "Willkommen zurück!",
