@@ -4,6 +4,9 @@ import { NavigationHeader } from "@/components/navigation-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,33 +22,103 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Shield, AlertTriangle } from "lucide-react";
+import { Users, Shield, AlertTriangle, Plus, Eye, Edit, Key } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [userDetailsModalOpen, setUserDetailsModalOpen] = useState(false);
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [newUser, setNewUser] = useState({
+    username: "",
+    password: "",
+    role: "employee"
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    newPassword: "",
+    confirmPassword: ""
+  });
+
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: { username: string; password: string; role: string }) => {
+      return apiRequest("/api/users", "POST", userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setCreateUserModalOpen(false);
+      setNewUser({ username: "", password: "", role: "employee" });
+      toast({
+        title: "Erfolg",
+        description: "Benutzer wurde erfolgreich erstellt",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: "Benutzer konnte nicht erstellt werden",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, userData }: { userId: number; userData: Partial<User> }) => {
+      return apiRequest(`/api/users/${userId}`, "PATCH", userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setEditUserModalOpen(false);
+      toast({
+        title: "Erfolg",
+        description: "Benutzer wurde erfolgreich aktualisiert",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: "Benutzer konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: number; password: string }) => {
+      return apiRequest(`/api/users/${userId}/password`, "PATCH", { password });
+    },
+    onSuccess: () => {
+      setPasswordModalOpen(false);
+      setPasswordData({ newPassword: "", confirmPassword: "" });
+      toast({
+        title: "Erfolg",
+        description: "Passwort wurde erfolgreich aktualisiert",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: "Passwort konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
-      const response = await fetch(`/api/users/${userId}/role`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ role }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Fehler beim Aktualisieren der Benutzerrolle");
-      }
-      
-      return response.json();
+      return apiRequest(`/api/users/${userId}/role`, "PATCH", { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -57,7 +130,7 @@ export default function UserManagement() {
     onError: (error) => {
       toast({
         title: "Fehler",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        description: "Benutzerrolle konnte nicht aktualisiert werden",
         variant: "destructive",
       });
     },
@@ -77,20 +150,74 @@ export default function UserManagement() {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'default'; // Purple/blue
+        return 'default';
       case 'operations_manager':
-        return 'destructive'; // Red
+        return 'destructive';
       case 'safety_officer':
-        return 'secondary'; // Orange/yellow
+        return 'secondary';
       case 'supervisor':
-        return 'outline'; // Green
+        return 'outline';
       default:
-        return 'secondary'; // Gray
+        return 'secondary';
     }
   };
 
   const handleRoleChange = (userId: number, newRole: string) => {
     updateRoleMutation.mutate({ userId, role: newRole });
+  };
+
+  const handleCreateUser = () => {
+    if (!newUser.username || !newUser.password) {
+      toast({
+        title: "Fehler",
+        description: "Benutzername und Passwort sind erforderlich",
+        variant: "destructive",
+      });
+      return;
+    }
+    createUserMutation.mutate(newUser);
+  };
+
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user);
+    setUserDetailsModalOpen(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditUserModalOpen(true);
+  };
+
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setPasswordModalOpen(true);
+  };
+
+  const handleUpdatePassword = () => {
+    if (!selectedUser) return;
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Fehler",
+        description: "Passwörter stimmen nicht überein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Fehler",
+        description: "Passwort muss mindestens 6 Zeichen lang sein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePasswordMutation.mutate({
+      userId: selectedUser.id,
+      password: passwordData.newPassword
+    });
   };
 
   return (
@@ -99,86 +226,45 @@ export default function UserManagement() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Users className="w-8 h-8 text-safety-blue" />
-            <div>
-              <h1 className="text-2xl font-bold text-industrial-gray">
-                Benutzerverwaltung
-              </h1>
-              <p className="text-secondary-gray">
-                Verwalten Sie Benutzerrollen und Berechtigungen für das Arbeitserlaubnissystem
-              </p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-industrial-gray">Benutzerverwaltung</h1>
+          <p className="mt-2 text-secondary-gray">
+            Verwalten Sie Benutzerkonten, Rollen und Berechtigungen im System
+          </p>
         </div>
 
-        {/* Role Information Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Administrator</p>
-                  <p className="text-2xl font-bold text-safety-blue">
-                    {users.filter(u => u.role === 'admin').length}
-                  </p>
-                </div>
-                <Shield className="w-8 h-8 text-safety-blue" />
-              </div>
-              <p className="text-xs text-secondary-gray mt-2">
-                Vollzugriff auf alle Funktionen
-              </p>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Gesamte Benutzer</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{users.length}</div>
             </CardContent>
           </Card>
-
+          
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Betriebsleiter</p>
-                  <p className="text-2xl font-bold text-danger-red">
-                    {users.filter(u => u.role === 'operations_manager').length}
-                  </p>
-                </div>
-                <AlertTriangle className="w-8 h-8 text-danger-red" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Administratoren</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users.filter(user => user.role === 'admin').length}
               </div>
-              <p className="text-xs text-secondary-gray mt-2">
-                Finale Genehmigungsberechtigung
-              </p>
             </CardContent>
           </Card>
-
+          
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Sicherheitsbeauftragte</p>
-                  <p className="text-2xl font-bold text-warning-orange">
-                    {users.filter(u => u.role === 'safety_officer').length}
-                  </p>
-                </div>
-                <Shield className="w-8 h-8 text-warning-orange" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Sicherheitsbeauftragte</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {users.filter(user => user.role === 'safety_officer').length}
               </div>
-              <p className="text-xs text-secondary-gray mt-2">
-                Sicherheitsbewertung und -genehmigung
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Mitarbeiter</p>
-                  <p className="text-2xl font-bold text-safety-green">
-                    {users.filter(u => u.role === 'employee' || u.role === 'supervisor').length}
-                  </p>
-                </div>
-                <Users className="w-8 h-8 text-safety-green" />
-              </div>
-              <p className="text-xs text-secondary-gray mt-2">
-                Vorgesetzte und Standardmitarbeiter
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -186,66 +272,86 @@ export default function UserManagement() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Benutzer und Rollen
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Benutzer und Rollen</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Verwalten Sie Benutzerkonten und deren Berechtigungen
+                </p>
+              </div>
+              <Button 
+                onClick={() => setCreateUserModalOpen(true)}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Neuer Benutzer
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">
-                <div className="text-secondary-gray">Benutzer werden geladen...</div>
-              </div>
+              <div className="text-center py-4">Lade Benutzer...</div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
                     <TableHead>Benutzername</TableHead>
-                    <TableHead>Abteilung</TableHead>
-                    <TableHead>Aktuelle Rolle</TableHead>
-                    <TableHead>Rolle ändern</TableHead>
+                    <TableHead>Rolle</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.fullName}
+                      <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Administrator</SelectItem>
+                            <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
+                            <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                            <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                            <SelectItem value="employee">Mitarbeiter</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
-                      <TableCell>{user.username}</TableCell>
-                      <TableCell>{user.department}</TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)}>
                           {getRoleLabel(user.role)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Select 
-                          defaultValue={user.role}
-                          onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                          disabled={updateRoleMutation.isPending}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="employee">Mitarbeiter</SelectItem>
-                            <SelectItem value="supervisor">Vorgesetzter</SelectItem>
-                            <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
-                            <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
-                            <SelectItem value="admin">Administrator</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewUser(user)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
                             Details
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
                             Bearbeiten
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleChangePassword(user)}
+                          >
+                            <Key className="w-4 h-4 mr-1" />
+                            Passwort
                           </Button>
                         </div>
                       </TableCell>
@@ -256,68 +362,227 @@ export default function UserManagement() {
             )}
           </CardContent>
         </Card>
+      </main>
 
-        {/* Role Permissions Information */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Rollenberechtigung Übersicht</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Create User Modal */}
+      <Dialog open={createUserModalOpen} onOpenChange={setCreateUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Neuen Benutzer erstellen</DialogTitle>
+            <DialogDescription>
+              Erstellen Sie ein neues Benutzerkonto mit Benutzername, Passwort und Rolle.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Benutzername *</Label>
+              <Input
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                placeholder="Benutzername eingeben"
+              />
+            </div>
+            
+            <div>
+              <Label>Passwort *</Label>
+              <Input
+                type="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                placeholder="Passwort eingeben"
+              />
+            </div>
+            
+            <div>
+              <Label>Rolle</Label>
+              <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrator</SelectItem>
+                  <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
+                  <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                  <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                  <SelectItem value="employee">Mitarbeiter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleCreateUser}
+                disabled={createUserMutation.isPending}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                Benutzer erstellen
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setCreateUserModalOpen(false)}
+              >
+                Abbrechen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Details Modal */}
+      <Dialog open={userDetailsModalOpen} onOpenChange={setUserDetailsModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Benutzerdetails</DialogTitle>
+            <DialogDescription>
+              Detaillierte Informationen über den Benutzer.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-industrial-gray mb-3">Genehmigungsberechtigungen</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default">Administrator</Badge>
-                    <span className="text-secondary-gray">Alle Berechtigungen</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="destructive">Betriebsleiter</Badge>
-                    <span className="text-secondary-gray">Finale Genehmigung aller Arbeitserlaubnisse</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Sicherheitsbeauftragter</Badge>
-                    <span className="text-secondary-gray">Sicherheitsbewertung und Genehmigung</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Vorgesetzter</Badge>
-                    <span className="text-secondary-gray">Erstgenehmigung von Arbeitserlaubnissen</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Mitarbeiter</Badge>
-                    <span className="text-secondary-gray">Anträge erstellen und einsehen</span>
-                  </div>
-                </div>
+                <Label className="text-sm font-medium">Benutzername</Label>
+                <p className="text-sm text-muted-foreground">{selectedUser.username}</p>
               </div>
+              
               <div>
-                <h3 className="font-semibold text-industrial-gray mb-3">Systemfunktionen</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default">Administrator</Badge>
-                    <span className="text-secondary-gray">Benutzerverwaltung, Systemkonfiguration</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="destructive">Betriebsleiter</Badge>
-                    <span className="text-secondary-gray">Berichte, Übersichten, Statistiken</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Sicherheitsbeauftragter</Badge>
-                    <span className="text-secondary-gray">Sicherheitsberichte, Risikoanalysen</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Vorgesetzter</Badge>
-                    <span className="text-secondary-gray">Team-Übersichten, Abteilungsberichte</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Mitarbeiter</Badge>
-                    <span className="text-secondary-gray">Eigene Anträge verwalten</span>
-                  </div>
-                </div>
+                <Label className="text-sm font-medium">Rolle</Label>
+                <p className="text-sm text-muted-foreground">{getRoleLabel(selectedUser.role)}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium">Benutzer-ID</Label>
+                <p className="text-sm text-muted-foreground">{selectedUser.id}</p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setUserDetailsModalOpen(false)}
+                >
+                  Schließen
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </main>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Modal */}
+      <Dialog open={editUserModalOpen} onOpenChange={setEditUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Benutzer bearbeiten</DialogTitle>
+            <DialogDescription>
+              Bearbeiten Sie die Benutzerdaten.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
+              <div>
+                <Label>Benutzername</Label>
+                <Input
+                  value={selectedUser.username}
+                  onChange={(e) => setSelectedUser({ ...selectedUser, username: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <Label>Rolle</Label>
+                <Select 
+                  value={selectedUser.role} 
+                  onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                    <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
+                    <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                    <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                    <SelectItem value="employee">Mitarbeiter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  onClick={() => updateUserMutation.mutate({ 
+                    userId: selectedUser.id, 
+                    userData: { username: selectedUser.username, role: selectedUser.role }
+                  })}
+                  disabled={updateUserMutation.isPending}
+                  className="bg-safety-blue text-white hover:bg-blue-700"
+                >
+                  Speichern
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditUserModalOpen(false)}
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Modal */}
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Passwort ändern</DialogTitle>
+            <DialogDescription>
+              Setzen Sie ein neues Passwort für {selectedUser?.username}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Neues Passwort *</Label>
+              <Input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                placeholder="Neues Passwort eingeben"
+              />
+            </div>
+            
+            <div>
+              <Label>Passwort bestätigen *</Label>
+              <Input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                placeholder="Passwort wiederholen"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleUpdatePassword}
+                disabled={updatePasswordMutation.isPending}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                Passwort ändern
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setPasswordModalOpen(false);
+                  setPasswordData({ newPassword: "", confirmPassword: "" });
+                }}
+              >
+                Abbrechen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

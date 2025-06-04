@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { 
@@ -18,23 +19,33 @@ import {
   Save,
   Users,
   Mail,
-  Server
+  Server,
+  Key,
+  Lock
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Settings() {
   const { toast } = useToast();
   
-  // Get current user to check role
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  
+  // Get current user
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/auth/user"],
   });
 
   const [settings, setSettings] = useState({
     // User Settings
-    fullName: "Hans Mueller",
+    fullName: currentUser?.fullName || "Hans Mueller",
     email: "hans.mueller@company.com",
-    department: "Operations",
+    department: currentUser?.department || "Operations",
     
     // Notification Settings
     emailNotifications: true,
@@ -48,28 +59,67 @@ export default function Settings() {
     // System Settings
     autoBackup: true,
     auditLog: true,
-    dataRetention: 365,
-    
-    // Email Server Settings (only for administrators)
-    smtpHost: "",
-    smtpPort: 587,
-    smtpUsername: "",
-    smtpPassword: "",
-    smtpSecure: true,
-    emailFrom: "",
+    logRetention: 90,
+    maintenanceMode: false,
   });
 
-  const handleSave = () => {
-    // Save settings logic would go here
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (passwordData: { currentPassword: string; newPassword: string }) => {
+      if (!currentUser) throw new Error("Not authenticated");
+      return apiRequest(`/api/users/${currentUser.id}/password`, "PATCH", { 
+        password: passwordData.newPassword 
+      });
+    },
+    onSuccess: () => {
+      setPasswordModalOpen(false);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      toast({
+        title: "Erfolg",
+        description: "Passwort wurde erfolgreich geändert",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: "Passwort konnte nicht geändert werden",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveSettings = () => {
     toast({
       title: "Einstellungen gespeichert",
       description: "Ihre Einstellungen wurden erfolgreich aktualisiert.",
     });
   };
 
-  const updateSetting = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const handlePasswordChange = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Fehler",
+        description: "Passwörter stimmen nicht überein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Fehler",
+        description: "Passwort muss mindestens 6 Zeichen lang sein",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    });
   };
+
+  const isAdmin = currentUser?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -77,11 +127,12 @@ export default function Settings() {
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-industrial-gray mb-2">
+          <h1 className="text-3xl font-bold text-industrial-gray flex items-center gap-3">
+            <SettingsIcon className="h-8 w-8" />
             Einstellungen
-          </h2>
-          <p className="text-secondary-gray">
-            Verwalten Sie Ihre Konto- und Systemeinstellungen
+          </h1>
+          <p className="mt-2 text-secondary-gray">
+            Verwalten Sie Ihre persönlichen Einstellungen und Systemkonfiguration
           </p>
         </div>
 
@@ -89,7 +140,7 @@ export default function Settings() {
           {/* User Profile Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-industrial-gray">
+              <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 Benutzerprofil
               </CardTitle>
@@ -97,30 +148,49 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="fullName">Vollständiger Name</Label>
+                  <Label>Vollständiger Name</Label>
                   <Input
-                    id="fullName"
                     value={settings.fullName}
-                    onChange={(e) => updateSetting('fullName', e.target.value)}
+                    onChange={(e) => setSettings({ ...settings, fullName: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">E-Mail-Adresse</Label>
+                  <Label>E-Mail-Adresse</Label>
                   <Input
-                    id="email"
                     type="email"
                     value={settings.email}
-                    onChange={(e) => updateSetting('email', e.target.value)}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="department">Abteilung</Label>
+                  <Label>Abteilung</Label>
                   <Input
-                    id="department"
                     value={settings.department}
-                    onChange={(e) => updateSetting('department', e.target.value)}
+                    onChange={(e) => setSettings({ ...settings, department: e.target.value })}
                   />
                 </div>
+                <div>
+                  <Label>Benutzername</Label>
+                  <Input value={currentUser?.username || ""} disabled />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-industrial-gray">Passwort ändern</h4>
+                  <p className="text-sm text-secondary-gray">
+                    Aktualisieren Sie Ihr Login-Passwort für erhöhte Sicherheit
+                  </p>
+                </div>
+                <Button 
+                  variant="outline"
+                  onClick={() => setPasswordModalOpen(true)}
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  Passwort ändern
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -128,7 +198,7 @@ export default function Settings() {
           {/* Notification Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-industrial-gray">
+              <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
                 Benachrichtigungen
               </CardTitle>
@@ -136,37 +206,40 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="emailNotifications">E-Mail-Benachrichtigungen</Label>
-                  <p className="text-sm text-secondary-gray">Erhalten Sie Updates per E-Mail</p>
+                  <Label>E-Mail-Benachrichtigungen</Label>
+                  <p className="text-sm text-secondary-gray">
+                    Erhalten Sie wichtige Updates per E-Mail
+                  </p>
                 </div>
                 <Switch
-                  id="emailNotifications"
                   checked={settings.emailNotifications}
-                  onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
+                  onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
                 />
               </div>
-              <Separator />
+              
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="permitExpiring">Ablaufende Genehmigungen</Label>
-                  <p className="text-sm text-secondary-gray">Benachrichtigung vor Ablauf der Genehmigung</p>
+                  <Label>Ablaufende Genehmigungen</Label>
+                  <p className="text-sm text-secondary-gray">
+                    Benachrichtigung bei bald ablaufenden Arbeitserlaubnissen
+                  </p>
                 </div>
                 <Switch
-                  id="permitExpiring"
                   checked={settings.permitExpiring}
-                  onCheckedChange={(checked) => updateSetting('permitExpiring', checked)}
+                  onCheckedChange={(checked) => setSettings({ ...settings, permitExpiring: checked })}
                 />
               </div>
-              <Separator />
+              
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="newPermitRequests">Neue Genehmigungsanträge</Label>
-                  <p className="text-sm text-secondary-gray">Benachrichtigung bei neuen Anträgen</p>
+                  <Label>Neue Genehmigungsanträge</Label>
+                  <p className="text-sm text-secondary-gray">
+                    Benachrichtigung bei neuen Anträgen zur Genehmigung
+                  </p>
                 </div>
                 <Switch
-                  id="newPermitRequests"
                   checked={settings.newPermitRequests}
-                  onCheckedChange={(checked) => updateSetting('newPermitRequests', checked)}
+                  onCheckedChange={(checked) => setSettings({ ...settings, newPermitRequests: checked })}
                 />
               </div>
             </CardContent>
@@ -175,7 +248,7 @@ export default function Settings() {
           {/* Security Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-industrial-gray">
+              <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Sicherheit
               </CardTitle>
@@ -183,191 +256,134 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="twoFactorAuth">Zwei-Faktor-Authentifizierung</Label>
-                  <p className="text-sm text-secondary-gray">Zusätzliche Sicherheitsebene für Ihr Konto</p>
+                  <Label>Zwei-Faktor-Authentifizierung</Label>
+                  <p className="text-sm text-secondary-gray">
+                    Zusätzliche Sicherheitsebene für Ihr Konto
+                  </p>
                 </div>
                 <Switch
-                  id="twoFactorAuth"
                   checked={settings.twoFactorAuth}
-                  onCheckedChange={(checked) => updateSetting('twoFactorAuth', checked)}
+                  onCheckedChange={(checked) => setSettings({ ...settings, twoFactorAuth: checked })}
                 />
               </div>
-              <Separator />
+              
               <div>
-                <Label htmlFor="sessionTimeout">Sitzungs-Timeout (Minuten)</Label>
+                <Label>Session-Timeout (Minuten)</Label>
                 <Input
-                  id="sessionTimeout"
                   type="number"
                   value={settings.sessionTimeout}
-                  onChange={(e) => updateSetting('sessionTimeout', parseInt(e.target.value))}
-                  className="w-32 mt-2"
+                  onChange={(e) => setSettings({ ...settings, sessionTimeout: parseInt(e.target.value) })}
+                  className="w-32"
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* System Settings */}
+          {/* System Settings - Only for Admins */}
+          {isAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Systemeinstellungen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Automatische Sicherung</Label>
+                    <p className="text-sm text-secondary-gray">
+                      Tägliche automatische Datensicherung aktivieren
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.autoBackup}
+                    onCheckedChange={(checked) => setSettings({ ...settings, autoBackup: checked })}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Audit-Protokoll</Label>
+                    <p className="text-sm text-secondary-gray">
+                      Detaillierte Protokollierung aller Systemaktivitäten
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.auditLog}
+                    onCheckedChange={(checked) => setSettings({ ...settings, auditLog: checked })}
+                  />
+                </div>
+                
+                <div>
+                  <Label>Log-Aufbewahrung (Tage)</Label>
+                  <Input
+                    type="number"
+                    value={settings.logRetention}
+                    onChange={(e) => setSettings({ ...settings, logRetention: parseInt(e.target.value) })}
+                    className="w-32"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Wartungsmodus</Label>
+                    <p className="text-sm text-secondary-gray">
+                      System für Wartungsarbeiten sperren
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.maintenanceMode}
+                    onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Links */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-industrial-gray">
-                <Database className="h-5 w-5" />
-                System
+              <CardTitle className="flex items-center gap-2">
+                <Server className="h-5 w-5" />
+                Schnellzugriff
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="autoBackup">Automatische Sicherung</Label>
-                  <p className="text-sm text-secondary-gray">Tägliche Datensicherung aktivieren</p>
-                </div>
-                <Switch
-                  id="autoBackup"
-                  checked={settings.autoBackup}
-                  onCheckedChange={(checked) => updateSetting('autoBackup', checked)}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="auditLog">Audit-Protokoll</Label>
-                  <p className="text-sm text-secondary-gray">Alle Benutzeraktivitäten protokollieren</p>
-                </div>
-                <Switch
-                  id="auditLog"
-                  checked={settings.auditLog}
-                  onCheckedChange={(checked) => updateSetting('auditLog', checked)}
-                />
-              </div>
-              <Separator />
-              <div>
-                <Label htmlFor="dataRetention">Datenaufbewahrung (Tage)</Label>
-                <Input
-                  id="dataRetention"
-                  type="number"
-                  value={settings.dataRetention}
-                  onChange={(e) => updateSetting('dataRetention', parseInt(e.target.value))}
-                  className="w-32 mt-2"
-                />
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isAdmin && (
+                  <Link href="/user-management">
+                    <Button variant="outline" className="w-full justify-start">
+                      <Users className="w-4 h-4 mr-2" />
+                      Benutzerverwaltung
+                    </Button>
+                  </Link>
+                )}
+                
+                <Button variant="outline" className="w-full justify-start">
+                  <Mail className="w-4 h-4 mr-2" />
+                  E-Mail-Einstellungen
+                </Button>
+                
+                {isAdmin && (
+                  <Button variant="outline" className="w-full justify-start">
+                    <Database className="w-4 h-4 mr-2" />
+                    Datenbank-Backup
+                  </Button>
+                )}
+                
+                <Button variant="outline" className="w-full justify-start">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Sicherheitsprotokoll
+                </Button>
               </div>
             </CardContent>
           </Card>
-
-          {/* Administrator-only sections */}
-          {currentUser?.role === 'admin' && (
-            <>
-              {/* User Management */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-industrial-gray">
-                    <Users className="h-5 w-5" />
-                    Benutzerverwaltung
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-secondary-gray">
-                    Verwalten Sie Benutzer, Rollen und Berechtigungen für das System.
-                  </p>
-                  <Link href="/user-management">
-                    <Button className="bg-safety-blue text-white hover:bg-blue-700">
-                      <Users className="w-4 h-4 mr-2" />
-                      Benutzerverwaltung öffnen
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {/* Email Server Configuration */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-industrial-gray">
-                    <Mail className="h-5 w-5" />
-                    E-Mail-Server Konfiguration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-secondary-gray mb-4">
-                    Konfigurieren Sie den SMTP-Server für E-Mail-Benachrichtigungen.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="smtpHost">SMTP-Server</Label>
-                      <Input
-                        id="smtpHost"
-                        placeholder="mail.company.com"
-                        value={settings.smtpHost}
-                        onChange={(e) => updateSetting('smtpHost', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="smtpPort">Port</Label>
-                      <Input
-                        id="smtpPort"
-                        type="number"
-                        placeholder="587"
-                        value={settings.smtpPort}
-                        onChange={(e) => updateSetting('smtpPort', parseInt(e.target.value))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="smtpUsername">Benutzername</Label>
-                      <Input
-                        id="smtpUsername"
-                        placeholder="no-reply@company.com"
-                        value={settings.smtpUsername}
-                        onChange={(e) => updateSetting('smtpUsername', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="smtpPassword">Passwort</Label>
-                      <Input
-                        id="smtpPassword"
-                        type="password"
-                        placeholder="••••••••"
-                        value={settings.smtpPassword}
-                        onChange={(e) => updateSetting('smtpPassword', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="emailFrom">Absender E-Mail</Label>
-                      <Input
-                        id="emailFrom"
-                        placeholder="arbeitserlaubnis@company.com"
-                        value={settings.emailFrom}
-                        onChange={(e) => updateSetting('emailFrom', e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="smtpSecure"
-                        checked={settings.smtpSecure}
-                        onCheckedChange={(checked) => updateSetting('smtpSecure', checked)}
-                      />
-                      <Label htmlFor="smtpSecure">SSL/TLS verwenden</Label>
-                    </div>
-                  </div>
-
-                  <Separator />
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Server className="w-4 h-4" />
-                      Verbindung testen
-                    </Button>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Test-E-Mail senden
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
 
           {/* Save Button */}
           <div className="flex justify-end">
             <Button 
-              onClick={handleSave}
+              onClick={handleSaveSettings}
               className="bg-safety-blue text-white hover:bg-blue-700"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -376,6 +392,73 @@ export default function Settings() {
           </div>
         </div>
       </main>
+
+      {/* Password Change Modal */}
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Passwort ändern
+            </DialogTitle>
+            <DialogDescription>
+              Geben Sie Ihr aktuelles Passwort ein und wählen Sie ein neues, sicheres Passwort.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Aktuelles Passwort</Label>
+              <Input
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                placeholder="Aktuelles Passwort eingeben"
+              />
+            </div>
+            
+            <div>
+              <Label>Neues Passwort</Label>
+              <Input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                placeholder="Neues Passwort eingeben"
+              />
+            </div>
+            
+            <div>
+              <Label>Passwort bestätigen</Label>
+              <Input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                placeholder="Neues Passwort wiederholen"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handlePasswordChange}
+                disabled={updatePasswordMutation.isPending}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                <Key className="w-4 h-4 mr-2" />
+                Passwort ändern
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setPasswordModalOpen(false);
+                  setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                }}
+              >
+                Abbrechen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

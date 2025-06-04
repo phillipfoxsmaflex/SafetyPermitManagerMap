@@ -34,6 +34,7 @@ export interface IStorage {
   
   // User role operations
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
+  updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
   
   // Template operations
   getAllTemplates(): Promise<Template[]>;
@@ -241,6 +242,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUser(userId: number, updates: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
       .where(eq(users.id, userId))
       .returning();
     return user;
