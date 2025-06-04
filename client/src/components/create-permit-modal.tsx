@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, AlertTriangle, Info } from "lucide-react";
+import { X, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield } from "lucide-react";
 import { z } from "zod";
 import {
   Dialog,
@@ -34,7 +34,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { CreatePermitFormData } from "@/lib/types";
+import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
+import hazardsData from "@/data/trbs_hazards.json";
 
 const createPermitSchema = z.object({
   type: z.string().min(1, "Permit type is required"),
@@ -64,8 +65,48 @@ interface CreatePermitModalProps {
 
 export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps) {
   const [activeTab, setActiveTab] = useState("basic");
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hazardNotes, setHazardNotes] = useState<HazardNote>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const categories = hazardsData.categories as HazardCategory[];
+
+  // Helper functions for hazard management
+  const getHazardId = (categoryId: number, hazardIndex: number) => `${categoryId}-${hazardIndex}`;
+  
+  const toggleHazard = (categoryId: number, hazardIndex: number) => {
+    const hazardId = getHazardId(categoryId, hazardIndex);
+    const currentHazards = form.getValues("selectedHazards") || [];
+    const isSelected = currentHazards.includes(hazardId);
+    
+    if (isSelected) {
+      form.setValue("selectedHazards", currentHazards.filter(h => h !== hazardId));
+    } else {
+      form.setValue("selectedHazards", [...currentHazards, hazardId]);
+    }
+  };
+
+  const updateHazardNote = (hazardId: string, note: string) => {
+    const newNotes = { ...hazardNotes, [hazardId]: note };
+    setHazardNotes(newNotes);
+    form.setValue("hazardNotes", JSON.stringify(newNotes));
+  };
+
+  const isHazardSelected = (categoryId: number, hazardIndex: number) => {
+    const hazardId = getHazardId(categoryId, hazardIndex);
+    const selectedHazards = form.getValues("selectedHazards") || [];
+    return selectedHazards.includes(hazardId);
+  };
+
+  const filteredCategories = categories.filter(category =>
+    category.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    category.hazards.some(hazard => 
+      hazard.hazard.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      hazard.protectiveMeasures.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   const form = useForm<CreatePermitFormData>({
     resolver: zodResolver(createPermitSchema),
@@ -83,15 +124,9 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
       safetyOfficer: "",
       identifiedHazards: "",
       additionalComments: "",
-      atmosphereTest: false,
-      ventilation: false,
-      ppe: false,
-      emergencyProcedures: false,
-      fireWatch: false,
-      isolationLockout: false,
-      oxygenLevel: "",
-      lelLevel: "",
-      h2sLevel: "",
+      selectedHazards: [],
+      hazardNotes: "{}",
+      completedMeasures: [],
     },
   });
 
