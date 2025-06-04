@@ -210,7 +210,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
 
   const isHazardSelected = (categoryId: number, hazardIndex: number) => {
     const hazardId = getHazardId(categoryId, hazardIndex);
-    const selectedHazards = form.getValues("selectedHazards") || [];
+    const selectedHazards = watchedSelectedHazards || [];
     return selectedHazards.includes(hazardId);
   };
 
@@ -243,6 +243,9 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
       completedMeasures: [],
     },
   });
+
+  // Watch for real-time updates
+  const watchedSelectedHazards = form.watch("selectedHazards");
 
   const createPermitMutation = useMutation({
     mutationFn: async (data: CreatePermitFormData) => {
@@ -581,17 +584,17 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                 )}
 
                 {/* Summary of selected hazards */}
-                {(form.getValues("selectedHazards") || []).length > 0 && (
+                {(watchedSelectedHazards || []).length > 0 && (
                   <Card className="bg-blue-50 border-blue-200">
                     <CardHeader>
                       <CardTitle className="text-sm text-blue-800 flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4" />
-                        <span>Ausgewählte Gefährdungen ({(form.getValues("selectedHazards") || []).length})</span>
+                        <span>Ausgewählte Gefährdungen ({(watchedSelectedHazards || []).length})</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {(form.getValues("selectedHazards") || []).map(hazardId => {
+                        {(watchedSelectedHazards || []).map(hazardId => {
                           const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
                           const category = categories.find(c => c.id === categoryId);
                           const hazard = category?.hazards[hazardIndex];
