@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield } from "lucide-react";
+import { X, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield, ArrowLeft, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import {
   Dialog,
@@ -35,7 +35,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
-import hazardsData from "@/data/trbs_hazards.json";
 
 const createPermitSchema = z.object({
   type: z.string().min(1, "Permit type is required"),
@@ -71,7 +70,122 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const categories = hazardsData.categories as HazardCategory[];
+  // TRBS hazard categories data
+  const categories: HazardCategory[] = [
+    {
+      id: 1,
+      category: "Mechanische Gefährdungen",
+      hazards: [
+        { hazard: "ungeschützte bewegte Maschinenteile", protectiveMeasures: "Schutzeinrichtungen, Abschalten der Maschine" },
+        { hazard: "Teile mit gefährlichen Oberflächen", protectiveMeasures: "Schutzhandschuhe, Abdeckungen" },
+        { hazard: "bewegte Transportmittel, bewegte Arbeitsmittel", protectiveMeasures: "Absperrungen, Warnsignale" },
+        { hazard: "unkontrolliert bewegte Teile", protectiveMeasures: "Sicherung gegen Herabfallen" },
+        { hazard: "Sturz, Ausrutschen, Umknicken, Stolpern", protectiveMeasures: "rutschfeste Bodenbeläge, ordentliche Verkehrswege" }
+      ]
+    },
+    {
+      id: 2,
+      category: "Elektrische Gefährdungen",
+      hazards: [
+        { hazard: "elektrischer Schlag", protectiveMeasures: "Freischaltung, spannungsfreier Zustand" },
+        { hazard: "Lichtbogenbildung", protectiveMeasures: "geeignete Schutzausrüstung" },
+        { hazard: "elektrostatische Aufladungen", protectiveMeasures: "Erdung, antistatische Ausrüstung" },
+        { hazard: "Blitzschlag", protectiveMeasures: "Blitzschutzanlage" }
+      ]
+    },
+    {
+      id: 3,
+      category: "Gefahrstoffe",
+      hazards: [
+        { hazard: "Hautkontakt mit Gefahrstoffen", protectiveMeasures: "Schutzhandschuhe, Schutzkleidung" },
+        { hazard: "Einatmen von Gefahrstoffen", protectiveMeasures: "Atemschutz, Absaugung" },
+        { hazard: "Verschlucken von Gefahrstoffen", protectiveMeasures: "Hygienemaßnahmen, Verbot von Essen und Trinken" },
+        { hazard: "Hautkontakt mit unter Druck stehenden Flüssigkeiten", protectiveMeasures: "Schutzausrüstung, Druckentlastung" }
+      ]
+    },
+    {
+      id: 4,
+      category: "Biologische Arbeitsstoffe",
+      hazards: [
+        { hazard: "Infektionsgefährdung", protectiveMeasures: "Hygienemaßnahmen, Schutzimpfungen" },
+        { hazard: "sensibilisierende Wirkung", protectiveMeasures: "Minimierung der Exposition" },
+        { hazard: "toxische Wirkung", protectiveMeasures: "persönliche Schutzausrüstung" }
+      ]
+    },
+    {
+      id: 5,
+      category: "Brand- und Explosionsgefährdungen",
+      hazards: [
+        { hazard: "brennbare Feststoffe, Flüssigkeiten, Gase", protectiveMeasures: "Zündquellen vermeiden, Inertisierung" },
+        { hazard: "explosionsfähige Atmosphäre", protectiveMeasures: "Ex-Schutz-Maßnahmen, Zoneneinteilung" },
+        { hazard: "Explosivstoffe", protectiveMeasures: "sichere Lagerung, Mengenbegrenzung" }
+      ]
+    },
+    {
+      id: 6,
+      category: "Thermische Gefährdungen",
+      hazards: [
+        { hazard: "heiße Medien/Oberflächen", protectiveMeasures: "Isolation, Schutzkleidung" },
+        { hazard: "kalte Medien/Oberflächen", protectiveMeasures: "Isolation, Schutzkleidung" },
+        { hazard: "Brand, Explosion", protectiveMeasures: "Brandschutzmaßnahmen" }
+      ]
+    },
+    {
+      id: 7,
+      category: "Gefährdungen durch spezielle physikalische Einwirkungen",
+      hazards: [
+        { hazard: "Lärm", protectiveMeasures: "Gehörschutz, Lärmminderung" },
+        { hazard: "Ultraschall, Infraschall", protectiveMeasures: "Abschirmung, Begrenzung der Exposition" },
+        { hazard: "Ganzkörpervibrationen", protectiveMeasures: "schwingungsarme Arbeitsmittel" },
+        { hazard: "Hand-Arm-Vibrationen", protectiveMeasures: "vibrationsmindernde Handschuhe" },
+        { hazard: "optische Strahlung", protectiveMeasures: "Augenschutz, Abschirmung" },
+        { hazard: "ionisierende Strahlung", protectiveMeasures: "Strahlenschutzmaßnahmen" },
+        { hazard: "elektromagnetische Felder", protectiveMeasures: "Abschirmung, Abstandsregelungen" },
+        { hazard: "Unter- oder Überdruck", protectiveMeasures: "Druckausgleich" }
+      ]
+    },
+    {
+      id: 8,
+      category: "Gefährdungen durch Arbeitsumgebungsbedingungen",
+      hazards: [
+        { hazard: "Klima", protectiveMeasures: "Klimatisierung, geeignete Kleidung" },
+        { hazard: "Beleuchtung/Sichtverhältnisse", protectiveMeasures: "ausreichende Beleuchtung" },
+        { hazard: "Ersticken", protectiveMeasures: "Belüftung, Sauerstoffmessung" },
+        { hazard: "Ertrinken", protectiveMeasures: "Schwimmhilfen, Absicherung" },
+        { hazard: "Bewegungseinschränkung", protectiveMeasures: "ausreichend Platz schaffen" }
+      ]
+    },
+    {
+      id: 9,
+      category: "Physische Belastung/Arbeitsschwere",
+      hazards: [
+        { hazard: "schwere dynamische Arbeit", protectiveMeasures: "Hebehilfen, Pausenregelung" },
+        { hazard: "einseitige dynamische Arbeit", protectiveMeasures: "Arbeitsplatzwechsel, Pausenregelung" },
+        { hazard: "Haltungsarbeit/Zwangshaltung", protectiveMeasures: "ergonomische Arbeitsplätze" },
+        { hazard: "Kombination aus statischer und dynamischer Arbeit", protectiveMeasures: "ausgewogene Arbeitsgestaltung" }
+      ]
+    },
+    {
+      id: 10,
+      category: "Psychische Faktoren",
+      hazards: [
+        { hazard: "ungenügend gestaltete Arbeitsaufgabe", protectiveMeasures: "Arbeitsgestaltung optimieren" },
+        { hazard: "ungenügend gestaltete Arbeitsorganisation", protectiveMeasures: "Organisationsverbesserung" },
+        { hazard: "ungenügend gestaltete soziale Bedingungen", protectiveMeasures: "Teambuilding-Maßnahmen" },
+        { hazard: "ungenügend gestaltete Arbeitsplatz- und Arbeitsumgebungsbedingungen", protectiveMeasures: "ergonomische Verbesserungen" }
+      ]
+    },
+    {
+      id: 11,
+      category: "Sonstige Gefährdungen",
+      hazards: [
+        { hazard: "durch Menschen", protectiveMeasures: "Sicherheitspersonal, Überwachung" },
+        { hazard: "durch Tiere", protectiveMeasures: "Schutzmaßnahmen, Fernhalten" },
+        { hazard: "durch Pflanzen und pflanzliche Produkte", protectiveMeasures: "Schutzkleidung, Information" },
+        { hazard: "auf Verkehrswegen", protectiveMeasures: "Verkehrsregelung, Warnschilder" }
+      ]
+    }
+  ];
 
   // Helper functions for hazard management
   const getHazardId = (categoryId: number, hazardIndex: number) => `${categoryId}-${hazardIndex}`;
@@ -338,233 +452,165 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                 <Alert className="border-yellow-200 bg-yellow-50">
                   <AlertTriangle className="h-4 w-4 text-caution-orange" />
                   <AlertDescription className="text-industrial-gray">
-                    <strong>Sicherheitsanforderungen:</strong> Führen Sie alle relevanten Sicherheitsprüfungen durch, bevor Sie mit der Arbeitsfreigabe fortfahren.
+                    <strong>TRBS Gefährdungsbeurteilung:</strong> Wählen Sie alle zutreffenden Gefährdungskategorien aus und dokumentieren Sie die erforderlichen Schutzmaßnahmen.
                   </AlertDescription>
                 </Alert>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Sicherheitscheckliste vor Arbeitsbeginn</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="atmosphereTest"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Atmosphere testing completed and documented
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="ventilation"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Adequate ventilation system verified
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="ppe"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Personal protective equipment (PPE) requirements identified
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="emergencyProcedures"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Emergency procedures communicated to all workers
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="fireWatch"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Fire watch personnel assigned (if applicable)
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="isolationLockout"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-sm text-industrial-gray">
-                            Equipment isolation and lockout/tagout completed
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Risk Assessment</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="riskLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Risk Level</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select risk level..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="critical">Critical</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="safetyOfficer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Safety Officer</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Assigned safety officer" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
+                {/* Search and filter */}
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Gefährdungen durchsuchen..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full"
                       />
                     </div>
+                    {selectedCategory && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setSelectedCategory(null)}
+                        className="flex items-center space-x-2"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>Zurück zur Übersicht</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
-                    <FormField
-                      control={form.control}
-                      name="identifiedHazards"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Identified Hazards</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="List all identified hazards and mitigation measures..."
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
+                {/* Main hazard interface */}
+                {!selectedCategory ? (
+                  /* Category overview */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCategories.map((category) => {
+                      const selectedHazardsInCategory = (form.getValues("selectedHazards") || [])
+                        .filter(hazardId => hazardId.startsWith(`${category.id}-`)).length;
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Atmospheric Monitoring</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="oxygenLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Oxygen Level (%)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="19.5-23.5" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                      return (
+                        <Card
+                          key={category.id}
+                          className="cursor-pointer transition-all hover:shadow-md border-l-4 border-l-primary"
+                          onClick={() => setSelectedCategory(category.id)}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <CardTitle className="text-sm font-medium text-industrial-gray line-clamp-2">
+                                {category.category}
+                              </CardTitle>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {category.hazards.length} Gefährdungen
+                              </span>
+                              {selectedHazardsInCategory > 0 && (
+                                <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs">
+                                  {selectedHazardsInCategory} ausgewählt
+                                </span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Detailed hazard view */
+                  (() => {
+                    const category = categories.find(c => c.id === selectedCategory);
+                    if (!category) return null;
 
-                      <FormField
-                        control={form.control}
-                        name="lelLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LEL (%)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="<10%" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                    return (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg text-industrial-gray">
+                            {category.category}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {category.hazards.map((hazard, index) => {
+                            const hazardId = getHazardId(category.id, index);
+                            const isSelected = isHazardSelected(category.id, index);
+                            const note = hazardNotes[hazardId] || "";
 
-                      <FormField
-                        control={form.control}
-                        name="h2sLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>H2S (ppm)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="<10 ppm" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                            return (
+                              <div key={index} className="border rounded-lg p-4 space-y-3">
+                                <div className="flex items-start space-x-3">
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={() => toggleHazard(category.id, index)}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-1 space-y-2">
+                                    <div>
+                                      <h4 className="font-medium text-sm text-industrial-gray">
+                                        {hazard.hazard}
+                                      </h4>
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        <strong>Schutzmaßnahmen:</strong> {hazard.protectiveMeasures}
+                                      </p>
+                                    </div>
+                                    
+                                    {isSelected && (
+                                      <div className="space-y-2">
+                                        <label className="text-sm font-medium text-industrial-gray">
+                                          Zusätzliche Notizen:
+                                        </label>
+                                        <Textarea
+                                          value={note}
+                                          onChange={(e) => updateHazardNote(hazardId, e.target.value)}
+                                          placeholder="Zusätzliche Informationen oder spezifische Maßnahmen..."
+                                          className="text-sm"
+                                          rows={2}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+                    );
+                  })()
+                )}
+
+                {/* Summary of selected hazards */}
+                {(form.getValues("selectedHazards") || []).length > 0 && (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardHeader>
+                      <CardTitle className="text-sm text-blue-800 flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Ausgewählte Gefährdungen ({(form.getValues("selectedHazards") || []).length})</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {(form.getValues("selectedHazards") || []).map(hazardId => {
+                          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                          const category = categories.find(c => c.id === categoryId);
+                          const hazard = category?.hazards[hazardIndex];
+                          
+                          if (!category || !hazard) return null;
+                          
+                          return (
+                            <div key={hazardId} className="text-xs bg-white p-2 rounded border">
+                              <span className="font-medium text-blue-700">{category.category}:</span>
+                              <span className="text-blue-600 ml-1">{hazard.hazard}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+
               </TabsContent>
 
               <TabsContent value="approval" className="space-y-6">
