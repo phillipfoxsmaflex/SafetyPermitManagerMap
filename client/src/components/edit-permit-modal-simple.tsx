@@ -188,24 +188,14 @@ export function EditPermitModalSimple({ permit, open, onOpenChange }: EditPermit
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleSaveDraft}
-              disabled={saveDraftMutation.isPending}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Als Entwurf speichern
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={submitMutation.isPending}
-              className="bg-safety-blue text-white hover:bg-blue-700"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Zur Genehmigung senden
-            </Button>
-          </div>
+          <Button 
+            onClick={handleSubmit}
+            disabled={submitMutation.isPending}
+            className="bg-safety-blue text-white hover:bg-blue-700"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Zur Genehmigung senden
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
