@@ -1,0 +1,312 @@
+{
+  "title": "TRBS 1112 - Besondere Gefährdungen bei Instandhaltungsarbeiten",
+  "version": "März 2019",
+  "categories": [
+    {
+      "id": 1,
+      "category": "Allgemeines",
+      "hazards": [
+        {
+          "hazard": "Verwendung von Arbeitsmitteln mit erhöhter Gefährdung (z. B. Kettensägen)",
+          "protectiveMeasures": "spezielle Unterweisung für den Umgang mit Arbeitsmitteln mit erhöhter Gefährdung"
+        },
+        {
+          "hazard": "eingeschränkte Zugänglichkeit zu Arbeitsmitteln",
+          "protectiveMeasures": "vor Aufnahme der Arbeiten Bedienwege festlegen und ausreichenden Bewegungsraum freihalten; ggf. Flucht- und Rettungswege festlegen"
+        },
+        {
+          "hazard": "Unterschätzung der Gefährdung bei Arbeiten geringen Umfangs oder kurzer Dauer",
+          "protectiveMeasures": "auch bei Arbeiten geringeren Umfangs sind Gefährdungen zu beurteilen und Maßnahmen festzulegen"
+        },
+        {
+          "hazard": "ungenügendes Gefahrenbewusstsein",
+          "protectiveMeasures": "Sensibilisierung der Mitarbeiter"
+        },
+        {
+          "hazard": "Arbeiten mit erhöhter Gefährdung oder kritischer Gefährdung aus dem Arbeitsverfahren, der Art der Tätigkeit, den verwendeten Stoffen oder der Umgebung",
+          "protectiveMeasures": "Arbeiten nicht alleine durchführen; Arbeiten mit besonderem Freigabe- oder Erlaubnisscheinverfahren durchführen; Verwendung von Personen-Notsignal-Anlagen; Monitorbeobachtung"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "category": "Mechanische Gefährdungen",
+      "hazards": [
+        {
+          "hazard": "kontrolliert bewegte ungeschützte Teile - die Gefahrenstellen sind meist zu Störungssuche, Funktionskontrollen sowie Außer- und Inbetriebnahmen frei zugänglich",
+          "protectiveMeasures": "größtmögliche Einschränkung des Zugangs zur Gefahrenstelle durch abstandhaltende Maßnahmen; deutliche Gefahrenhinweise für Unbeteiligte"
+        },
+        {
+          "hazard": "trennende und abschaltende Schutzeinrichtungen sind beseitigt oder unwirksam gemacht",
+          "protectiveMeasures": "instandzusetzendes Arbeitsmittel ist mit sicherheitstechnischen Mitteln, insbesondere mit kontrollierter Handsteuerung innerhalb sicherer Betriebsparameter zu halten; ausreichende Reduzierung von Geschwindigkeiten der kontrolliert bewegten Teile; Zustimmungseinrichtungen mit Tippschalter mit selbsttätiger Rückstellung"
+        },
+        {
+          "hazard": "Durchführung der Arbeiten bei laufendem Betrieb",
+          "protectiveMeasures": "Festlegung der Qualifikation für besondere Tätigkeiten; Festlegen von Personen, die mit Beobachtungsaufgaben betraut sind; Festlegung der Kommunikation und Koordination zwischen allen Beteiligten; Vermeidung des Zutritts; Not-Halt-Einrichtung in unmittelbarer Nähe des Instandhaltungspersonals"
+        },
+        {
+          "hazard": "unkontrolliert bewegte Teile - aus der Hand rutschen von schweren öl- und fettbehafteten Teilen, Abrutschen von Werkzeugen, plötzliches Losreißen von Bauteilen und Lasten durch vom Betrieb abweichende Belastungseinflüsse sowie Restenergien",
+          "protectiveMeasures": "Sicherung von Werkzeugen sowie Bauteilen gegen unkontrolliertes Bewegen, Sauberhaltung von Werkzeugen, Absperren des Gefahrenbereiches, Sicherungsposten stellen, Beseitigen von Restenergien, Verwendung von entsprechender persönlicher Schutzausrüstung"
+        },
+        {
+          "hazard": "Bewegungen der instandzusetzenden Gegenstände oder Teilen davon, durch sich bei der Instandhaltungsmaßnahme verändernde Lastverteilungen",
+          "protectiveMeasures": "Beachtung möglicher asymmetrischer Lastverteilungen und Massenschwerpunkte; Absperren des Gefahrenbereiches; Sicherungsposten stellen; Blockiervorrichtungen benutzen"
+        },
+        {
+          "hazard": "Gefährdungen durch unerwarteten Ausstoß von Arbeitsstoffen und Medien (Hydraulik, Pneumatik, Dampf, Wasser, Schüttgut)",
+          "protectiveMeasures": "Systeme vor Arbeitsbeginn drucklos/medienfrei machen und sichern, gefahrloses Ableiten"
+        },
+        {
+          "hazard": "Teile mit gefährlichen Oberflächen - beim Kontakt mit zerstörten Gegenständen, Gratbildung oder scharfkantigen Teilen",
+          "protectiveMeasures": "Abdecken oder unwirksam machen von scharfen Kanten, Ecken oder Spitzen auf Oberflächen bei Instandsetzungs- oder Reinigungsmaßnahmen"
+        },
+        {
+          "hazard": "Arbeiten unter beengten Verhältnissen meist im Hand- und Armbereich",
+          "protectiveMeasures": "Schaffung ausreichender Handfreiräume bei Instandhaltungsmaßnahmen"
+        },
+        {
+          "hazard": "Verunreinigungen (z. B. Öl, Fett, Staub) auf Böden, Zugängen, Tritt- und Standflächen",
+          "protectiveMeasures": "bei Bedarf vor Arbeitsbeginn reinigen, Bereitstellung von Ölbindemitteln, -vliesen oder Ähnlichem"
+        },
+        {
+          "hazard": "Nutzung von ungeeigneten Flächen und Bauteilen von Maschinen und Anlagen, Medienversorgungsleitungen oder Ähnlichem als Tritte oder Aufstiege",
+          "protectiveMeasures": "Verwenden einhängbarer Tritte, Montagerüstungen, Haltemöglichkeiten und Anschlagpunkte schaffen"
+        },
+        {
+          "hazard": "bewegte Arbeitsmittel - Einsatz von handgehaltenen Arbeitsmitteln in nicht alltäglichen Arbeitspositionen (Zwangshaltung, Arbeiten auf Leitern)",
+          "protectiveMeasures": "sicherer Stand bei Arbeiten mit Handbohrmaschinen, Winkelschleifern u. ä., Reaktionskräfte der Arbeitsmittel beachten, Festspannen oder Festsetzen der Arbeitsmittel, Schaffung von Anschlagpunkten"
+        },
+        {
+          "hazard": "bewegte Transportmittel - Neigung, Gefälle und Vertiefungen auf Transportwegen",
+          "protectiveMeasures": "Transportmittel mit ausreichender Bremswirkung auswählen, Reaktionskräfte beachten, Lastverteilung beachten, Ladungssicherung gewährleisten, ggf. Absperrung von Transportwegen"
+        },
+        {
+          "hazard": "Transport von Lasten in Bereichen, die nicht dafür vorgesehen sind",
+          "protectiveMeasures": "Beachtung der zulässigen Decken- oder Fußbodenbelastung, lastverteilende Platten auslegen, vorübergehende Überfahrten gegen Wegrutschen sichern"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "category": "Absturz",
+      "hazards": [
+        {
+          "hazard": "absturzgefährdete Bereiche",
+          "protectiveMeasures": "Absturzsicherung z. B. durch Geländer, Auffangnetze, Schutzwände, Verwendung persönlicher Schutzausrüstung gegen Absturz"
+        },
+        {
+          "hazard": "Zugänglichkeit oft nur über Leitern, Tritte gewährleistet",
+          "protectiveMeasures": "Tritt- und Standsicherheit gewährleisten; Leitern hinsichtlich Art und Größe auf Instandhaltungsaufgabe abstimmen; Leitern nur auf tragfähigem, ebenen Untergrund aufstellen; kein seitliches Hinauslehnen; schwere Lasten nicht von Hand transportieren"
+        },
+        {
+          "hazard": "mangelnde Standsicherheit von Gerüsten (Überlastung durch Teile …)",
+          "protectiveMeasures": "Planung/Festlegung von Lasten, nur geeignete Gerüste verwenden, Sicherung und Fixierung, maximal zulässige Belastung beachten (Übergabeprotokoll)"
+        },
+        {
+          "hazard": "schlechte Zugänglichkeit zu hochgelegenen Arbeitsplätzen (z. B. Unterzügen), Hindernissen, die nicht umfahren werden können",
+          "protectiveMeasures": "Auswahl geeigneter Hubarbeits- und Gelenkarmbühnen, Bedienungsanleitung beachten; Einweisung der Bediener, Funktionskontrolle vor Verwendung durchführen, Tragfähigkeit beachten"
+        },
+        {
+          "hazard": "offene Gräben, Gruben, Behälter, Bottiche",
+          "protectiveMeasures": "Sicherung durch Umwehrungen oder Abdeckungen, ausreichende Tragfähigkeit beachten"
+        },
+        {
+          "hazard": "lose Beläge (z. B. Bleche und Roste als zeitweilige Abdeckung von Gefahrenstellen)",
+          "protectiveMeasures": "nichtverschiebbare und stolperfreie Befestigung"
+        },
+        {
+          "hazard": "Vertiefungen durch zeitweilige Entfernung von Abdeckungen, Rosten, z. B. Aufdecken von Rohr- und Kabelkanälen",
+          "protectiveMeasures": "Absperrung oder Markierung des Arbeitsbereiches"
+        },
+        {
+          "hazard": "eingeschränkte Höhentauglichkeit der Beschäftigten",
+          "protectiveMeasures": "Beschäftigte ohne entsprechende Höhentauglichkeit nicht bei diesen Arbeiten einsetzen"
+        },
+        {
+          "hazard": "nicht durchtrittsichere Flächen (Dächer, Dachluken)",
+          "protectiveMeasures": "Schutz vor Hindurchfallen, sichere Geländer, Brüstungen, Abschrankungen, Abdeckungen, Einweisung"
+        },
+        {
+          "hazard": "Verwendung eines Staplers mit Arbeitskorb",
+          "protectiveMeasures": "Tragfähigkeit beachten; Arbeitsbühne formschlüssig an den Gabeln befestigen; Arbeitsbühne mit Umwehrung; Durchgriffschutz zum Staplermast, max. Höhe 5 m; Kommunikation zwischen Fahrer und Instandhalter"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "category": "Elektrische Gefährdung",
+      "hazards": [
+        {
+          "hazard": "elektrischer Schlag - Arbeiten mit elektrischen Betriebsmitteln",
+          "protectiveMeasures": "Schutzkleinspannung, Schutztrennung in beengten Räumen und bei Feuchtigkeit"
+        },
+        {
+          "hazard": "Arbeiten im Bereich von unter Spannung stehenden Anlageteilen",
+          "protectiveMeasures": "ordnungsgemäße Auswahl und Kennzeichnung der Arbeitsmittel; Beachten der Schutzabstände; Schutz durch Abdeckung oder Abschrankung; Information über erdverlegte Leitungen einholen; Metallsuch- und Stromleitungssuchgerät verwenden"
+        },
+        {
+          "hazard": "Arbeiten und Fehlersuche in Schaltschränken",
+          "protectiveMeasures": "unter Spannung stehende Anlageteile abschranken/sichern; Regeln zu „Arbeiten unter Spannung" beachten"
+        },
+        {
+          "hazard": "Rückspannung; Rückwärtseinspeisung bei Transformatoren (Generatoren, unterbrechungsfreie Spannungsversorgungen, Kondensatoren)",
+          "protectiveMeasures": "„5 Sicherheitsregeln" der Elektrotechnik beachten"
+        },
+        {
+          "hazard": "Lichtbögen - Auftreten von Lichtbögen (Fehlschaltungen in Schaltanlagen, Schmutzablagerungen)",
+          "protectiveMeasures": "Arbeitsbereich festlegen und kennzeichnen, Personal einweisen; persönliche Schutzausrüstung verwenden, reinigen"
+        },
+        {
+          "hazard": "Kurzschluss",
+          "protectiveMeasures": "Überprüfung des Isolationswiderstandes; auf vorschriftsmäßige Überstromschutzeinrichtung achten; Schalthandlungen unter Last nur bei entsprechenden Schaltorganen; Last so gering wie möglich halten"
+        },
+        {
+          "hazard": "elektrische, magnetische und elektromagnetische Felder - Gefährdungen durch hohe elektromagnetische Felder bei Tätigkeiten in der unmittelbaren Umgebung starker Feldquellen",
+          "protectiveMeasures": "Festlegung des Expositionsbereichs; Ermittlung der auftretenden elektromagnetischen Felder; Bei Überschreitung: Reduzierung der Leistung, Abschirmungen, Vergrößerung des Abstandes; Tätigkeiten nur unter Aufsicht eines Sachkundigen"
+        },
+        {
+          "hazard": "elektromagnetische Beeinflussung durch Stromschienen, Netzsysteme, Einleiterkabel",
+          "protectiveMeasures": "Abstände einhalten"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "category": "Gefährdungen durch Medien",
+      "hazards": [
+        {
+          "hazard": "Öffnen von Anlagen, -teilen mit möglichem Überdruck",
+          "protectiveMeasures": "Druck entlasten; Druckfreiheit feststellen; Systeme mit möglichem Überdruck nur nach vorgegebener Verfahrensweise öffnen, auf möglichen Siedeverzug achten (ggf. Arbeitserlaubnis)"
+        },
+        {
+          "hazard": "Arbeiten an und in Druckbehältern, Silos, Kanälen, Rohrleitungen (z. B. Sauerstoffmangel, Gärgase)",
+          "protectiveMeasures": "Arbeiten in abgeschlossenen Räumen nur mit Freigabeverfahren (Arbeitserlaubnis); Sicherungsposten und einsatzbereite Rettungsmittel vor Ort; Gaswarnanlagen (stationär und mobil)"
+        },
+        {
+          "hazard": "Arbeiten an konstruktiv vorgesehenen Öffnungen für die Ableitung von Medien (Ersticken, Vergiften, Verätzen, Verbrennen, Erfrieren)",
+          "protectiveMeasures": "Massenströme gefahrlos umleiten oder ableiten; Über ein Arbeitsfreigabeverfahren sicherstellen, dass die Systeme drucklos, entleert, gespült, abgesperrt und gegen wieder eintretende Medien gesichert sind"
+        },
+        {
+          "hazard": "lokale Undichtigkeit",
+          "protectiveMeasures": "Information über Medien einholen; Nutzung von geeigneter persönlicher Schutzausrüstung"
+        },
+        {
+          "hazard": "Restmedien (Restmengen, Anbackungen, Ablagerungen)",
+          "protectiveMeasures": "nur nach vorgegebener Verfahrensweise arbeiten; Flüssigkeiten abpumpen, Anbackungen entfernen, reinigen; Leckageauffangmöglichkeit verwenden; Nutzung von geeigneter persönlicher Schutzausrüstung"
+        },
+        {
+          "hazard": "Einsatz von Lösungsmittel beim Reinigen verschmutzter Maschinenteile",
+          "protectiveMeasures": "ungefährliche Mittel verwenden; ausreichende Lüftung, Tragen von Schutzkleidung"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "category": "Brand- und Explosionsgefährdungen",
+      "hazards": [
+        {
+          "hazard": "Entzündung von Feststoffen, Flüssigkeiten, Gasen - Schweißen, Schleifen und Trennen, Verwendung transportabler Öfen",
+          "protectiveMeasures": "vorhandene Brandlasten vor Arbeitsaufnahme beseitigen; Funkenflug begrenzen; geeignete Löschtechnik bereitstellen; Systeme entleeren, spülen ggf. trocknen; schriftliche Feuererlaubnis; Brandwache benennen"
+        },
+        {
+          "hazard": "Einbringen von Brandlasten in Bereiche, in denen normalerweise keine Brandgefährdung/Explosionsgefährdung herrscht",
+          "protectiveMeasures": "ausreichende Lüftung, Absaugung, aufsaugende Hilfsstoffe/Bindemittel, Staubablagerung beseitigen. ggf. Zündquellen vermeiden; Verwenden von lösemittelfreien Reinigungsmitteln"
+        },
+        {
+          "hazard": "mögliche Präsenz von schlagempfindlichen/zersetzungsfähigen oder selbstentzündlichen (bei Luftzutritt) Stoffen",
+          "protectiveMeasures": "Freigabe/Arbeitserlaubnis, Abklärung der Medien und Gefahren vorab; Entleerung, Reinigung/Spülung des Systems, ggf. Inertisierungsmaßnahmen"
+        },
+        {
+          "hazard": "fehlende Information über den Inhalt bzw. ehemaligen Inhalt von Behältern und Rohrleitungen",
+          "protectiveMeasures": "genaue Dokumentation über und Kennzeichnung von Inhaltsstoffen; falls nicht vorhanden, muss von einem gefährlichen Inhalt ausgegangen werden; ggf. Messungen/Analysen; Entleeren/Spülen/Trocknen"
+        },
+        {
+          "hazard": "Arbeiten in explosionsgefährdeten Bereichen (Funkenentstehung durch Schaltvorgänge, elektrostatische Entladung, Verwendung von elektrischen Kleinwerkzeugen)",
+          "protectiveMeasures": "explosionsfähige Atmosphäre für die Dauer der Arbeiten beseitigen; ex-geschützte Arbeitsmittel verwenden; ausreichend leitfähige Arbeitskleidung; Freigabeverfahren und Sicherungsposten vorsehen"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "category": "Thermische Gefährdungen",
+      "hazards": [
+        {
+          "hazard": "Arbeiten in heißen oder kalten Bereichen",
+          "protectiveMeasures": "Rahmenbedingungen festlegen (Temperaturen, maximale Verweildauer); Abschotten (Kühlen/Heizen); Belüften; persönliche Schutzausrüstung"
+        },
+        {
+          "hazard": "Kontakt mit heißen/kalten Oberflächen (Ofenoberflächen, Rohrleitungen)",
+          "protectiveMeasures": "Temperatur messen, abdecken, Temperaturausgleich ermöglichen (Wartezeit), Thermoschutzhandschuhe, Wärmeschutzkleidung, Wärmeschutzisolation"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "category": "Physikalische Gefährdungen",
+      "hazards": [
+        {
+          "hazard": "Schall - Arbeiten in Lärmbereichen; überhörte Warnsignale; Verständigungsprobleme",
+          "protectiveMeasures": "außer Betrieb nehmen; Abschirmen; Dämpfen; optische Signale verwenden; Wechselsprechanlagen einsetzen; Begrenzung der Einsatzzeit; Kameraeinsatz, Spiegel; persönliche Schutzausrüstung"
+        },
+        {
+          "hazard": "Schwingungen - Arbeiten an laufenden Anlagen; Anlagenteile; Fahrzeuge; Handwerkzeug",
+          "protectiveMeasures": "außer Betrieb nehmen; Dämpfungsmatten einsetzen; Begrenzung der Einsatzzeit; persönliche Schutzausrüstung"
+        },
+        {
+          "hazard": "Strahlung - Arbeiten an Lasern, im Bereich von UV-Strahlern (Lichtbogenschweißen); Röntgenstrahler (Schweißnahtprüfung)",
+          "protectiveMeasures": "außer Betrieb nehmen; Abschirmen, Abstand schaffen; persönliche Schutzausrüstung"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "category": "Gefährdungen durch Druck",
+      "hazards": [
+        {
+          "hazard": "Austreten von Medien bei lösbaren Verbindungen",
+          "protectiveMeasures": "drucklos machen, vollständige Entleerung"
+        },
+        {
+          "hazard": "Abreißen von Befestigungselementen",
+          "protectiveMeasures": "drucklos machen; regelmäßige Prüfungen auf Korrosion"
+        },
+        {
+          "hazard": "Zugänglichkeit bei Arbeiten/Prüfung von Tragelementen (Stahlstützen, Standardzargen)",
+          "protectiveMeasures": "Aufstellbedingungen beachten"
+        },
+        {
+          "hazard": "Austausch von Tragelementen",
+          "protectiveMeasures": "Abstützen; Abhängen des Druckbehälters; Gerüste einbauen; Ersatzabstützungen"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "category": "Gefährdungen durch Wechselwirkung",
+      "hazards": [
+        {
+          "hazard": "Reinigen von Betriebsmitteln mittels Hochdruckreiniger (Höchstdruckreiniger)",
+          "protectiveMeasures": "für den Druckbereich geeignete persönliche Schutzausrüstung verwenden und entsprechend unterweisen (Einsatz besonders beauftragter und unterwiesener Personen)"
+        },
+        {
+          "hazard": "Staub verursacht durch Arbeitsverfahren (z. B. Sandstrahlen)",
+          "protectiveMeasures": "Verwendung spezieller Absaugvorrichtung, Arbeitsbereich abschotten; persönliche Schutzausrüstung"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "category": "Gefährdungen an der Schnittstelle Mensch – Arbeitsmittel",
+      "hazards": [
+        {
+          "hazard": "unzureichende, ungünstige Beleuchtung",
+          "protectiveMeasures": "zusätzliche, passende Beleuchtung bereitstellen"
+        },
+        {
+          "hazard": "Arbeiten bei mangelnden Verständigungsmöglichkeiten",
+          "protectiveMeasures": "Festlegung von Kommunikationsregeln, Sprechfunk, Kameraeinsatz, Spiegel"
+        }
+      ]
+    }
+  ]
+}

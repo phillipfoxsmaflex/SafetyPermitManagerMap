@@ -52,15 +52,9 @@ const createPermitSchema = z.object({
   maintenanceApprover: z.string().min(1, "Instandhaltungs-/Engineering-Genehmiger ist erforderlich"),
   identifiedHazards: z.string().optional(),
   additionalComments: z.string().optional(),
-  atmosphereTest: z.boolean().optional(),
-  ventilation: z.boolean().optional(),
-  ppe: z.boolean().optional(),
-  emergencyProcedures: z.boolean().optional(),
-  fireWatch: z.boolean().optional(),
-  isolationLockout: z.boolean().optional(),
-  oxygenLevel: z.string().optional(),
-  lelLevel: z.string().optional(),
-  h2sLevel: z.string().optional(),
+  selectedHazards: z.array(z.string()).optional(),
+  hazardNotes: z.string().optional(),
+  completedMeasures: z.array(z.string()).optional(),
 });
 
 interface CreatePermitModalProps {

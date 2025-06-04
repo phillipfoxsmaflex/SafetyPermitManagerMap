@@ -32,18 +32,10 @@ export const permits = pgTable("permits", {
   identifiedHazards: text("identified_hazards"),
   additionalComments: text("additional_comments"),
   
-  // Safety checklist
-  atmosphereTest: boolean("atmosphere_test").default(false),
-  ventilation: boolean("ventilation").default(false),
-  ppe: boolean("ppe").default(false),
-  emergencyProcedures: boolean("emergency_procedures").default(false),
-  fireWatch: boolean("fire_watch").default(false),
-  isolationLockout: boolean("isolation_lockout").default(false),
-  
-  // Atmospheric monitoring
-  oxygenLevel: text("oxygen_level"),
-  lelLevel: text("lel_level"),
-  h2sLevel: text("h2s_level"),
+  // TRBS Hazard Assessment - replaces old safety checklist and atmospheric monitoring
+  selectedHazards: text("selected_hazards").array(), // Array of "categoryId-hazardIndex" strings
+  hazardNotes: text("hazard_notes"), // JSON string with notes per hazard
+  completedMeasures: text("completed_measures").array(), // Array of completed protective measure IDs
   
   // Approval tracking - Required approvals
   departmentHeadApproval: boolean("department_head_approval").default(false),

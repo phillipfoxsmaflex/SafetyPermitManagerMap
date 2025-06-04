@@ -21,13 +21,22 @@ export interface CreatePermitFormData {
   maintenanceApprover: string;
   identifiedHazards?: string;
   additionalComments?: string;
-  atmosphereTest?: boolean;
-  ventilation?: boolean;
-  ppe?: boolean;
-  emergencyProcedures?: boolean;
-  fireWatch?: boolean;
-  isolationLockout?: boolean;
-  oxygenLevel?: string;
-  lelLevel?: string;
-  h2sLevel?: string;
+  selectedHazards?: string[];
+  hazardNotes?: string;
+  completedMeasures?: string[];
+}
+
+export interface HazardCategory {
+  id: number;
+  category: string;
+  hazards: Hazard[];
+}
+
+export interface Hazard {
+  hazard: string;
+  protectiveMeasures: string;
+}
+
+export interface HazardNote {
+  [hazardId: string]: string;
 }
