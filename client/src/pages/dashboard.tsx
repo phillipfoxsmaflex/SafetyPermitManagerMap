@@ -59,7 +59,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-secondary-gray">Pending Approval</p>
+                  <p className="text-sm font-medium text-secondary-gray">Genehmigung ausstehend</p>
                   <p className="text-3xl font-bold text-warning-orange">
                     {statsLoading ? "..." : stats?.pendingApproval || 0}
                   </p>
@@ -75,7 +75,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-secondary-gray">Expired Today</p>
+                  <p className="text-sm font-medium text-secondary-gray">Heute abgelaufen</p>
                   <p className="text-3xl font-bold text-alert-red">
                     {statsLoading ? "..." : stats?.expiredToday || 0}
                   </p>
@@ -91,7 +91,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-secondary-gray">Completed</p>
+                  <p className="text-sm font-medium text-secondary-gray">Abgeschlossen</p>
                   <p className="text-3xl font-bold text-safety-green">
                     {statsLoading ? "..." : stats?.completed || 0}
                   </p>
@@ -111,15 +111,15 @@ export default function Dashboard() {
             onClick={() => setCreateModalOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create New Permit
+            Neue Genehmigung erstellen
           </Button>
           <Button variant="outline">
             <Search className="w-4 h-4 mr-2" />
-            Search Permits
+            Genehmigungen suchen
           </Button>
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            Bericht exportieren
           </Button>
         </div>
 

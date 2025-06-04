@@ -47,10 +47,10 @@ export default function Permits() {
         {/* Page Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-industrial-gray mb-2">
-            Work Permits
+            Arbeitsgenehmigungen
           </h2>
           <p className="text-secondary-gray">
-            View and manage all work permits in the system
+            Anzeigen und Verwalten aller Arbeitsgenehmigungen im System
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function Permits() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray h-4 w-4" />
                 <Input
-                  placeholder="Search permits by ID, location, requestor, or description..."
+                  placeholder="Suche nach ID, Standort, Antragsteller oder Beschreibung..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"

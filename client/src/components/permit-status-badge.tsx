@@ -9,32 +9,32 @@ export function PermitStatusBadge({ status }: PermitStatusBadgeProps) {
     switch (status) {
       case 'active':
         return {
-          label: 'Active',
+          label: 'Aktiv',
           className: 'bg-green-100 text-safety-green hover:bg-green-100',
         };
       case 'pending':
         return {
-          label: 'Pending',
+          label: 'Ausstehend',
           className: 'bg-orange-100 text-warning-orange hover:bg-orange-100',
         };
       case 'expired':
         return {
-          label: 'Expired',
+          label: 'Abgelaufen',
           className: 'bg-red-100 text-alert-red hover:bg-red-100',
         };
       case 'completed':
         return {
-          label: 'Completed',
+          label: 'Abgeschlossen',
           className: 'bg-blue-100 text-safety-blue hover:bg-blue-100',
         };
       case 'approved':
         return {
-          label: 'Approved',
+          label: 'Genehmigt',
           className: 'bg-green-100 text-safety-green hover:bg-green-100',
         };
       case 'rejected':
         return {
-          label: 'Rejected',
+          label: 'Abgelehnt',
           className: 'bg-red-100 text-alert-red hover:bg-red-100',
         };
       default:

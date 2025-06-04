@@ -29,11 +29,11 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
 
   const getPermitTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      'confined_space': 'Confined Space',
-      'hot_work': 'Hot Work',
-      'electrical': 'Electrical Work',
-      'chemical': 'Chemical Handling',
-      'height': 'Height Work',
+      'confined_space': 'Enger Raum',
+      'hot_work': 'Heißarbeiten',
+      'electrical': 'Elektrische Arbeiten',
+      'chemical': 'Chemische Arbeiten',
+      'height': 'Höhenarbeiten',
     };
     return typeMap[type] || type;
   };
@@ -42,10 +42,10 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-industrial-gray">Recent Permits</h3>
+          <h3 className="text-lg font-semibold text-industrial-gray">Aktuelle Genehmigungen</h3>
         </div>
         <div className="p-8 text-center">
-          <div className="text-secondary-gray">Loading permits...</div>
+          <div className="text-secondary-gray">Genehmigungen werden geladen...</div>
         </div>
       </div>
     );
@@ -54,32 +54,32 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-industrial-gray">Recent Permits</h3>
+        <h3 className="text-lg font-semibold text-industrial-gray">Aktuelle Genehmigungen</h3>
       </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Permit ID
+                Genehmigungs-ID
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Type
+                Typ
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Location
+                Standort
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Requestor
+                Antragsteller
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
                 Status
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Valid Until
+                Gültig bis
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Actions
+                Aktionen
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -87,7 +87,7 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
             {permits.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-secondary-gray">
-                  No permits found. Create your first permit to get started.
+                  Keine Genehmigungen gefunden. Erstellen Sie Ihre erste Genehmigung, um zu beginnen.
                 </TableCell>
               </TableRow>
             ) : (
