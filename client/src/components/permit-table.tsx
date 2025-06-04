@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { PermitStatusBadge } from "./permit-status-badge";
 import type { Permit } from "@shared/schema";
+import { useLocation } from "wouter";
 
 interface PermitTableProps {
   permits: Permit[];
@@ -17,6 +18,8 @@ interface PermitTableProps {
 }
 
 export function PermitTable({ permits, isLoading }: PermitTableProps) {
+  const [, setLocation] = useLocation();
+
   const formatDateTime = (date: Date | string) => {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', {
@@ -25,24 +28,6 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  const handleView = (permit: Permit) => {
-    console.log("Viewing permit:", permit.permitId);
-    // In a real app, this would open a detailed view modal or navigate to permit details
-    alert(`Genehmigung ${permit.permitId} wird angezeigt`);
-  };
-
-  const handleEdit = (permit: Permit) => {
-    console.log("Editing permit:", permit.permitId);
-    // In a real app, this would open an edit modal or navigate to edit page
-    alert(`Genehmigung ${permit.permitId} wird bearbeitet`);
-  };
-
-  const handlePrint = (permit: Permit) => {
-    console.log("Printing permit:", permit.permitId);
-    // In a real app, this would generate and print the permit
-    window.print();
   };
 
   const getPermitTypeLabel = (type: string) => {
@@ -54,6 +39,227 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
       'height': 'Höhenarbeiten',
     };
     return typeMap[type] || type;
+  };
+
+  const handleView = (permit: Permit) => {
+    console.log("Viewing permit:", permit.permitId);
+    setLocation(`/permit/${permit.id}`);
+  };
+
+  const handleEdit = (permit: Permit) => {
+    console.log("Editing permit:", permit.permitId);
+    setLocation(`/permit/${permit.id}`);
+  };
+
+  const handlePrint = (permit: Permit) => {
+    console.log("Printing permit:", permit.permitId);
+    
+    // Create a print-friendly version
+    const printContent = `
+      <html>
+        <head>
+          <title>Arbeitserlaubnis ${permit.permitId}</title>
+          <style>
+            @page { 
+              size: A4; 
+              margin: 2cm; 
+            }
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 12px; 
+              line-height: 1.4; 
+              color: #000; 
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              border-bottom: 2px solid #000; 
+              padding-bottom: 20px; 
+            }
+            .section { 
+              margin-bottom: 20px; 
+            }
+            .section-title { 
+              font-weight: bold; 
+              font-size: 14px; 
+              margin-bottom: 10px; 
+              border-bottom: 1px solid #ccc; 
+              padding-bottom: 5px; 
+            }
+            .field-row { 
+              display: flex; 
+              margin-bottom: 8px; 
+            }
+            .field-label { 
+              font-weight: bold; 
+              width: 180px; 
+              flex-shrink: 0; 
+            }
+            .field-value { 
+              flex: 1; 
+            }
+            .checkbox { 
+              margin-right: 5px; 
+            }
+            .status { 
+              text-transform: uppercase; 
+              font-weight: bold; 
+            }
+            .signatures { 
+              margin-top: 40px; 
+              display: grid; 
+              grid-template-columns: 1fr 1fr 1fr; 
+              gap: 30px; 
+            }
+            .signature-box { 
+              border-top: 1px solid #000; 
+              padding-top: 10px; 
+              text-align: center; 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>ARBEITSERLAUBNIS</h1>
+            <h2>Genehmigung Nr. ${permit.permitId}</h2>
+          </div>
+
+          <div class="section">
+            <div class="section-title">GRUNDINFORMATIONEN</div>
+            <div class="field-row">
+              <div class="field-label">Genehmigungstyp:</div>
+              <div class="field-value">${getPermitTypeLabel(permit.type)}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Arbeitsort:</div>
+              <div class="field-value">${permit.location}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Beschreibung:</div>
+              <div class="field-value">${permit.description}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Antragsteller:</div>
+              <div class="field-value">${permit.requestorName}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Abteilung:</div>
+              <div class="field-value">${permit.department}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Kontakt:</div>
+              <div class="field-value">${permit.contactNumber}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Notfallkontakt:</div>
+              <div class="field-value">${permit.emergencyContact}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">ZEITRAUM UND STATUS</div>
+            <div class="field-row">
+              <div class="field-label">Startdatum:</div>
+              <div class="field-value">${new Date(permit.startDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Enddatum:</div>
+              <div class="field-value">${new Date(permit.endDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Status:</div>
+              <div class="field-value status">${permit.status}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Risikostufe:</div>
+              <div class="field-value">${permit.riskLevel || 'Nicht angegeben'}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">SICHERHEITSCHECKLISTE</div>
+            <div class="field-row">
+              <div class="checkbox">${permit.atmosphereTest ? '☑' : '☐'}</div>
+              <div class="field-value">Atmosphärenprüfung durchgeführt</div>
+            </div>
+            <div class="field-row">
+              <div class="checkbox">${permit.ventilation ? '☑' : '☐'}</div>
+              <div class="field-value">Belüftung sichergestellt</div>
+            </div>
+            <div class="field-row">
+              <div class="checkbox">${permit.ppe ? '☑' : '☐'}</div>
+              <div class="field-value">Persönliche Schutzausrüstung vorhanden</div>
+            </div>
+            <div class="field-row">
+              <div class="checkbox">${permit.emergencyProcedures ? '☑' : '☐'}</div>
+              <div class="field-value">Notfallverfahren kommuniziert</div>
+            </div>
+            <div class="field-row">
+              <div class="checkbox">${permit.fireWatch ? '☑' : '☐'}</div>
+              <div class="field-value">Brandwache zugewiesen</div>
+            </div>
+            <div class="field-row">
+              <div class="checkbox">${permit.isolationLockout ? '☑' : '☐'}</div>
+              <div class="field-value">Isolierung/Absperrung durchgeführt</div>
+            </div>
+          </div>
+
+          ${permit.oxygenLevel || permit.lelLevel || permit.h2sLevel ? `
+          <div class="section">
+            <div class="section-title">ATMOSPHÄREN-MESSWERTE</div>
+            ${permit.oxygenLevel ? `<div class="field-row"><div class="field-label">Sauerstoff:</div><div class="field-value">${permit.oxygenLevel}</div></div>` : ''}
+            ${permit.lelLevel ? `<div class="field-row"><div class="field-label">LEL:</div><div class="field-value">${permit.lelLevel}</div></div>` : ''}
+            ${permit.h2sLevel ? `<div class="field-row"><div class="field-label">H2S:</div><div class="field-value">${permit.h2sLevel}</div></div>` : ''}
+          </div>` : ''}
+
+          <div class="section">
+            <div class="section-title">IDENTIFIZIERTE GEFAHREN</div>
+            <div class="field-value">${permit.identifiedHazards || 'Keine spezifischen Gefahren identifiziert'}</div>
+          </div>
+
+          ${permit.additionalComments ? `
+          <div class="section">
+            <div class="section-title">ZUSÄTZLICHE KOMMENTARE</div>
+            <div class="field-value">${permit.additionalComments}</div>
+          </div>` : ''}
+
+          <div class="signatures">
+            <div class="signature-box">
+              <div>Vorgesetzter</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.supervisorApproval ? `Genehmigt: ${permit.supervisorApprovalDate ? new Date(permit.supervisorApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+            <div class="signature-box">
+              <div>Sicherheitsbeauftragter</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.safetyOfficerApproval ? `Genehmigt: ${permit.safetyOfficerApprovalDate ? new Date(permit.safetyOfficerApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+            <div class="signature-box">
+              <div>Betriebsleiter</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.operationsManagerApproval ? `Genehmigt: ${permit.operationsManagerApprovalDate ? new Date(permit.operationsManagerApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #666;">
+            Erstellt am: ${permit.createdAt ? new Date(permit.createdAt).toLocaleDateString('de-DE') : ''} | 
+            Letzte Aktualisierung: ${permit.updatedAt ? new Date(permit.updatedAt).toLocaleDateString('de-DE') : ''}
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
   };
 
   if (isLoading) {

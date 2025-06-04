@@ -60,13 +60,6 @@ export function NavigationHeader() {
               }`}>
                 Berichte
               </Link>
-              <Link href="/settings" className={`font-medium pb-2 border-b-2 ${
-                isActive("/settings") 
-                  ? "text-safety-blue border-safety-blue" 
-                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
-              }`}>
-                Einstellungen
-              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
@@ -88,7 +81,6 @@ export function NavigationHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={handleProfileClick}>Profil</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLocation("/settings")}>Einstellungen</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>Abmelden</DropdownMenuItem>
               </DropdownMenuContent>
