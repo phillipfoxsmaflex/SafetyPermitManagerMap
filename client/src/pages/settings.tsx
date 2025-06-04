@@ -431,34 +431,36 @@ export default function Settings() {
                   </Link>
                 )}
                 
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={handleOpenEmailSettings}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  E-Mail-Einstellungen
-                </Button>
-                
                 {isAdmin && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={handleBackupDatabase}
-                  >
-                    <Database className="w-4 h-4 mr-2" />
-                    Datenbank-Backup
-                  </Button>
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={handleOpenEmailSettings}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      E-Mail-Einstellungen
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={handleBackupDatabase}
+                    >
+                      <Database className="w-4 h-4 mr-2" />
+                      Datenbank-Backup
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={handleViewSecurityLog}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Sicherheitsprotokoll
+                    </Button>
+                  </>
                 )}
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={handleViewSecurityLog}
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Sicherheitsprotokoll
-                </Button>
               </div>
             </CardContent>
           </Card>
