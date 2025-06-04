@@ -104,6 +104,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve permit
+  app.post("/api/permits/:id/approve", async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const { approvalType } = req.body;
+      
+      const permit = await storage.getPermit(permitId);
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+      
+      const updates: any = { updatedAt: new Date() };
+      
+      if (approvalType === "department_head") {
+        updates.departmentHeadApproval = true;
+        updates.departmentHeadApprovalDate = new Date();
+      } else if (approvalType === "maintenance") {
+        updates.maintenanceApproval = true;
+        updates.maintenanceApprovalDate = new Date();
+      }
+      
+      // Check if both required approvals are now complete
+      const updatedPermit = await storage.updatePermit(permitId, updates);
+      if (updatedPermit?.departmentHeadApproval && updatedPermit?.maintenanceApproval) {
+        await storage.updatePermit(permitId, { status: "approved" });
+      }
+      
+      res.json({ message: "Permit approved successfully" });
+    } catch (error) {
+      console.error("Error approving permit:", error);
+      res.status(500).json({ message: "Failed to approve permit" });
+    }
+  });
+
+  // Reject permit
+  app.post("/api/permits/:id/reject", async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      const permit = await storage.getPermit(permitId);
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+      
+      await storage.updatePermit(permitId, { 
+        status: "rejected",
+        additionalComments: reason,
+        updatedAt: new Date()
+      });
+      
+      res.json({ message: "Permit rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting permit:", error);
+      res.status(500).json({ message: "Failed to reject permit" });
+    }
+  });
+
   // Notification routes
   app.get("/api/notifications", async (req, res) => {
     try {

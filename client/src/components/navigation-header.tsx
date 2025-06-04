@@ -54,6 +54,13 @@ export function NavigationHeader() {
               }`}>
                 Genehmigungen
               </Link>
+              <Link href="/approvals" className={`font-medium pb-2 border-b-2 ${
+                isActive("/approvals") 
+                  ? "text-safety-blue border-safety-blue" 
+                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
+              }`}>
+                Freigaben
+              </Link>
               <Link href="/reports" className={`font-medium pb-2 border-b-2 ${
                 isActive("/reports") 
                   ? "text-safety-blue border-safety-blue" 

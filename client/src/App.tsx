@@ -19,6 +19,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/permits" component={Permits} />
       <Route path="/permit/:id" component={PermitDetails} />
+      <Route path="/approvals" component={Approvals} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
       <Route path="/user-management" component={UserManagement} />
