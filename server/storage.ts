@@ -1,4 +1,4 @@
-import { users, permits, notifications, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification } from "@shared/schema";
+import { users, permits, notifications, templates, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -34,6 +34,10 @@ export interface IStorage {
   
   // User role operations
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
+  
+  // Template operations
+  getAllTemplates(): Promise<Template[]>;
+  createTemplate(template: InsertTemplate): Promise<Template>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -230,6 +234,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async getAllTemplates(): Promise<Template[]> {
+    return await db.select().from(templates);
+  }
+
+  async createTemplate(insertTemplate: InsertTemplate): Promise<Template> {
+    const [template] = await db
+      .insert(templates)
+      .values(insertTemplate)
+      .returning();
+    return template;
   }
 }
 

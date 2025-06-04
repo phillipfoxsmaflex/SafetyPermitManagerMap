@@ -272,6 +272,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Templates routes
+  app.get("/api/templates", async (req, res) => {
+    try {
+      const templates = await storage.getAllTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ message: "Failed to get templates" });
+    }
+  });
+
+  app.post("/api/templates", async (req, res) => {
+    try {
+      console.log("Creating template with data:", JSON.stringify(req.body, null, 2));
+      
+      const { name, template } = req.body;
+      const createdBy = 1; // Mock user ID
+      
+      const newTemplate = await storage.createTemplate({
+        name,
+        template,
+        createdBy
+      });
+      
+      console.log("Created template:", newTemplate);
+      res.status(201).json(newTemplate);
+    } catch (error) {
+      console.error("Error creating template:", error);
+      res.status(500).json({ message: "Failed to create template" });
+    }
+  });
+
   // User management routes
   app.get("/api/users", async (req, res) => {
     try {
