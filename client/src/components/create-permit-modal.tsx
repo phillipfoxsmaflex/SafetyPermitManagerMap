@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, AlertTriangle, Info } from "lucide-react";
 import { z } from "zod";
 import {
@@ -73,19 +73,6 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch users for approver dropdowns
-  const { data: users = [] } = useQuery({
-    queryKey: ["/api/users"],
-  });
-
-  // Filter users for approver dropdowns
-  const supervisorUsers = users.filter((user: any) => 
-    user.role === 'supervisor' || user.role === 'admin' || user.role === 'Vorgesetzter' || user.role === 'Administrator'
-  );
-  const maintenanceUsers = users.filter((user: any) => 
-    user.role === 'maintenance' || user.role === 'admin' || user.role === 'Betriebsleiter' || user.role === 'Administrator'
-  );
-
   const form = useForm<CreatePermitFormData>({
     resolver: zodResolver(createPermitSchema),
     defaultValues: {
@@ -100,8 +87,6 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
       endDate: "",
       riskLevel: "",
       safetyOfficer: "",
-      departmentHead: "",
-      maintenanceApprover: "",
       identifiedHazards: "",
       additionalComments: "",
       atmosphereTest: false,
@@ -573,18 +558,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                         <FormItem>
                           <FormLabel>Abteilungsleiter (Genehmiger) *</FormLabel>
                           <FormControl>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Abteilungsleiter auswählen" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {supervisorUsers.map((user: any) => (
-                                  <SelectItem key={user.id} value={user.username}>
-                                    {user.username} ({user.role})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Input placeholder="Name des Abteilungsleiters" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -598,18 +572,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                         <FormItem>
                           <FormLabel>Instandhaltung/Engineering-Genehmiger *</FormLabel>
                           <FormControl>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Instandhaltungs-/Engineering-Genehmiger auswählen" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {maintenanceUsers.map((user: any) => (
-                                  <SelectItem key={user.id} value={user.username}>
-                                    {user.username} ({user.role})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Input placeholder="Name des Instandhaltungs-/Engineering-Genehmigers" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
