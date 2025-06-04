@@ -27,6 +27,8 @@ import type { Permit } from "@shared/schema";
 export default function Approvals() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("pending");
+  const [viewingPermit, setViewingPermit] = useState<Permit | null>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
 
   const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
@@ -135,6 +137,11 @@ export default function Approvals() {
       }
       return false;
     });
+  };
+
+  const handleView = (permit: Permit) => {
+    setViewingPermit(permit);
+    setViewModalOpen(true);
   };
 
   const handleApprove = (permit: Permit) => {
@@ -257,6 +264,16 @@ export default function Approvals() {
             </Button>
           </div>
         )}
+        <div className="flex gap-2 pt-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => handleView(permit)}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            Ansehen
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -372,6 +389,90 @@ export default function Approvals() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Permit Viewing Dialog */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-industrial-gray">
+              Arbeitserlaubnis Details - {viewingPermit?.permitId}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingPermit && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Typ</p>
+                  <p className="text-secondary-gray">{viewingPermit.type}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Arbeitsort</p>
+                  <p className="text-secondary-gray">{viewingPermit.location}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Antragsteller</p>
+                  <p className="text-secondary-gray">{viewingPermit.requestorName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Abteilung</p>
+                  <p className="text-secondary-gray">{viewingPermit.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Startdatum</p>
+                  <p className="text-secondary-gray">
+                    {format(new Date(viewingPermit.startDate), "dd.MM.yyyy", { locale: de })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray">Enddatum</p>
+                  <p className="text-secondary-gray">
+                    {format(new Date(viewingPermit.endDate), "dd.MM.yyyy", { locale: de })}
+                  </p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-industrial-gray mb-2">Beschreibung</p>
+                <p className="text-secondary-gray">{viewingPermit.description}</p>
+              </div>
+              
+              {viewingPermit.identifiedHazards && (
+                <div>
+                  <p className="text-sm font-medium text-industrial-gray mb-2">Identifizierte Gefahren</p>
+                  <p className="text-secondary-gray">{viewingPermit.identifiedHazards}</p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <p className="font-medium text-industrial-gray text-sm">Genehmigungsstatus:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className={`flex items-center gap-2 p-2 rounded ${viewingPermit.departmentHeadApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
+                    {viewingPermit.departmentHeadApproval ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-orange-600" />
+                    )}
+                    <span className="text-sm">
+                      Abteilungsleiter: {viewingPermit.departmentHeadApproval ? 'Genehmigt' : 'Ausstehend'}
+                    </span>
+                  </div>
+                  <div className={`flex items-center gap-2 p-2 rounded ${viewingPermit.maintenanceApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
+                    {viewingPermit.maintenanceApproval ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-orange-600" />
+                    )}
+                    <span className="text-sm">
+                      Instandhaltung/Engineering: {viewingPermit.maintenanceApproval ? 'Genehmigt' : 'Ausstehend'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
