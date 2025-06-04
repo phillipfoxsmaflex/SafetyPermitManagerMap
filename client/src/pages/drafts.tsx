@@ -19,7 +19,7 @@ import {
   Trash2, 
   Plus, 
   Save, 
-  Template,
+  FileStack,
   Clock,
   Search,
   Filter
@@ -39,12 +39,12 @@ export default function Drafts() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   // Fetch draft permits
-  const { data: permits = [], isLoading } = useQuery({
+  const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
   });
 
   // Fetch templates
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [] } = useQuery<any[]>({
     queryKey: ["/api/templates"],
   });
 
@@ -232,7 +232,7 @@ export default function Drafts() {
             variant="outline"
             onClick={() => handleCreateTemplate(permit)}
           >
-            <Template className="w-4 h-4 mr-1" />
+            <FileStack className="w-4 h-4 mr-1" />
             Als Vorlage
           </Button>
           <Button 
@@ -286,7 +286,7 @@ export default function Drafts() {
               Entwürfe ({filteredDrafts.length})
             </TabsTrigger>
             <TabsTrigger value="templates" className="flex items-center gap-2">
-              <Template className="h-4 w-4" />
+              <FileStack className="h-4 w-4" />
               Vorlagen ({templates.length})
             </TabsTrigger>
           </TabsList>
@@ -361,7 +361,7 @@ export default function Drafts() {
           <TabsContent value="templates">
             <div className="space-y-6">
               <Alert className="border-blue-200 bg-blue-50">
-                <Template className="h-4 w-4 text-safety-blue" />
+                <FileStack className="h-4 w-4 text-safety-blue" />
                 <AlertDescription className="text-industrial-gray">
                   <strong>Vorlagen:</strong> Erstellen Sie wiederverwendbare Vorlagen aus bestehenden Entwürfen oder verwenden Sie gespeicherte Vorlagen für neue Anträge.
                 </AlertDescription>
@@ -408,7 +408,7 @@ export default function Drafts() {
                 {templates.length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">
-                      <Template className="h-12 w-12 text-secondary-gray mx-auto mb-4" />
+                      <FileStack className="h-12 w-12 text-secondary-gray mx-auto mb-4" />
                       <p className="text-industrial-gray">Keine Vorlagen vorhanden</p>
                       <p className="text-secondary-gray text-sm">
                         Erstellen Sie Vorlagen aus bestehenden Entwürfen für die Wiederverwendung.

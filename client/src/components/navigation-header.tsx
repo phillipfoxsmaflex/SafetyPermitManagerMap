@@ -61,12 +61,12 @@ export function NavigationHeader() {
               }`}>
                 Freigaben
               </Link>
-              <Link href="/reports" className={`font-medium pb-2 border-b-2 ${
-                isActive("/reports") 
+              <Link href="/drafts" className={`font-medium pb-2 border-b-2 ${
+                isActive("/drafts") 
                   ? "text-safety-blue border-safety-blue" 
                   : "text-secondary-gray border-transparent hover:text-industrial-gray"
               }`}>
-                Berichte
+                Entwürfe
               </Link>
             </nav>
           </div>
