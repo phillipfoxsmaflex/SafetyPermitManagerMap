@@ -1,6 +1,6 @@
-import { users, permits, type User, type InsertUser, type Permit, type InsertPermit } from "@shared/schema";
+import { users, permits, notifications, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -24,6 +24,16 @@ export interface IStorage {
     expiredToday: number;
     completed: number;
   }>;
+  
+  // Notification operations
+  getUserNotifications(userId: number): Promise<Notification[]>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: number): Promise<boolean>;
+  markAllNotificationsAsRead(userId: number): Promise<boolean>;
+  
+  // User role operations
+  updateUserRole(userId: number, role: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {

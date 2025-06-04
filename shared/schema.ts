@@ -55,6 +55,17 @@ export const permits = pgTable("permits", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // 'info', 'warning', 'success', 'error'
+  relatedPermitId: integer("related_permit_id").references(() => permits.id),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -69,7 +80,14 @@ export const insertPermitSchema = createInsertSchema(permits).omit({
   endDate: z.string(),
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
 export type Permit = typeof permits.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
