@@ -56,16 +56,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new permit
   app.post("/api/permits", async (req, res) => {
     try {
+      console.log("Creating permit with data:", JSON.stringify(req.body, null, 2));
+      
       const validatedData = insertPermitSchema.parse(req.body);
+      console.log("Validated data:", JSON.stringify(validatedData, null, 2));
+      
       const permit = await storage.createPermit(validatedData);
+      console.log("Created permit:", permit);
+      
       res.status(201).json(permit);
     } catch (error) {
+      console.error("Error creating permit:", error);
+      
       if (error instanceof z.ZodError) {
+        console.log("Validation errors:", error.errors);
         return res.status(400).json({ 
           message: "Validation error", 
           errors: error.errors 
         });
       }
+      
       res.status(500).json({ message: "Failed to create permit" });
     }
   });
