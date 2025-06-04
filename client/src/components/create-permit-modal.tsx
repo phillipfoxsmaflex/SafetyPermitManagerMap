@@ -48,6 +48,8 @@ const createPermitSchema = z.object({
   endDate: z.string().min(1, "End date is required"),
   riskLevel: z.string().optional(),
   safetyOfficer: z.string().optional(),
+  departmentHead: z.string().min(1, "Abteilungsleiter ist erforderlich"),
+  maintenanceApprover: z.string().min(1, "Instandhaltungs-/Engineering-Genehmiger ist erforderlich"),
   identifiedHazards: z.string().optional(),
   additionalComments: z.string().optional(),
   atmosphereTest: z.boolean().optional(),

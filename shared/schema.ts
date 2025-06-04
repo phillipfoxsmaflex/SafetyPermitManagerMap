@@ -27,6 +27,8 @@ export const permits = pgTable("permits", {
   status: text("status").notNull().default('pending'), // 'pending', 'approved', 'active', 'completed', 'expired', 'rejected'
   riskLevel: text("risk_level"), // 'low', 'medium', 'high', 'critical'
   safetyOfficer: text("safety_officer"),
+  departmentHead: text("department_head"), // Required approver
+  maintenanceApprover: text("maintenance_approver"), // Required approver
   identifiedHazards: text("identified_hazards"),
   additionalComments: text("additional_comments"),
   
@@ -43,13 +45,14 @@ export const permits = pgTable("permits", {
   lelLevel: text("lel_level"),
   h2sLevel: text("h2s_level"),
   
-  // Approval tracking
-  supervisorApproval: boolean("supervisor_approval").default(false),
-  supervisorApprovalDate: timestamp("supervisor_approval_date"),
+  // Approval tracking - Required approvals
+  departmentHeadApproval: boolean("department_head_approval").default(false),
+  departmentHeadApprovalDate: timestamp("department_head_approval_date"),
+  maintenanceApproval: boolean("maintenance_approval").default(false),
+  maintenanceApprovalDate: timestamp("maintenance_approval_date"),
+  // Optional additional approvals
   safetyOfficerApproval: boolean("safety_officer_approval").default(false),
   safetyOfficerApprovalDate: timestamp("safety_officer_approval_date"),
-  operationsManagerApproval: boolean("operations_manager_approval").default(false),
-  operationsManagerApprovalDate: timestamp("operations_manager_approval_date"),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
