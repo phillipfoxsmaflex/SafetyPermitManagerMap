@@ -1,0 +1,82 @@
+# Prompt für TRBS 1112 Gefährdungstabelle App in Replit
+
+## Aufgabe
+Erstelle eine interaktive Web-App in Replit, die die TRBS 1112 Gefährdungstabelle für Instandhaltungsarbeiten darstellt. Die App soll die bereitgestellten JSON-Daten verwenden und eine benutzerfreundliche Oberfläche bieten.
+
+## Technische Anforderungen
+- **Framework**: HTML, CSS, JavaScript (Vanilla JS oder React)
+- **Design**: Responsive Design für Desktop und Mobile
+- **Funktionalitäten**:
+  - Übersicht aller Gefährdungskategorien
+  - Filterbare und durchsuchbare Gefährdungsliste
+  - Detailansicht für jede Gefährdung mit Schutzmaßnahmen
+  - Exportfunktion (PDF oder Excel)
+  - Druckfunktion
+
+## Funktionale Anforderungen
+
+### 1. Hauptübersicht
+- Zeige alle 11 Gefährdungskategorien als Karten/Tiles
+- Anzahl der Gefährdungen pro Kategorie anzeigen
+- Klickbare Kategorien für Detailansicht
+
+### 2. Kategorie-Detailansicht
+- Liste aller Gefährdungen einer Kategorie
+- Gefährdungsbeschreibung und Schutzmaßnahmen
+- Zurück-Navigation zur Hauptübersicht
+
+### 3. Suchfunktion
+- Volltextsuche über alle Gefährdungen und Schutzmaßnahmen
+- Filter nach Kategorien
+- Highlighting der Suchbegriffe in den Ergebnissen
+
+### 4. Zusatzfunktionen
+- **Favoriten**: Wichtige Gefährdungen markieren und separat anzeigen
+- **Checkliste**: Abhakbare Liste für durchgeführte Sicherheitsmaßnahmen
+- **Notizen**: Möglichkeit, eigene Notizen zu Gefährdungen hinzuzufügen
+- **Export**: PDF-Export der gewählten Gefährdungen mit Schutzmaßnahmen
+
+## Design-Vorgaben
+- **Header**: Titel "TRBS 1112 - Gefährdungen bei Instandhaltungsarbeiten"
+- **Farbschema**: Professionelle Arbeitsschutz-Farben (Rot für Gefährdungen, Grün für Schutzmaßnahmen, Blau für Navigation)
+- **Icons**: Verwende passende Icons für die verschiedenen Gefährdungstypen
+- **Layout**: Cards/Karten-Design für bessere Übersichtlichkeit
+
+## JSON-Datenstruktur
+Die bereitgestellten JSON-Daten enthalten:
+```json
+{
+  "title": "TRBS 1112 - Besondere Gefährdungen bei Instandhaltungsarbeiten",
+  "version": "März 2019",
+  "categories": [
+    {
+      "id": 1,
+      "category": "Kategoriename",
+      "hazards": [
+        {
+          "hazard": "Gefährdungsbeschreibung",
+          "protectiveMeasures": "Schutzmaßnahmen"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Implementierung
+1. **Datenintegration**: JSON-Daten in die App laden
+2. **Routing**: Einfache Client-seitige Navigation zwischen Ansichten
+3. **State Management**: Lokaler Zustand für Favoriten, Notizen und Filter
+4. **Responsive Design**: Mobile-first Ansatz
+5. **Performance**: Lazy Loading für große Datenlisten
+
+## Zusätzliche Features (Optional)
+- **Offline-Funktionalität**: Service Worker für Offline-Zugriff
+- **Print-Stylesheet**: Optimiertes Layout für Ausdrucke  
+- **Dark Mode**: Alternative Farbschema-Option
+- **Mehrsprachigkeit**: Vorbereitung für weitere Sprachen
+
+## Datenschutz
+- Alle Daten bleiben lokal im Browser
+- Keine externen APIs erforderlich
+- LocalStorage für
