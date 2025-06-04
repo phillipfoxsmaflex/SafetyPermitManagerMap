@@ -214,14 +214,31 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   });
 
   const onSaveDraft = () => {
-    console.log("onSaveDraft called - bypassing validation");
+    console.log("=== DRAFT SAVE BUTTON CLICKED ===");
     console.log("Permit ID:", permit?.id);
+    
+    if (!permit?.id) {
+      console.error("No permit ID found");
+      toast({
+        title: "Fehler",
+        description: "Keine Genehmigungsnummer gefunden.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Get current form values without validation
     const formValues = form.getValues();
     console.log("Form values:", formValues);
     
-    saveDraftMutation.mutate(formValues);
+    // Ensure we have at least some basic data
+    const draftData = {
+      ...formValues,
+      status: "draft"
+    };
+    
+    console.log("Sending draft data:", draftData);
+    saveDraftMutation.mutate(draftData);
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
@@ -740,7 +757,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={onSaveDraft}
+                  onClick={() => {
+                    console.log("BUTTON CLICKED - DIRECT HANDLER");
+                    onSaveDraft();
+                  }}
                   disabled={saveDraftMutation.isPending}
                 >
                   <Save className="w-4 h-4 mr-2" />
