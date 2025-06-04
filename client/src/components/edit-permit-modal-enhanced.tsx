@@ -186,6 +186,8 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   });
 
   const onSaveDraft = (data: EditPermitFormData) => {
+    console.log("onSaveDraft called with data:", data);
+    console.log("Permit ID:", permit?.id);
     saveDraftMutation.mutate(data);
   };
 
@@ -706,7 +708,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                   type="button" 
                   variant="outline" 
                   onClick={form.handleSubmit(onSaveDraft)}
-                  disabled={updatePermitMutation.isPending}
+                  disabled={saveDraftMutation.isPending}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Als Entwurf speichern
