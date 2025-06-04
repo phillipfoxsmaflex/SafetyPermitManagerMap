@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Permits from "@/pages/permits";
-import Reports from "@/pages/reports";
+import SavedReports from "@/pages/saved-reports";
 import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
 import UserManagement from "@/pages/user-management";
@@ -20,7 +20,7 @@ function Router() {
       <Route path="/permits" component={Permits} />
       <Route path="/permit/:id" component={PermitDetails} />
       <Route path="/approvals" component={Approvals} />
-      <Route path="/reports" component={Reports} />
+      <Route path="/reports" component={SavedReports} />
       <Route path="/settings" component={Settings} />
       <Route path="/user-management" component={UserManagement} />
       <Route path="/login" component={Login} />
