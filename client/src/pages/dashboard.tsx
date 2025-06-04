@@ -86,6 +86,7 @@ export default function Dashboard() {
         'electrical': 'Elektrische Arbeiten',
         'chemical': 'Chemische Arbeiten',
         'height': 'Höhenarbeiten',
+        'general_permit': 'Allgemeiner Erlaubnisschein',
       };
       return typeMap[type] || type;
     };
@@ -121,7 +122,7 @@ export default function Dashboard() {
                 Genehmigungsverwaltung Dashboard
               </h2>
               <p className="text-secondary-gray">
-                Überwachung und Verwaltung von Arbeitsgenehmigungen für enge Räume und chemische Umgebungen
+                Überwachung und Verwaltung von Permit to work für enge Räume und chemische Umgebungen
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">

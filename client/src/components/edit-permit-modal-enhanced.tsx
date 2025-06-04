@@ -343,6 +343,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                                 <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
                                 <SelectItem value="height">Arbeiten in der Höhe</SelectItem>
                                 <SelectItem value="chemical">Arbeiten mit Chemikalien</SelectItem>
+                                <SelectItem value="general_permit">Allgemeiner Erlaubnisschein</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />

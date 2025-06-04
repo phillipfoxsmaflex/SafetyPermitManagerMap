@@ -24,10 +24,22 @@ export function NavigationHeader() {
     // In a real app, this would open a profile modal or navigate to profile page
   };
 
-  const handleLogout = () => {
-    console.log("User logged out");
-    // In a real app, this would clear session and redirect to login
-    alert("Abmeldung erfolgreich");
+  const handleLogout = async () => {
+    try {
+      // Call logout API endpoint
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      console.log("User logged out");
+      // Redirect to login page
+      setLocation("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still redirect to login even if API call fails
+      setLocation("/login");
+    }
   };
 
   return (

@@ -324,6 +324,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                             <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
                             <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
                             <SelectItem value="height">Höhenarbeiten</SelectItem>
+                            <SelectItem value="general_permit">Allgemeiner Erlaubnisschein</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

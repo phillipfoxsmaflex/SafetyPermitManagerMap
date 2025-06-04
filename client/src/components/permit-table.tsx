@@ -39,6 +39,7 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
       'electrical': 'Elektrische Arbeiten',
       'chemical': 'Chemische Arbeiten',
       'height': 'Höhenarbeiten',
+      'general_permit': 'Allgemeiner Erlaubnisschein',
     };
     return typeMap[type] || type;
   };
