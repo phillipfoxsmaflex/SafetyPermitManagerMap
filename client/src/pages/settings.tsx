@@ -96,10 +96,47 @@ export default function Settings() {
     },
   });
 
-  const handleSaveSettings = () => {
-    toast({
-      title: "Einstellungen gespeichert",
-      description: "Ihre Einstellungen wurden erfolgreich aktualisiert.",
+  const saveProfileMutation = useMutation({
+    mutationFn: async (data: { fullName: string; email: string }) => {
+      if (!currentUser?.id) throw new Error("Not authenticated");
+      
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          fullName: data.fullName,
+          email: data.email
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profil aktualisiert",
+        description: "Ihre Profildaten wurden erfolgreich gespeichert.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Profildaten konnten nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSaveProfile = () => {
+    saveProfileMutation.mutate({
+      fullName: settings.fullName,
+      email: settings.email
     });
   };
 
@@ -301,19 +338,6 @@ export default function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Zwei-Faktor-Authentifizierung</Label>
-                  <p className="text-sm text-secondary-gray">
-                    Zusätzliche Sicherheitsebene für Ihr Konto
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.twoFactorAuth}
-                  onCheckedChange={(checked) => setSettings({ ...settings, twoFactorAuth: checked })}
-                />
-              </div>
-              
               <div>
                 <Label>Session-Timeout (Minuten)</Label>
                 <Input
@@ -442,11 +466,12 @@ export default function Settings() {
           {/* Save Button */}
           <div className="flex justify-end">
             <Button 
-              onClick={handleSaveSettings}
+              onClick={handleSaveProfile}
+              disabled={saveProfileMutation.isPending}
               className="bg-safety-blue text-white hover:bg-blue-700"
             >
               <Save className="w-4 h-4 mr-2" />
-              Einstellungen speichern
+              {saveProfileMutation.isPending ? "Speichere..." : "Profil speichern"}
             </Button>
           </div>
         </div>
