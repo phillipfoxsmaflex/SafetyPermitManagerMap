@@ -72,30 +72,30 @@ export default function Permits() {
             <div className="flex gap-4">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
-                  <SelectValue placeholder="All Statuses" />
+                  <SelectValue placeholder="Alle Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="pending">Ausstehend</SelectItem>
+                  <SelectItem value="approved">Genehmigt</SelectItem>
+                  <SelectItem value="active">Aktiv</SelectItem>
+                  <SelectItem value="completed">Abgeschlossen</SelectItem>
+                  <SelectItem value="expired">Abgelaufen</SelectItem>
+                  <SelectItem value="rejected">Abgelehnt</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All Types" />
+                  <SelectValue placeholder="Alle Typen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="confined_space">Confined Space</SelectItem>
-                  <SelectItem value="hot_work">Hot Work</SelectItem>
-                  <SelectItem value="electrical">Electrical Work</SelectItem>
-                  <SelectItem value="chemical">Chemical Handling</SelectItem>
-                  <SelectItem value="height">Height Work</SelectItem>
+                  <SelectItem value="all">Alle Typen</SelectItem>
+                  <SelectItem value="confined_space">Enger Raum</SelectItem>
+                  <SelectItem value="hot_work">Heißarbeiten</SelectItem>
+                  <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
+                  <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
+                  <SelectItem value="height">Höhenarbeiten</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -104,17 +104,17 @@ export default function Permits() {
                 onClick={() => setCreateModalOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                New Permit
+                Neue Genehmigung
               </Button>
             </div>
           </div>
 
           {/* Results Summary */}
           <div className="mt-4 text-sm text-secondary-gray">
-            Showing {filteredPermits.length} of {permits.length} permits
-            {searchQuery && ` matching "${searchQuery}"`}
-            {statusFilter !== "all" && ` with status "${statusFilter}"`}
-            {typeFilter !== "all" && ` of type "${typeFilter}"`}
+            Zeige {filteredPermits.length} von {permits.length} Genehmigungen
+            {searchQuery && ` mit "${searchQuery}"`}
+            {statusFilter !== "all" && ` mit Status "${statusFilter}"`}
+            {typeFilter !== "all" && ` vom Typ "${typeFilter}"`}
           </div>
         </div>
 

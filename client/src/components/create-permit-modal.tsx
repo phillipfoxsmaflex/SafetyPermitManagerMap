@@ -137,7 +137,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-industrial-gray">
-            Create New Work Permit
+            Neue Arbeitsgenehmigung erstellen
           </DialogTitle>
         </DialogHeader>
 
@@ -146,13 +146,13 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="basic" className="text-sm">
-                  1. Basic Information
+                  1. Grundinformationen
                 </TabsTrigger>
                 <TabsTrigger value="safety" className="text-sm">
-                  2. Safety Assessment
+                  2. Sicherheitsbewertung
                 </TabsTrigger>
                 <TabsTrigger value="approval" className="text-sm">
-                  3. Approval & Sign-off
+                  3. Genehmigung & Freigabe
                 </TabsTrigger>
               </TabsList>
 
@@ -163,19 +163,19 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Permit Type</FormLabel>
+                        <FormLabel>Genehmigungstyp</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select permit type..." />
+                              <SelectValue placeholder="Genehmigungstyp auswählen..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="confined_space">Confined Space Entry</SelectItem>
-                            <SelectItem value="hot_work">Hot Work</SelectItem>
-                            <SelectItem value="electrical">Electrical Work</SelectItem>
-                            <SelectItem value="chemical">Chemical Handling</SelectItem>
-                            <SelectItem value="height">Height Work</SelectItem>
+                            <SelectItem value="confined_space">Enger Raum Zutritt</SelectItem>
+                            <SelectItem value="hot_work">Heißarbeiten</SelectItem>
+                            <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
+                            <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
+                            <SelectItem value="height">Höhenarbeiten</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -188,9 +188,9 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Work Location</FormLabel>
+                        <FormLabel>Arbeitsort</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Tank A-104, Building 3" {...field} />
+                          <Input placeholder="z.B. Tank A-104, Gebäude 3" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -202,7 +202,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Requested Start Date</FormLabel>
+                        <FormLabel>Gewünschtes Startdatum</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} />
                         </FormControl>
@@ -216,7 +216,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Requested End Date</FormLabel>
+                        <FormLabel>Gewünschtes Enddatum</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} />
                         </FormControl>
@@ -231,10 +231,10 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Work Description</FormLabel>
+                          <FormLabel>Arbeitsbeschreibung</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Describe the work to be performed..."
+                              placeholder="Beschreiben Sie die auszuführenden Arbeiten..."
                               className="min-h-[100px]"
                               {...field}
                             />
@@ -250,7 +250,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="requestorName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Requestor Name</FormLabel>
+                        <FormLabel>Name des Antragstellers</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -264,7 +264,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="department"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Department</FormLabel>
+                        <FormLabel>Abteilung</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -278,7 +278,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="contactNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Number</FormLabel>
+                        <FormLabel>Kontaktnummer</FormLabel>
                         <FormControl>
                           <Input type="tel" {...field} />
                         </FormControl>
@@ -292,7 +292,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     name="emergencyContact"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Emergency Contact</FormLabel>
+                        <FormLabel>Notfallkontakt</FormLabel>
                         <FormControl>
                           <Input type="tel" {...field} />
                         </FormControl>
@@ -307,13 +307,13 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                 <Alert className="border-yellow-200 bg-yellow-50">
                   <AlertTriangle className="h-4 w-4 text-caution-orange" />
                   <AlertDescription className="text-industrial-gray">
-                    <strong>Safety Requirements:</strong> Complete all applicable safety checks before proceeding with work authorization.
+                    <strong>Sicherheitsanforderungen:</strong> Führen Sie alle relevanten Sicherheitsprüfungen durch, bevor Sie mit der Arbeitsfreigabe fortfahren.
                   </AlertDescription>
                 </Alert>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-industrial-gray">Pre-Work Safety Checklist</CardTitle>
+                    <CardTitle className="text-industrial-gray">Sicherheitscheckliste vor Arbeitsbeginn</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
