@@ -61,6 +61,7 @@ const editPermitSchema = z.object({
   selectedHazards: z.array(z.string()).optional(),
   hazardNotes: z.string().optional(),
   completedMeasures: z.array(z.string()).optional(),
+  status: z.string().optional(),
 });
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;

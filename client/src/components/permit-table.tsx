@@ -21,9 +21,10 @@ interface PermitTableProps {
 export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
   const [, setLocation] = useLocation();
 
-  const formatDateTime = (date: Date | string) => {
+  const formatDateTime = (date: Date | string | null) => {
+    if (!date) return 'Nicht angegeben';
     const d = new Date(date);
-    return d.toLocaleDateString('en-US', {
+    return d.toLocaleDateString('de-DE', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -161,11 +162,11 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
             <div class="section-title">ZEITRAUM UND STATUS</div>
             <div class="field-row">
               <div class="field-label">Startdatum:</div>
-              <div class="field-value">${new Date(permit.startDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              <div class="field-value">${permit.startDate ? new Date(permit.startDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Nicht angegeben'}</div>
             </div>
             <div class="field-row">
               <div class="field-label">Enddatum:</div>
-              <div class="field-value">${new Date(permit.endDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              <div class="field-value">${permit.endDate ? new Date(permit.endDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Nicht angegeben'}</div>
             </div>
             <div class="field-row">
               <div class="field-label">Status:</div>
@@ -177,40 +178,63 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
             </div>
           </div>
 
+          ${permit.selectedHazards && permit.selectedHazards.length > 0 ? `
           <div class="section">
-            <div class="section-title">SICHERHEITSCHECKLISTE</div>
-            <div class="field-row">
-              <div class="checkbox">${permit.atmosphereTest ? '☑' : '☐'}</div>
-              <div class="field-value">Atmosphärenprüfung durchgeführt</div>
-            </div>
-            <div class="field-row">
-              <div class="checkbox">${permit.ventilation ? '☑' : '☐'}</div>
-              <div class="field-value">Belüftung sichergestellt</div>
-            </div>
-            <div class="field-row">
-              <div class="checkbox">${permit.ppe ? '☑' : '☐'}</div>
-              <div class="field-value">Persönliche Schutzausrüstung vorhanden</div>
-            </div>
-            <div class="field-row">
-              <div class="checkbox">${permit.emergencyProcedures ? '☑' : '☐'}</div>
-              <div class="field-value">Notfallverfahren kommuniziert</div>
-            </div>
-            <div class="field-row">
-              <div class="checkbox">${permit.fireWatch ? '☑' : '☐'}</div>
-              <div class="field-value">Brandwache zugewiesen</div>
-            </div>
-            <div class="field-row">
-              <div class="checkbox">${permit.isolationLockout ? '☑' : '☐'}</div>
-              <div class="field-value">Isolierung/Absperrung durchgeführt</div>
-            </div>
-          </div>
-
-          ${permit.oxygenLevel || permit.lelLevel || permit.h2sLevel ? `
-          <div class="section">
-            <div class="section-title">ATMOSPHÄREN-MESSWERTE</div>
-            ${permit.oxygenLevel ? `<div class="field-row"><div class="field-label">Sauerstoff:</div><div class="field-value">${permit.oxygenLevel}</div></div>` : ''}
-            ${permit.lelLevel ? `<div class="field-row"><div class="field-label">LEL:</div><div class="field-value">${permit.lelLevel}</div></div>` : ''}
-            ${permit.h2sLevel ? `<div class="field-row"><div class="field-label">H2S:</div><div class="field-value">${permit.h2sLevel}</div></div>` : ''}
+            <div class="section-title">TRBS GEFÄHRDUNGSBEURTEILUNG</div>
+            ${permit.selectedHazards.map(hazardId => {
+              const categories = [
+                { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
+                { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
+                { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
+                { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
+                { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
+                { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
+                { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
+                { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
+                { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
+                { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
+                { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
+              ];
+              
+              const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+              const category = categories.find(c => c.id === categoryId);
+              const hazard = category?.hazards[hazardIndex];
+              
+              if (!category || !hazard) return '';
+              
+              return `<div class="field-row">
+                <div class="field-label">${category.category}:</div>
+                <div class="field-value">${hazard}</div>
+              </div>`;
+            }).join('')}
+            
+            ${permit?.hazardNotes && permit.hazardNotes !== '{}' ? `
+            <div class="subsection">
+              <div class="subsection-title">Zusätzliche Notizen:</div>
+              ${Object.entries(JSON.parse(permit.hazardNotes || '{}')).map(([hazardId, note]) => {
+                const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                const categories = [
+                  { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
+                  { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
+                  { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
+                  { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
+                  { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
+                  { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
+                  { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
+                  { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
+                  { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
+                  { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
+                  { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
+                ];
+                const category = categories.find(c => c.id === categoryId);
+                const hazard = category?.hazards[hazardIndex];
+                
+                return note ? `<div class="field-row">
+                  <div class="field-label">${hazard}:</div>
+                  <div class="field-value">${note}</div>
+                </div>` : '';
+              }).join('')}
+            </div>` : ''}
           </div>` : ''}
 
           <div class="section">
