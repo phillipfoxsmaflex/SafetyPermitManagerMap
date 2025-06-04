@@ -28,20 +28,29 @@ export default function Approvals() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("pending");
 
-  const { data: permits = [], isLoading } = useQuery({
+  const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
   });
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<{ role: string }>({
     queryKey: ["/api/auth/user"],
   });
 
   const approvePermitMutation = useMutation({
     mutationFn: async ({ permitId, approvalType }: { permitId: number; approvalType: 'department_head' | 'maintenance' }) => {
-      await apiRequest(`/api/permits/${permitId}/approve`, {
+      const response = await fetch(`/api/permits/${permitId}/approve`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ approvalType }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
@@ -61,10 +70,19 @@ export default function Approvals() {
 
   const rejectPermitMutation = useMutation({
     mutationFn: async ({ permitId, reason }: { permitId: number; reason: string }) => {
-      await apiRequest(`/api/permits/${permitId}/reject`, {
+      const response = await fetch(`/api/permits/${permitId}/reject`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ reason }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
