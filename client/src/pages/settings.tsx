@@ -24,6 +24,12 @@ import type { User as UserType } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();
+  
+  // Get current user to check role
+  const { data: currentUser } = useQuery<UserType>({
+    queryKey: ["/api/auth/user"],
+  });
+
   const [settings, setSettings] = useState({
     // User Settings
     fullName: "Hans Mueller",
@@ -32,7 +38,6 @@ export default function Settings() {
     
     // Notification Settings
     emailNotifications: true,
-    smsNotifications: false,
     permitExpiring: true,
     newPermitRequests: true,
     
@@ -43,7 +48,15 @@ export default function Settings() {
     // System Settings
     autoBackup: true,
     auditLog: true,
-    dataRetention: 365
+    dataRetention: 365,
+    
+    // Email Server Settings (only for administrators)
+    smtpHost: "",
+    smtpPort: 587,
+    smtpUsername: "",
+    smtpPassword: "",
+    smtpSecure: true,
+    emailFrom: "",
   });
 
   const handleSave = () => {
@@ -130,18 +143,6 @@ export default function Settings() {
                   id="emailNotifications"
                   checked={settings.emailNotifications}
                   onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="smsNotifications">SMS-Benachrichtigungen</Label>
-                  <p className="text-sm text-secondary-gray">Erhalten Sie dringende Updates per SMS</p>
-                </div>
-                <Switch
-                  id="smsNotifications"
-                  checked={settings.smsNotifications}
-                  onCheckedChange={(checked) => updateSetting('smsNotifications', checked)}
                 />
               </div>
               <Separator />
@@ -250,6 +251,118 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Administrator-only sections */}
+          {currentUser?.role === 'admin' && (
+            <>
+              {/* User Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-industrial-gray">
+                    <Users className="h-5 w-5" />
+                    Benutzerverwaltung
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-secondary-gray">
+                    Verwalten Sie Benutzer, Rollen und Berechtigungen für das System.
+                  </p>
+                  <Link href="/user-management">
+                    <Button className="bg-safety-blue text-white hover:bg-blue-700">
+                      <Users className="w-4 h-4 mr-2" />
+                      Benutzerverwaltung öffnen
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Email Server Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-industrial-gray">
+                    <Mail className="h-5 w-5" />
+                    E-Mail-Server Konfiguration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-secondary-gray mb-4">
+                    Konfigurieren Sie den SMTP-Server für E-Mail-Benachrichtigungen.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="smtpHost">SMTP-Server</Label>
+                      <Input
+                        id="smtpHost"
+                        placeholder="mail.company.com"
+                        value={settings.smtpHost}
+                        onChange={(e) => updateSetting('smtpHost', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="smtpPort">Port</Label>
+                      <Input
+                        id="smtpPort"
+                        type="number"
+                        placeholder="587"
+                        value={settings.smtpPort}
+                        onChange={(e) => updateSetting('smtpPort', parseInt(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="smtpUsername">Benutzername</Label>
+                      <Input
+                        id="smtpUsername"
+                        placeholder="no-reply@company.com"
+                        value={settings.smtpUsername}
+                        onChange={(e) => updateSetting('smtpUsername', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="smtpPassword">Passwort</Label>
+                      <Input
+                        id="smtpPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={settings.smtpPassword}
+                        onChange={(e) => updateSetting('smtpPassword', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="emailFrom">Absender E-Mail</Label>
+                      <Input
+                        id="emailFrom"
+                        placeholder="arbeitserlaubnis@company.com"
+                        value={settings.emailFrom}
+                        onChange={(e) => updateSetting('emailFrom', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="smtpSecure"
+                        checked={settings.smtpSecure}
+                        onCheckedChange={(checked) => updateSetting('smtpSecure', checked)}
+                      />
+                      <Label htmlFor="smtpSecure">SSL/TLS verwenden</Label>
+                    </div>
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Server className="w-4 h-4" />
+                      Verbindung testen
+                    </Button>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Test-E-Mail senden
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
           {/* Save Button */}
           <div className="flex justify-end">
