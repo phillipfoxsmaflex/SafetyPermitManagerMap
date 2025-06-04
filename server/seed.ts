@@ -8,6 +8,13 @@ async function seed() {
     // Create default users
     const defaultUsers = [
       {
+        username: "admin",
+        password: "password123",
+        fullName: "System Administrator",
+        department: "IT",
+        role: "admin"
+      },
+      {
         username: "hans.mueller",
         password: "password123",
         fullName: "Hans Mueller",
@@ -29,11 +36,18 @@ async function seed() {
         role: "operations_manager"
       },
       {
-        username: "worker.1",
+        username: "employee",
         password: "password123",
         fullName: "Thomas Bauer",
         department: "Maintenance",
-        role: "worker"
+        role: "employee"
+      },
+      {
+        username: "supervisor",
+        password: "password123",
+        fullName: "Maria Schneider",
+        department: "Production",
+        role: "supervisor"
       }
     ];
 
