@@ -751,23 +751,58 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
           <Separator />
 
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-between p-4 border-t">
+            <button 
+              type="button" 
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              onClick={() => onOpenChange(false)}
+            >
               Abbrechen
-            </Button>
+            </button>
             <div className="flex gap-2">
-              <Button 
+              <button 
                 type="button" 
-                variant="outline" 
-                onClick={() => {
-                  console.log("BUTTON CLICKED - DIRECT HANDLER");
-                  onSaveDraft();
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 flex items-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("=== NATIVE BUTTON CLICKED ===");
+                  console.log("Event:", e);
+                  
+                  if (!permit?.id) {
+                    console.error("No permit ID");
+                    alert("Fehler: Keine Genehmigungsnummer gefunden");
+                    return;
+                  }
+                  
+                  try {
+                    const formData = form.getValues();
+                    console.log("Form data:", formData);
+                    
+                    const response = await fetch(`/api/permits/${permit.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ...formData, status: "draft" })
+                    });
+                    
+                    if (response.ok) {
+                      alert("Entwurf gespeichert!");
+                      onOpenChange(false);
+                      // Refresh permits
+                      window.location.reload();
+                    } else {
+                      console.error("Response not ok:", response.status);
+                      alert("Fehler beim Speichern");
+                    }
+                  } catch (error) {
+                    console.error("Error:", error);
+                    alert("Fehler beim Speichern");
+                  }
                 }}
-                disabled={saveDraftMutation.isPending}
               >
                 <Save className="w-4 h-4 mr-2" />
                 Als Entwurf speichern
-              </Button>
+              </button>
               <Button 
                 type="button" 
                 onClick={form.handleSubmit(onSubmitForApproval)}
