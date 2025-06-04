@@ -6,20 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { NavigationHeader } from "@/components/navigation-header";
-import { EditPermitModalSimple } from "@/components/edit-permit-modal-simple";
+import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
+import { CreatePermitModal } from "@/components/create-permit-modal";
 import { 
   FileText, 
   Edit3, 
   Trash2, 
   Save, 
-  Send, 
   Plus, 
   Copy, 
   FileStack,
@@ -40,25 +38,7 @@ export default function Drafts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  // Create Draft Form State
-  const [formData, setFormData] = useState({
-    type: "",
-    location: "",
-    description: "",
-    requestorName: "",
-    department: "",
-    contactNumber: "",
-    emergencyContact: "",
-    startDate: "",
-    endDate: "",
-    riskLevel: "",
-    identifiedHazards: "",
-    additionalComments: "",
-    departmentHead: "",
-    maintenanceApprover: ""
-  });
-
-  const { data: permits = [] } = useQuery<Permit[]>({
+  const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
   });
 
@@ -69,120 +49,11 @@ export default function Drafts() {
   const draftPermits = permits.filter((permit: Permit) => permit.status === 'draft');
 
   const filteredDrafts = draftPermits.filter((permit: Permit) => {
-    const matchesSearch = searchTerm === "" || 
-      permit.permitId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permit.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permit.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = permit.permitId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         permit.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         permit.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || permit.type === filterType;
-    
     return matchesSearch && matchesType;
-  });
-
-  const updateField = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      type: "",
-      location: "",
-      description: "",
-      requestorName: "",
-      department: "",
-      contactNumber: "",
-      emergencyContact: "",
-      startDate: "",
-      endDate: "",
-      riskLevel: "",
-      identifiedHazards: "",
-      additionalComments: "",
-      departmentHead: "",
-      maintenanceApprover: ""
-    });
-  };
-
-  const createDraftMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch("/api/permits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "draft" })
-      });
-      if (!response.ok) throw new Error("Failed to create draft");
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Erfolg", description: "Entwurf erstellt und gespeichert." });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-      setCreateModalOpen(false);
-      resetForm();
-    },
-    onError: (error) => {
-      console.error("Draft creation error:", error);
-      toast({ title: "Fehler", description: "Entwurf konnte nicht erstellt werden.", variant: "destructive" });
-    }
-  });
-
-  const submitForApprovalMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch("/api/permits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "pending" })
-      });
-      if (!response.ok) throw new Error("Failed to submit for approval");
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Erfolg", description: "Genehmigung zur Prüfung eingereicht." });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-      setCreateModalOpen(false);
-      resetForm();
-    },
-    onError: (error) => {
-      console.error("Submit for approval error:", error);
-      toast({ title: "Fehler", description: "Genehmigung konnte nicht eingereicht werden.", variant: "destructive" });
-    }
-  });
-
-  const deleteDraftMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/permits/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete draft");
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Erfolg", description: "Entwurf gelöscht." });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-    },
-    onError: (error) => {
-      console.error("Delete draft error:", error);
-      toast({ title: "Fehler", description: "Entwurf konnte nicht gelöscht werden.", variant: "destructive" });
-    }
-  });
-
-  const createTemplateMutation = useMutation({
-    mutationFn: async ({ name, permitData }: { name: string; permitData: any }) => {
-      const response = await fetch("/api/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, template: permitData })
-      });
-      if (!response.ok) throw new Error("Failed to create template");
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Erfolg", description: "Vorlage erstellt." });
-      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
-      setTemplateModalOpen(false);
-      setTemplateName("");
-      setSelectedDraft(null);
-    },
-    onError: (error) => {
-      console.error("Create template error:", error);
-      toast({ title: "Fehler", description: "Vorlage konnte nicht erstellt werden.", variant: "destructive" });
-    }
   });
 
   const handleEdit = (permit: Permit) => {
@@ -190,11 +61,62 @@ export default function Drafts() {
     setEditModalOpen(true);
   };
 
+  const deletePermitMutation = useMutation({
+    mutationFn: async (permitId: number) => {
+      const response = await fetch(`/api/permits/${permitId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete permit');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      toast({
+        title: "Entwurf gelöscht",
+        description: "Der Entwurf wurde erfolgreich gelöscht.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Der Entwurf konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDelete = (permit: Permit) => {
-    if (window.confirm(`Möchten Sie den Entwurf ${permit.permitId} wirklich löschen?`)) {
-      deleteDraftMutation.mutate(permit.id);
+    if (confirm(`Möchten Sie den Entwurf "${permit.permitId}" wirklich löschen?`)) {
+      deletePermitMutation.mutate(permit.id);
     }
   };
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (data: { name: string; template: any }) => {
+      return apiRequest("/api/templates", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
+      setTemplateModalOpen(false);
+      setTemplateName("");
+      setSelectedDraft(null);
+      toast({
+        title: "Vorlage erstellt",
+        description: "Die Vorlage wurde erfolgreich erstellt.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Die Vorlage konnte nicht erstellt werden.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleCreateTemplate = (permit: Permit) => {
     setSelectedDraft(permit);
@@ -202,51 +124,28 @@ export default function Drafts() {
   };
 
   const handleSaveTemplate = () => {
-    if (selectedDraft && templateName.trim()) {
-      createTemplateMutation.mutate({
-        name: templateName.trim(),
-        permitData: selectedDraft
-      });
-    }
-  };
-
-  const handleCreateDraft = () => {
-    createDraftMutation.mutate(formData);
-  };
-
-  const handleSubmitForApproval = () => {
-    submitForApprovalMutation.mutate(formData);
+    if (!selectedDraft || !templateName.trim()) return;
+    
+    createTemplateMutation.mutate({
+      name: templateName,
+      template: selectedDraft,
+    });
   };
 
   const handleUseTemplate = (template: any) => {
-    const templateData = template.template;
-    setFormData({
-      type: templateData.type || "",
-      location: templateData.location || "",
-      description: templateData.description || "",
-      requestorName: templateData.requestorName || "",
-      department: templateData.department || "",
-      contactNumber: templateData.contactNumber || "",
-      emergencyContact: templateData.emergencyContact || "",
-      startDate: "",
-      endDate: "",
-      riskLevel: templateData.riskLevel || "",
-      identifiedHazards: templateData.identifiedHazards || "",
-      additionalComments: templateData.additionalComments || "",
-      departmentHead: templateData.departmentHead || "",
-      maintenanceApprover: templateData.maintenanceApprover || ""
-    });
+    // This will be handled by the CreatePermitModal component
     setCreateModalOpen(true);
   };
 
   const getPermitTypeLabel = (type: string) => {
-    const types: { [key: string]: string } = {
-      hot_work: "Heißarbeiten",
-      confined_space: "Enger Raum", 
-      electrical: "Elektrische Arbeiten",
-      height_work: "Höhenarbeiten"
+    const typeMap: Record<string, string> = {
+      'confined_space': 'Enger Raum Zutritt',
+      'hot_work': 'Heißarbeiten',
+      'electrical': 'Elektrische Arbeiten',
+      'chemical': 'Chemische Arbeiten',
+      'height': 'Höhenarbeiten',
     };
-    return types[type] || type;
+    return typeMap[type] || type;
   };
 
   const DraftCard = ({ permit }: { permit: Permit }) => (
@@ -256,17 +155,14 @@ export default function Drafts() {
           <div>
             <CardTitle className="text-lg text-industrial-gray">{permit.permitId}</CardTitle>
             <p className="text-sm text-secondary-gray mt-1">
-              {getPermitTypeLabel(permit.type)}
+              {getPermitTypeLabel(permit.type)} • {permit.location}
             </p>
           </div>
-          <Badge variant="secondary">Entwurf</Badge>
+          <Badge variant="outline">Entwurf</Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-          <div>
-            <span className="font-medium">Arbeitsort:</span> {permit.location}
-          </div>
+        <div className="space-y-2 text-sm mb-4">
           <div>
             <span className="font-medium">Antragsteller:</span> {permit.requestorName}
           </div>
@@ -274,23 +170,21 @@ export default function Drafts() {
             <span className="font-medium">Abteilung:</span> {permit.department}
           </div>
           <div>
-            <span className="font-medium">Erstellt:</span> {permit.createdAt ? format(new Date(permit.createdAt.toString()), "dd.MM.yyyy", { locale: de }) : "N/A"}
+            <span className="font-medium">Erstellt:</span> {format(new Date(permit.createdAt!), "dd.MM.yyyy", { locale: de })}
           </div>
         </div>
         
-        <div className="border-t pt-3">
-          <p className="text-sm text-secondary-gray mb-2">Beschreibung:</p>
-          <p className="text-sm">{permit.description}</p>
-        </div>
+        <p className="text-sm text-secondary-gray mb-4 line-clamp-2">
+          {permit.description}
+        </p>
         
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2">
           <Button
             size="sm"
             variant="outline"
             onClick={() => handleEdit(permit)}
-            className="flex-1"
           >
-            <Edit3 className="w-4 h-4 mr-2" />
+            <Edit3 className="w-4 h-4 mr-1" />
             Bearbeiten
           </Button>
           <Button
@@ -298,7 +192,7 @@ export default function Drafts() {
             variant="outline"
             onClick={() => handleCreateTemplate(permit)}
           >
-            <Copy className="w-4 h-4 mr-2" />
+            <Copy className="w-4 h-4 mr-1" />
             Als Vorlage
           </Button>
           <Button
@@ -307,45 +201,59 @@ export default function Drafts() {
             onClick={() => handleDelete(permit)}
             className="text-red-600 hover:text-red-700"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4 mr-1" />
+            Löschen
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <NavigationHeader />
+        <div className="text-center py-12">
+          <p className="text-industrial-gray">Lade Entwürfe...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-industrial-light">
+    <div className="min-h-screen bg-gray-50">
       <NavigationHeader />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-industrial-gray">Entwürfe & Vorlagen</h1>
-          <p className="text-secondary-gray mt-2">
-            Verwalten Sie Ihre Genehmigungsentwürfe und erstellen Sie Vorlagen für die Wiederverwendung.
-          </p>
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-industrial-gray">Entwürfe</h1>
+            <p className="text-secondary-gray mt-2">
+              Verwalten Sie Ihre gespeicherten Arbeitserlaubnis-Entwürfe und Vorlagen
+            </p>
+          </div>
+          <Button 
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-safety-blue text-white hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Neue Genehmigung erstellen
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Drafts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                onClick={() => setCreateModalOpen(true)}
-                className="bg-safety-blue text-white hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Neue Genehmigung erstellen
-              </Button>
-              
-              <div className="flex gap-2 flex-1">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex gap-4 items-center">
+                <div className="flex-1">
                   <Input
-                    placeholder="Entwürfe durchsuchen..."
+                    placeholder="Suchen nach Genehmigungsnummer, Beschreibung oder Ort..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="w-full"
+                    icon={<Search className="w-4 h-4" />}
                   />
                 </div>
                 <Select value={filterType} onValueChange={setFilterType}>
@@ -449,184 +357,60 @@ export default function Drafts() {
         </div>
 
         {/* Edit Modal */}
-        <EditPermitModalSimple
+        <EditPermitModalEnhanced
           permit={selectedPermit}
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
         />
 
         {/* Create Modal */}
-        <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Neue Arbeitserlaubnis erstellen</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Genehmigungstyp *</Label>
-                  <Select value={formData.type} onValueChange={(value) => updateField("type", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Typ auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hot_work">Heißarbeiten</SelectItem>
-                      <SelectItem value="confined_space">Enger Raum</SelectItem>
-                      <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
-                      <SelectItem value="height_work">Höhenarbeiten</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Arbeitsort *</Label>
-                  <Input value={formData.location} onChange={(e) => updateField("location", e.target.value)} />
-                </div>
-              </div>
-
-              <div>
-                <Label>Beschreibung der Arbeiten *</Label>
-                <Textarea value={formData.description} onChange={(e) => updateField("description", e.target.value)} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Antragsteller *</Label>
-                  <Input value={formData.requestorName} onChange={(e) => updateField("requestorName", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Abteilung *</Label>
-                  <Input value={formData.department} onChange={(e) => updateField("department", e.target.value)} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Kontaktnummer</Label>
-                  <Input value={formData.contactNumber} onChange={(e) => updateField("contactNumber", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Notfallkontakt</Label>
-                  <Input value={formData.emergencyContact} onChange={(e) => updateField("emergencyContact", e.target.value)} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Startdatum</Label>
-                  <Input type="datetime-local" value={formData.startDate} onChange={(e) => updateField("startDate", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Enddatum</Label>
-                  <Input type="datetime-local" value={formData.endDate} onChange={(e) => updateField("endDate", e.target.value)} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Abteilungsleiter *</Label>
-                  <Input value={formData.departmentHead} onChange={(e) => updateField("departmentHead", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Instandhaltung/Technik *</Label>
-                  <Input value={formData.maintenanceApprover} onChange={(e) => updateField("maintenanceApprover", e.target.value)} />
-                </div>
-              </div>
-
-              <div>
-                <Label>Risikostufe</Label>
-                <Select value={formData.riskLevel} onValueChange={(value) => updateField("riskLevel", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Risikostufe auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Niedrig</SelectItem>
-                    <SelectItem value="medium">Mittel</SelectItem>
-                    <SelectItem value="high">Hoch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Identifizierte Gefahren</Label>
-                <Textarea value={formData.identifiedHazards} onChange={(e) => updateField("identifiedHazards", e.target.value)} />
-              </div>
-
-              <div>
-                <Label>Zusätzliche Kommentare</Label>
-                <Textarea value={formData.additionalComments} onChange={(e) => updateField("additionalComments", e.target.value)} />
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-6 border-t">
-              <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
-                Abbrechen
-              </Button>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={handleCreateDraft}
-                  disabled={createDraftMutation.isPending}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Als Entwurf speichern
-                </Button>
-                <Button 
-                  onClick={handleSubmitForApproval}
-                  disabled={submitForApprovalMutation.isPending}
-                  className="bg-safety-blue text-white hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Zur Genehmigung senden
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CreatePermitModal 
+          open={createModalOpen} 
+          onOpenChange={setCreateModalOpen} 
+        />
 
         {/* Template Creation Modal */}
-        <Dialog open={templateModalOpen} onOpenChange={setTemplateModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Vorlage erstellen</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <Label>Vorlagenname</Label>
-                <Input
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="z.B. Standard Enger Raum Inspektion"
-                />
-              </div>
-              
-              {selectedDraft && (
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm font-medium mb-2">Basierend auf Entwurf:</p>
-                  <p className="text-sm">{selectedDraft.permitId} - {selectedDraft.description}</p>
+        {templateModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Vorlage erstellen</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label>Vorlagenname</Label>
+                  <Input
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="z.B. Standard Enger Raum Inspektion"
+                  />
                 </div>
-              )}
+                
+                {selectedDraft && (
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-sm font-medium mb-2">Basierend auf Entwurf:</p>
+                    <p className="text-sm">{selectedDraft.permitId} - {selectedDraft.description}</p>
+                  </div>
+                )}
 
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  onClick={handleSaveTemplate}
-                  disabled={!templateName.trim() || createTemplateMutation.isPending}
-                  className="bg-safety-blue text-white hover:bg-blue-700"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Vorlage speichern
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setTemplateModalOpen(false)}
-                >
-                  Abbrechen
-                </Button>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    onClick={handleSaveTemplate}
+                    disabled={!templateName.trim() || createTemplateMutation.isPending}
+                    className="bg-safety-blue text-white hover:bg-blue-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Vorlage speichern
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setTemplateModalOpen(false)}
+                  >
+                    Abbrechen
+                  </Button>
+                </div>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
       </div>
     </div>
   );
