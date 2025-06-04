@@ -58,7 +58,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Creating permit with data:", JSON.stringify(req.body, null, 2));
       
-      const validatedData = insertPermitSchema.parse(req.body);
+      // Convert empty date strings to null
+      const processedData = {
+        ...req.body,
+        startDate: req.body.startDate === "" ? null : req.body.startDate,
+        endDate: req.body.endDate === "" ? null : req.body.endDate,
+      };
+      
+      const validatedData = insertPermitSchema.parse(processedData);
       console.log("Validated data:", JSON.stringify(validatedData, null, 2));
       
       const permit = await storage.createPermit(validatedData);

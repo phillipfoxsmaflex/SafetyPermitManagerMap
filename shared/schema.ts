@@ -22,8 +22,8 @@ export const permits = pgTable("permits", {
   department: text("department").notNull(),
   contactNumber: text("contact_number").notNull(),
   emergencyContact: text("emergency_contact").notNull(),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
   status: text("status").notNull().default('pending'), // 'pending', 'approved', 'active', 'completed', 'expired', 'rejected'
   riskLevel: text("risk_level"), // 'low', 'medium', 'high', 'critical'
   safetyOfficer: text("safety_officer"),
