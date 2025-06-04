@@ -309,7 +309,7 @@ export default function Approvals() {
       <div className="container mx-auto p-6">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 mb-6">
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="ghost" size="sm" className="text-secondary-gray hover:text-industrial-gray">
               <Home className="w-4 h-4 mr-2" />
               Dashboard
@@ -326,7 +326,7 @@ export default function Approvals() {
               Verwalten Sie Arbeitserlaubnis-Genehmigungen
             </p>
           </div>
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Zurück zum Dashboard
