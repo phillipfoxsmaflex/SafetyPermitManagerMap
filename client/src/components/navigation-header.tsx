@@ -25,7 +25,7 @@ export function NavigationHeader() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <HardHat className="text-safety-blue text-2xl" />
-              <h1 className="text-xl font-bold text-industrial-gray">SicherheitsGenehmigungen</h1>
+              <h1 className="text-xl font-bold text-industrial-gray">Arbeitserlaubnis</h1>
             </div>
             <nav className="hidden md:flex space-x-6">
               <Link href="/" className={`font-medium pb-2 border-b-2 ${
@@ -42,8 +42,20 @@ export function NavigationHeader() {
               }`}>
                 Genehmigungen
               </Link>
-              <a href="#reports" className="text-secondary-gray hover:text-industrial-gray">Berichte</a>
-              <a href="#settings" className="text-secondary-gray hover:text-industrial-gray">Einstellungen</a>
+              <Link href="/reports" className={`font-medium pb-2 border-b-2 ${
+                isActive("/reports") 
+                  ? "text-safety-blue border-safety-blue" 
+                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
+              }`}>
+                Berichte
+              </Link>
+              <Link href="/settings" className={`font-medium pb-2 border-b-2 ${
+                isActive("/settings") 
+                  ? "text-safety-blue border-safety-blue" 
+                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
+              }`}>
+                Einstellungen
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
