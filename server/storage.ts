@@ -177,6 +177,58 @@ export class DatabaseStorage implements IStorage {
       completed: allPermits.filter(p => p.status === 'completed').length,
     };
   }
+
+  // Notification operations
+  async getUserNotifications(userId: number): Promise<Notification[]> {
+    const userNotifications = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+    return userNotifications;
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const unreadNotifications = await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return unreadNotifications.length;
+  }
+
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(insertNotification)
+      .returning();
+    return notification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<boolean> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id));
+    return true;
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<boolean> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+    return true;
+  }
+
+  // User role operations
+  async updateUserRole(userId: number, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
 }
 
 export const storage = new DatabaseStorage();
