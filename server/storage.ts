@@ -1,6 +1,6 @@
 import { users, permits, notifications, templates, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, like } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -41,9 +41,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  private permitCounter: number = 1;
-
-  private generatePermitId(type: string): string {
+  private async generatePermitId(type: string): Promise<string> {
     const typeMap: Record<string, string> = {
       'confined_space': 'CS',
       'hot_work': 'HW',
@@ -54,10 +52,22 @@ export class DatabaseStorage implements IStorage {
     
     const prefix = typeMap[type] || 'GN';
     const year = new Date().getFullYear();
-    const number = this.permitCounter.toString().padStart(3, '0');
-    this.permitCounter++;
     
-    return `${prefix}-${year}-${number}`;
+    // Find the highest existing permit number for this type and year
+    const existingPermits = await db.select()
+      .from(permits)
+      .where(like(permits.permitId, `${prefix}-${year}-%`));
+    
+    let maxNumber = 0;
+    existingPermits.forEach(permit => {
+      const match = permit.permitId.match(new RegExp(`${prefix}-${year}-(\\d+)`));
+      if (match) {
+        maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
+      }
+    });
+    
+    const nextNumber = (maxNumber + 1).toString().padStart(3, '0');
+    return `${prefix}-${year}-${nextNumber}`;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -105,7 +115,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPermit(insertPermit: InsertPermit): Promise<Permit> {
-    const permitId = this.generatePermitId(insertPermit.type);
+    const permitId = await this.generatePermitId(insertPermit.type);
     const now = new Date();
     
     const [permit] = await db
