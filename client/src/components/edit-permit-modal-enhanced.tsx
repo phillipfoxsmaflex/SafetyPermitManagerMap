@@ -747,37 +747,38 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
               </TabsContent>
             </Tabs>
 
-            <Separator />
-
-            <div className="flex justify-between">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Abbrechen
-              </Button>
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    console.log("BUTTON CLICKED - DIRECT HANDLER");
-                    onSaveDraft();
-                  }}
-                  disabled={saveDraftMutation.isPending}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Als Entwurf speichern
-                </Button>
-                <Button 
-                  type="button" 
-                  onClick={form.handleSubmit(onSubmitForApproval)}
-                  className="bg-safety-blue text-white hover:bg-blue-700"
-                  disabled={updatePermitMutation.isPending}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Zur Genehmigung senden
-                </Button>
-              </div>
-            </div>
           </form>
+
+          <Separator />
+
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  console.log("BUTTON CLICKED - DIRECT HANDLER");
+                  onSaveDraft();
+                }}
+                disabled={saveDraftMutation.isPending}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Als Entwurf speichern
+              </Button>
+              <Button 
+                type="button" 
+                onClick={form.handleSubmit(onSubmitForApproval)}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+                disabled={updatePermitMutation.isPending}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Zur Genehmigung senden
+              </Button>
+            </div>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>
