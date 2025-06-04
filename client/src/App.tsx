@@ -8,6 +8,7 @@ import Permits from "@/pages/permits";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
+import UserManagement from "@/pages/user-management";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/permit/:id" component={PermitDetails} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
+      <Route path="/user-management" component={UserManagement} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -152,7 +152,7 @@ export class DatabaseStorage implements IStorage {
 
   async deletePermit(id: number): Promise<boolean> {
     const result = await db.delete(permits).where(eq(permits.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async getPermitStats(): Promise<{
