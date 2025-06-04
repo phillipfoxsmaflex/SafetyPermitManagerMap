@@ -145,6 +145,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // In a real app, create a session here
+      res.json({ 
+        success: true, 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          fullName: user.fullName,
+          role: user.role,
+          department: user.department
+        } 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      // In a real app, destroy session here
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      // Mock current user - in real app, get from session
+      const user = await storage.getUser(1);
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  });
+
   // User management routes
   app.get("/api/users", async (req, res) => {
     try {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { 
   Settings as SettingsIcon, 
   User, 
   Bell, 
   Shield, 
   Database,
-  Save 
+  Save,
+  Users,
+  Mail,
+  Server
 } from "lucide-react";
+import type { User as UserType } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();

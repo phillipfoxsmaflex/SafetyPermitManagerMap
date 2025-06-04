@@ -9,6 +9,7 @@ import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
 import UserManagement from "@/pages/user-management";
+import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
       <Route path="/user-management" component={UserManagement} />
+      <Route path="/login" component={Login} />
       <Route component={NotFound} />
     </Switch>
   );
