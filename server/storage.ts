@@ -1,4 +1,6 @@
 import { users, permits, type User, type InsertUser, type Permit, type InsertPermit } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -24,54 +26,8 @@ export interface IStorage {
   }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private permits: Map<number, Permit>;
-  private currentUserId: number;
-  private currentPermitId: number;
-  private permitCounter: number;
-
-  constructor() {
-    this.users = new Map();
-    this.permits = new Map();
-    this.currentUserId = 1;
-    this.currentPermitId = 1;
-    this.permitCounter = 1;
-    
-    // Initialize with some default users
-    this.seedData();
-  }
-
-  private seedData() {
-    // Create default users
-    const defaultUsers: InsertUser[] = [
-      {
-        username: "hans.mueller",
-        password: "password123",
-        fullName: "Hans Mueller",
-        department: "Operations",
-        role: "supervisor"
-      },
-      {
-        username: "safety.officer",
-        password: "password123",
-        fullName: "Dr. Sarah Weber",
-        department: "Safety",
-        role: "safety_officer"
-      },
-      {
-        username: "ops.manager",
-        password: "password123",
-        fullName: "Michael Schmidt",
-        department: "Operations",
-        role: "operations_manager"
-      }
-    ];
-
-    defaultUsers.forEach(user => {
-      this.createUser(user);
-    });
-  }
+export class DatabaseStorage implements IStorage {
+  private permitCounter: number = 1;
 
   private generatePermitId(type: string): string {
     const typeMap: Record<string, string> = {
@@ -91,91 +47,102 @@ export class MemStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await db.select().from(users);
   }
 
   async getPermit(id: number): Promise<Permit | undefined> {
-    return this.permits.get(id);
+    const [permit] = await db.select().from(permits).where(eq(permits.id, id));
+    return permit || undefined;
   }
 
   async getPermitByPermitId(permitId: string): Promise<Permit | undefined> {
-    return Array.from(this.permits.values()).find(
-      (permit) => permit.permitId === permitId,
-    );
+    const [permit] = await db.select().from(permits).where(eq(permits.permitId, permitId));
+    return permit || undefined;
   }
 
   async getAllPermits(): Promise<Permit[]> {
-    return Array.from(this.permits.values()).sort(
-      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    );
+    return await db.select().from(permits).orderBy(permits.createdAt);
   }
 
   async getPermitsByStatus(status: string): Promise<Permit[]> {
-    return Array.from(this.permits.values()).filter(
-      (permit) => permit.status === status,
-    );
+    return await db.select().from(permits).where(eq(permits.status, status));
   }
 
   async getPermitsByRequestor(requestorId: number): Promise<Permit[]> {
-    return Array.from(this.permits.values()).filter(
-      (permit) => permit.requestorId === requestorId,
-    );
+    return await db.select().from(permits).where(eq(permits.requestorId, requestorId));
   }
 
   async createPermit(insertPermit: InsertPermit): Promise<Permit> {
-    const id = this.currentPermitId++;
     const permitId = this.generatePermitId(insertPermit.type);
     const now = new Date();
     
-    const permit: Permit = {
-      ...insertPermit,
-      id,
-      permitId,
-      status: 'pending',
-      requestorId: insertPermit.requestorId || null,
-      startDate: new Date(insertPermit.startDate),
-      endDate: new Date(insertPermit.endDate),
-      createdAt: now,
-      updatedAt: now,
-    };
+    const [permit] = await db
+      .insert(permits)
+      .values({
+        ...insertPermit,
+        permitId,
+        status: 'pending',
+        requestorId: insertPermit.requestorId || null,
+        startDate: new Date(insertPermit.startDate),
+        endDate: new Date(insertPermit.endDate),
+        createdAt: now,
+        updatedAt: now,
+        riskLevel: insertPermit.riskLevel || null,
+        safetyOfficer: insertPermit.safetyOfficer || null,
+        identifiedHazards: insertPermit.identifiedHazards || null,
+        additionalComments: insertPermit.additionalComments || null,
+        atmosphereTest: insertPermit.atmosphereTest || false,
+        ventilation: insertPermit.ventilation || false,
+        ppe: insertPermit.ppe || false,
+        emergencyProcedures: insertPermit.emergencyProcedures || false,
+        fireWatch: insertPermit.fireWatch || false,
+        isolationLockout: insertPermit.isolationLockout || false,
+        oxygenLevel: insertPermit.oxygenLevel || null,
+        lelLevel: insertPermit.lelLevel || null,
+        h2sLevel: insertPermit.h2sLevel || null,
+        supervisorApproval: false,
+        supervisorApprovalDate: null,
+        safetyOfficerApproval: false,
+        safetyOfficerApprovalDate: null,
+        operationsManagerApproval: false,
+        operationsManagerApprovalDate: null,
+      })
+      .returning();
     
-    this.permits.set(id, permit);
     return permit;
   }
 
   async updatePermit(id: number, updates: Partial<Permit>): Promise<Permit | undefined> {
-    const permit = this.permits.get(id);
-    if (!permit) return undefined;
+    const [permit] = await db
+      .update(permits)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(permits.id, id))
+      .returning();
     
-    const updatedPermit: Permit = {
-      ...permit,
-      ...updates,
-      updatedAt: new Date(),
-    };
-    
-    this.permits.set(id, updatedPermit);
-    return updatedPermit;
+    return permit || undefined;
   }
 
   async deletePermit(id: number): Promise<boolean> {
-    return this.permits.delete(id);
+    const result = await db.delete(permits).where(eq(permits.id, id));
+    return result.rowCount > 0;
   }
 
   async getPermitStats(): Promise<{
@@ -184,22 +151,22 @@ export class MemStorage implements IStorage {
     expiredToday: number;
     completed: number;
   }> {
-    const permits = Array.from(this.permits.values());
+    const allPermits = await db.select().from(permits);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return {
-      activePermits: permits.filter(p => p.status === 'active').length,
-      pendingApproval: permits.filter(p => p.status === 'pending').length,
-      expiredToday: permits.filter(p => {
+      activePermits: allPermits.filter(p => p.status === 'active').length,
+      pendingApproval: allPermits.filter(p => p.status === 'pending').length,
+      expiredToday: allPermits.filter(p => {
         const endDate = new Date(p.endDate);
         return endDate >= today && endDate < tomorrow && p.status === 'expired';
       }).length,
-      completed: permits.filter(p => p.status === 'completed').length,
+      completed: allPermits.filter(p => p.status === 'completed').length,
     };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
