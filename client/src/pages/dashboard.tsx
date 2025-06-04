@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
+import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
 import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
@@ -38,6 +41,11 @@ export default function Dashboard() {
   }, [permits, searchTerm]);
 
   const recentPermits = filteredPermits.slice(0, 10);
+
+  const handleEditPermit = (permit: Permit) => {
+    setSelectedPermit(permit);
+    setEditModalOpen(true);
+  };
 
   const handleExportReport = () => {
     const csvContent = generateCSVReport(permits);
@@ -218,7 +226,7 @@ export default function Dashboard() {
             {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
           </h3>
         </div>
-        <PermitTable permits={recentPermits} isLoading={permitsLoading} />
+        <PermitTable permits={recentPermits} isLoading={permitsLoading} onEdit={handleEditPermit} />
       </main>
 
       {/* Mobile Floating Action Button */}
@@ -233,6 +241,12 @@ export default function Dashboard() {
       <CreatePermitModal 
         open={createModalOpen} 
         onOpenChange={setCreateModalOpen} 
+      />
+      
+      <EditPermitModalEnhanced
+        permit={selectedPermit}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
       />
     </div>
   );
