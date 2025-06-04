@@ -228,7 +228,7 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
             <div class="signature-box">
               <div>Vorgesetzter</div>
               <div style="margin-top: 20px; font-size: 10px;">
-                ${permit.supervisorApproval ? `Genehmigt: ${permit.supervisorApprovalDate ? new Date(permit.supervisorApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
+                ${permit.departmentHeadApproval ? `Genehmigt: ${permit.departmentHeadApprovalDate ? new Date(permit.departmentHeadApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
               </div>
             </div>
             <div class="signature-box">

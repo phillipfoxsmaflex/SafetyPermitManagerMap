@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   User,
   Calendar,
+  Circle,
   MapPin,
   Building,
   Phone,
@@ -445,29 +446,157 @@ export default function Approvals() {
                   <p className="text-secondary-gray">{viewingPermit.identifiedHazards}</p>
                 </div>
               )}
-              
-              <div className="space-y-2">
-                <p className="font-medium text-industrial-gray text-sm">Genehmigungsstatus:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div className={`flex items-center gap-2 p-2 rounded ${viewingPermit.departmentHeadApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
-                    {viewingPermit.departmentHeadApproval ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-orange-600" />
-                    )}
-                    <span className="text-sm">
-                      Abteilungsleiter: {viewingPermit.departmentHeadApproval ? 'Genehmigt' : 'Ausstehend'}
-                    </span>
+
+              {/* Sicherheitsbetrachtung */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold text-industrial-gray mb-4">Sicherheitsbetrachtung</h3>
+                
+                {/* Risikostufe */}
+                {viewingPermit.riskLevel && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-industrial-gray mb-2">Risikostufe</p>
+                    <Badge variant={viewingPermit.riskLevel === 'high' ? 'destructive' : viewingPermit.riskLevel === 'medium' ? 'secondary' : 'default'}>
+                      {viewingPermit.riskLevel === 'high' ? 'Hoch' : viewingPermit.riskLevel === 'medium' ? 'Mittel' : 'Niedrig'}
+                    </Badge>
                   </div>
-                  <div className={`flex items-center gap-2 p-2 rounded ${viewingPermit.maintenanceApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
-                    {viewingPermit.maintenanceApproval ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-orange-600" />
-                    )}
-                    <span className="text-sm">
-                      Instandhaltung/Engineering: {viewingPermit.maintenanceApproval ? 'Genehmigt' : 'Ausstehend'}
-                    </span>
+                )}
+
+                {/* Sicherheitsmaßnahmen */}
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-industrial-gray mb-3">Erforderliche Sicherheitsmaßnahmen</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.atmosphereTest ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.atmosphereTest ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Atmosphärenüberwachung
+                    </div>
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.ventilation ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.ventilation ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Belüftung
+                    </div>
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.ppe ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.ppe ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Persönliche Schutzausrüstung
+                    </div>
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.emergencyProcedures ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.emergencyProcedures ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Notfallverfahren
+                    </div>
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.fireWatch ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.fireWatch ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Brandwache
+                    </div>
+                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.isolationLockout ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
+                      {viewingPermit.isolationLockout ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                      Isolation/Lockout
+                    </div>
+                  </div>
+                </div>
+
+                {/* Atmosphärenüberwachung Details */}
+                {(viewingPermit.oxygenLevel || viewingPermit.lelLevel || viewingPermit.h2sLevel) && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-industrial-gray mb-3">Atmosphärenüberwachung Messwerte</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      {viewingPermit.oxygenLevel && (
+                        <div className="bg-blue-50 p-3 rounded">
+                          <p className="text-xs text-blue-600 font-medium">Sauerstoff (O₂)</p>
+                          <p className="text-lg font-bold text-blue-800">{viewingPermit.oxygenLevel}</p>
+                        </div>
+                      )}
+                      {viewingPermit.lelLevel && (
+                        <div className="bg-orange-50 p-3 rounded">
+                          <p className="text-xs text-orange-600 font-medium">LEL</p>
+                          <p className="text-lg font-bold text-orange-800">{viewingPermit.lelLevel}</p>
+                        </div>
+                      )}
+                      {viewingPermit.h2sLevel && (
+                        <div className="bg-red-50 p-3 rounded">
+                          <p className="text-xs text-red-600 font-medium">H₂S</p>
+                          <p className="text-lg font-bold text-red-800">{viewingPermit.h2sLevel}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sicherheitsbeauftragter */}
+                {viewingPermit.safetyOfficer && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-industrial-gray mb-2">Zugewiesener Sicherheitsbeauftragter</p>
+                    <p className="text-secondary-gray">{viewingPermit.safetyOfficer}</p>
+                  </div>
+                )}
+
+                {/* Zusätzliche Kommentare */}
+                {viewingPermit.additionalComments && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-industrial-gray mb-2">Zusätzliche Kommentare</p>
+                    <p className="text-secondary-gray">{viewingPermit.additionalComments}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Genehmiger und Status */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold text-industrial-gray mb-4">Genehmigung & Freigabe</h3>
+                
+                {/* Ausgewählte Genehmiger */}
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-industrial-gray mb-3">Ausgewählte Genehmiger</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <p className="text-xs text-gray-600 font-medium">Abteilungsleiter</p>
+                      <p className="text-sm font-semibold text-industrial-gray">
+                        {viewingPermit.departmentHead || 'Nicht zugewiesen'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <p className="text-xs text-gray-600 font-medium">Instandhaltung/Engineering</p>
+                      <p className="text-sm font-semibold text-industrial-gray">
+                        {viewingPermit.maintenanceApprover || 'Nicht zugewiesen'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Genehmigungsstatus */}
+                <div className="space-y-2">
+                  <p className="font-medium text-industrial-gray text-sm">Genehmigungsstatus:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className={`flex items-center gap-2 p-3 rounded ${viewingPermit.departmentHeadApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
+                      {viewingPermit.departmentHeadApproval ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-orange-600" />
+                      )}
+                      <div>
+                        <span className="text-sm font-medium">
+                          Abteilungsleiter: {viewingPermit.departmentHeadApproval ? 'Genehmigt' : 'Ausstehend'}
+                        </span>
+                        {viewingPermit.departmentHeadApprovalDate && (
+                          <p className="text-xs text-gray-600">
+                            {format(new Date(viewingPermit.departmentHeadApprovalDate), "dd.MM.yyyy HH:mm", { locale: de })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`flex items-center gap-2 p-3 rounded ${viewingPermit.maintenanceApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
+                      {viewingPermit.maintenanceApproval ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-orange-600" />
+                      )}
+                      <div>
+                        <span className="text-sm font-medium">
+                          Instandhaltung/Engineering: {viewingPermit.maintenanceApproval ? 'Genehmigt' : 'Ausstehend'}
+                        </span>
+                        {viewingPermit.maintenanceApprovalDate && (
+                          <p className="text-xs text-gray-600">
+                            {format(new Date(viewingPermit.maintenanceApprovalDate), "dd.MM.yyyy HH:mm", { locale: de })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

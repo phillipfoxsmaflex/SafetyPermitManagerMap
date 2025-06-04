@@ -150,16 +150,43 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
     updatePermitMutation.mutate(data);
   };
 
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data: EditPermitFormData) => {
+      const response = await apiRequest(`/api/permits/${permit?.id}`, "PATCH", { ...data, status: "draft" });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Entwurf gespeichert",
+        description: "Die Genehmigung wurde als Entwurf gespeichert.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error("Draft save error:", error);
+      toast({
+        title: "Fehler",
+        description: "Entwurf konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSaveDraft = (data: EditPermitFormData) => {
-    updatePermitMutation.mutate({ ...data, status: "draft" });
+    saveDraftMutation.mutate(data);
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
     updatePermitMutation.mutate({ ...data, status: "pending" });
   };
 
-  const supervisorUsers = users.filter((user: any) => user.role === 'supervisor' || user.role === 'admin');
-  const maintenanceUsers = users.filter((user: any) => user.role === 'maintenance' || user.role === 'admin');
+  const supervisorUsers = users.filter((user: any) => 
+    user.role === 'supervisor' || user.role === 'admin' || user.role === 'Vorgesetzter' || user.role === 'Administrator'
+  );
+  const maintenanceUsers = users.filter((user: any) => 
+    user.role === 'maintenance' || user.role === 'admin' || user.role === 'Betriebsleiter' || user.role === 'Administrator'
+  );
 
   if (!permit) return null;
 
