@@ -6,6 +6,27 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Get permit statistics (must come before /api/permits/:id)
+  app.get("/api/permits/stats", async (req, res) => {
+    try {
+      const stats = await storage.getPermitStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch permit statistics" });
+    }
+  });
+
+  // Get permits by status (must come before /api/permits/:id)
+  app.get("/api/permits/status/:status", async (req, res) => {
+    try {
+      const status = req.params.status;
+      const permits = await storage.getPermitsByStatus(status);
+      res.json(permits);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch permits by status" });
+    }
+  });
+
   // Get all permits
   app.get("/api/permits", async (req, res) => {
     try {
@@ -83,26 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get permit statistics
-  app.get("/api/permits/stats", async (req, res) => {
-    try {
-      const stats = await storage.getPermitStats();
-      res.json(stats);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch permit statistics" });
-    }
-  });
 
-  // Get permits by status
-  app.get("/api/permits/status/:status", async (req, res) => {
-    try {
-      const status = req.params.status;
-      const permits = await storage.getPermitsByStatus(status);
-      res.json(permits);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch permits by status" });
-    }
-  });
 
   // Approve permit (supervisor, safety officer, operations manager)
   app.post("/api/permits/:id/approve", async (req, res) => {

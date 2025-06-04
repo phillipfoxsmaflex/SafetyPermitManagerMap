@@ -148,6 +148,8 @@ export class MemStorage implements IStorage {
       ...insertPermit,
       id,
       permitId,
+      status: 'pending',
+      requestorId: insertPermit.requestorId || null,
       startDate: new Date(insertPermit.startDate),
       endDate: new Date(insertPermit.endDate),
       createdAt: now,

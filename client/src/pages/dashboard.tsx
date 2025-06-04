@@ -30,10 +30,10 @@ export default function Dashboard() {
         {/* Dashboard Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-industrial-gray mb-2">
-            Permit Management Dashboard
+            Genehmigungsverwaltung Dashboard
           </h2>
           <p className="text-secondary-gray">
-            Monitor and manage work permits for confined spaces and chemical environments
+            Überwachung und Verwaltung von Arbeitsgenehmigungen für enge Räume und chemische Umgebungen
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-secondary-gray">Active Permits</p>
+                  <p className="text-sm font-medium text-secondary-gray">Aktive Genehmigungen</p>
                   <p className="text-3xl font-bold text-safety-blue">
                     {statsLoading ? "..." : stats?.activePermits || 0}
                   </p>

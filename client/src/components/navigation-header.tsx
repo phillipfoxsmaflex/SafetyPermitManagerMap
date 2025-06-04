@@ -25,29 +25,25 @@ export function NavigationHeader() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <HardHat className="text-safety-blue text-2xl" />
-              <h1 className="text-xl font-bold text-industrial-gray">SafeWork Permits</h1>
+              <h1 className="text-xl font-bold text-industrial-gray">SicherheitsGenehmigungen</h1>
             </div>
             <nav className="hidden md:flex space-x-6">
-              <Link href="/">
-                <a className={`font-medium pb-2 border-b-2 ${
-                  isActive("/") 
-                    ? "text-safety-blue border-safety-blue" 
-                    : "text-secondary-gray border-transparent hover:text-industrial-gray"
-                }`}>
-                  Dashboard
-                </a>
+              <Link href="/" className={`font-medium pb-2 border-b-2 ${
+                isActive("/") 
+                  ? "text-safety-blue border-safety-blue" 
+                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
+              }`}>
+                Dashboard
               </Link>
-              <Link href="/permits">
-                <a className={`font-medium pb-2 border-b-2 ${
-                  isActive("/permits") 
-                    ? "text-safety-blue border-safety-blue" 
-                    : "text-secondary-gray border-transparent hover:text-industrial-gray"
-                }`}>
-                  Permits
-                </a>
+              <Link href="/permits" className={`font-medium pb-2 border-b-2 ${
+                isActive("/permits") 
+                  ? "text-safety-blue border-safety-blue" 
+                  : "text-secondary-gray border-transparent hover:text-industrial-gray"
+              }`}>
+                Genehmigungen
               </Link>
-              <a href="#reports" className="text-secondary-gray hover:text-industrial-gray">Reports</a>
-              <a href="#settings" className="text-secondary-gray hover:text-industrial-gray">Settings</a>
+              <a href="#reports" className="text-secondary-gray hover:text-industrial-gray">Berichte</a>
+              <a href="#settings" className="text-secondary-gray hover:text-industrial-gray">Einstellungen</a>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
@@ -69,9 +65,9 @@ export function NavigationHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem>Profil</DropdownMenuItem>
+                <DropdownMenuItem>Einstellungen</DropdownMenuItem>
+                <DropdownMenuItem>Abmelden</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
