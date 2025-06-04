@@ -70,6 +70,34 @@ const editPermitSchema = z.object({
   h2sLevel: z.string().optional(),
 });
 
+// Relaxed schema for drafts - only basic fields required
+const draftPermitSchema = z.object({
+  type: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  requestorName: z.string().optional(),
+  department: z.string().optional(),
+  contactNumber: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  riskLevel: z.string().optional(),
+  safetyOfficer: z.string().optional(),
+  departmentHead: z.string().optional(),
+  maintenanceApprover: z.string().optional(),
+  identifiedHazards: z.string().optional(),
+  additionalComments: z.string().optional(),
+  atmosphereTest: z.boolean().optional(),
+  ventilation: z.boolean().optional(),
+  ppe: z.boolean().optional(),
+  emergencyProcedures: z.boolean().optional(),
+  fireWatch: z.boolean().optional(),
+  isolationLockout: z.boolean().optional(),
+  oxygenLevel: z.string().optional(),
+  lelLevel: z.string().optional(),
+  h2sLevel: z.string().optional(),
+});
+
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
 
 export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPermitModalEnhancedProps) {
@@ -185,10 +213,15 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
     },
   });
 
-  const onSaveDraft = (data: EditPermitFormData) => {
-    console.log("onSaveDraft called with data:", data);
+  const onSaveDraft = () => {
+    console.log("onSaveDraft called - bypassing validation");
     console.log("Permit ID:", permit?.id);
-    saveDraftMutation.mutate(data);
+    
+    // Get current form values without validation
+    const formValues = form.getValues();
+    console.log("Form values:", formValues);
+    
+    saveDraftMutation.mutate(formValues);
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
@@ -707,7 +740,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={form.handleSubmit(onSaveDraft)}
+                  onClick={onSaveDraft}
                   disabled={saveDraftMutation.isPending}
                 >
                   <Save className="w-4 h-4 mr-2" />
