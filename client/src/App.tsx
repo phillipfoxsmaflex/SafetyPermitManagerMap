@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/dashboard";
 import Permits from "@/pages/permits";
 import Drafts from "@/pages/drafts";
@@ -16,15 +18,51 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/permits" component={Permits} />
-      <Route path="/permit/:id" component={PermitDetails} />
-      <Route path="/approvals" component={Approvals} />
-      <Route path="/drafts" component={Drafts} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/user-management" component={UserManagement} />
-      <Route path="/login" component={Login} />
-      <Route component={NotFound} />
+      <Route path="/login">
+        <ProtectedRoute requireAuth={false}>
+          <Login />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/permits">
+        <ProtectedRoute>
+          <Permits />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/permit/:id">
+        <ProtectedRoute>
+          <PermitDetails />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/approvals">
+        <ProtectedRoute>
+          <Approvals />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/drafts">
+        <ProtectedRoute>
+          <Drafts />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/user-management">
+        <ProtectedRoute>
+          <UserManagement />
+        </ProtectedRoute>
+      </Route>
+      <Route>
+        <ProtectedRoute>
+          <NotFound />
+        </ProtectedRoute>
+      </Route>
     </Switch>
   );
 }
@@ -32,10 +70,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

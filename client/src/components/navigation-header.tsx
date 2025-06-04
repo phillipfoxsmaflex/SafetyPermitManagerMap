@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "@/components/notification-dropdown";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function NavigationHeader() {
   const [location, setLocation] = useLocation();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -26,20 +28,22 @@ export function NavigationHeader() {
 
   const handleLogout = async () => {
     try {
-      // Call logout API endpoint
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      
+      await logout();
       console.log("User logged out");
-      // Redirect to login page
       setLocation("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still redirect to login even if API call fails
       setLocation("/login");
     }
+  };
+
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map(name => name.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -88,10 +92,14 @@ export function NavigationHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=32&h=32" />
-                    <AvatarFallback>HM</AvatarFallback>
+                    <AvatarImage src="" />
+                    <AvatarFallback>
+                      {user?.fullName ? getInitials(user.fullName) : "U"}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-industrial-gray">Hans Mueller</span>
+                  <span className="text-sm font-medium text-industrial-gray">
+                    {user?.fullName || "Benutzer"}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-secondary-gray" />
                 </Button>
               </DropdownMenuTrigger>
