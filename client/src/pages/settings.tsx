@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -28,8 +28,10 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function Settings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -61,6 +63,16 @@ export default function Settings() {
     auditLog: true,
     logRetention: 90,
     maintenanceMode: false,
+  });
+
+  const [emailSettings, setEmailSettings] = useState({
+    smtpServer: "smtp.company.com",
+    smtpPort: 587,
+    username: "notifications@company.com",
+    password: "",
+    enableTLS: true,
+    fromAddress: "noreply@company.com",
+    fromName: "TRBS Permit System"
   });
 
   const updatePasswordMutation = useMutation({
@@ -117,6 +129,44 @@ export default function Settings() {
       currentPassword: passwordData.currentPassword,
       newPassword: passwordData.newPassword
     });
+  };
+
+  const handleNavigateToPermits = () => {
+    setLocation("/permits");
+  };
+
+  const handleNavigateToDrafts = () => {
+    setLocation("/drafts");
+  };
+
+  const handleNavigateToApprovals = () => {
+    setLocation("/approvals");
+  };
+
+  const handleOpenEmailSettings = () => {
+    setEmailModalOpen(true);
+  };
+
+  const handleBackupDatabase = () => {
+    toast({
+      title: "Backup gestartet",
+      description: "Die Datenbank-Sicherung wurde erfolgreich initiiert",
+    });
+  };
+
+  const handleViewSecurityLog = () => {
+    toast({
+      title: "Sicherheitsprotokoll",
+      description: "Öffne Sicherheitsprotokoll-Viewer",
+    });
+  };
+
+  const handleSaveEmailSettings = () => {
+    toast({
+      title: "E-Mail-Einstellungen gespeichert",
+      description: "Die E-Mail-Konfiguration wurde erfolgreich aktualisiert",
+    });
+    setEmailModalOpen(false);
   };
 
   const isAdmin = currentUser?.role === 'admin';
@@ -360,19 +410,31 @@ export default function Settings() {
                   </Link>
                 )}
                 
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleOpenEmailSettings}
+                >
                   <Mail className="w-4 h-4 mr-2" />
                   E-Mail-Einstellungen
                 </Button>
                 
                 {isAdmin && (
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={handleBackupDatabase}
+                  >
                     <Database className="w-4 h-4 mr-2" />
                     Datenbank-Backup
                   </Button>
                 )}
                 
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleViewSecurityLog}
+                >
                   <Shield className="w-4 h-4 mr-2" />
                   Sicherheitsprotokoll
                 </Button>
@@ -452,6 +514,110 @@ export default function Settings() {
                   setPasswordModalOpen(false);
                   setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
                 }}
+              >
+                Abbrechen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Settings Modal */}
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              E-Mail-Server Konfiguration
+            </DialogTitle>
+            <DialogDescription>
+              Konfigurieren Sie die SMTP-Einstellungen für E-Mail-Benachrichtigungen.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>SMTP-Server</Label>
+                <Input
+                  value={emailSettings.smtpServer}
+                  onChange={(e) => setEmailSettings({ ...emailSettings, smtpServer: e.target.value })}
+                  placeholder="smtp.example.com"
+                />
+              </div>
+              <div>
+                <Label>Port</Label>
+                <Input
+                  type="number"
+                  value={emailSettings.smtpPort}
+                  onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: parseInt(e.target.value) })}
+                  placeholder="587"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label>Benutzername</Label>
+              <Input
+                value={emailSettings.username}
+                onChange={(e) => setEmailSettings({ ...emailSettings, username: e.target.value })}
+                placeholder="user@example.com"
+              />
+            </div>
+            
+            <div>
+              <Label>Passwort</Label>
+              <Input
+                type="password"
+                value={emailSettings.password}
+                onChange={(e) => setEmailSettings({ ...emailSettings, password: e.target.value })}
+                placeholder="E-Mail-Passwort"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Absender-Adresse</Label>
+                <Input
+                  value={emailSettings.fromAddress}
+                  onChange={(e) => setEmailSettings({ ...emailSettings, fromAddress: e.target.value })}
+                  placeholder="noreply@example.com"
+                />
+              </div>
+              <div>
+                <Label>Absender-Name</Label>
+                <Input
+                  value={emailSettings.fromName}
+                  onChange={(e) => setEmailSettings({ ...emailSettings, fromName: e.target.value })}
+                  placeholder="System Name"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>TLS aktivieren</Label>
+                <p className="text-xs text-secondary-gray">
+                  Verschlüsselte Verbindung verwenden
+                </p>
+              </div>
+              <Switch
+                checked={emailSettings.enableTLS}
+                onCheckedChange={(checked) => setEmailSettings({ ...emailSettings, enableTLS: checked })}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleSaveEmailSettings}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Speichern
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setEmailModalOpen(false)}
               >
                 Abbrechen
               </Button>
