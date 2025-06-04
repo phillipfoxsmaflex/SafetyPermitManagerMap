@@ -17,6 +17,8 @@ export interface CreatePermitFormData {
   endDate: string;
   riskLevel?: string;
   safetyOfficer?: string;
+  departmentHead: string;
+  maintenanceApprover: string;
   identifiedHazards?: string;
   additionalComments?: string;
   atmosphereTest?: boolean;

@@ -9,6 +9,7 @@ import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
 import UserManagement from "@/pages/user-management";
+import Approvals from "@/pages/approvals";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 

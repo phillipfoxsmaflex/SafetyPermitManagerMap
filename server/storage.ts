@@ -128,12 +128,14 @@ export class DatabaseStorage implements IStorage {
         oxygenLevel: insertPermit.oxygenLevel || null,
         lelLevel: insertPermit.lelLevel || null,
         h2sLevel: insertPermit.h2sLevel || null,
-        supervisorApproval: false,
-        supervisorApprovalDate: null,
+        departmentHead: insertPermit.departmentHead || null,
+        maintenanceApprover: insertPermit.maintenanceApprover || null,
+        departmentHeadApproval: false,
+        departmentHeadApprovalDate: null,
+        maintenanceApproval: false,
+        maintenanceApprovalDate: null,
         safetyOfficerApproval: false,
         safetyOfficerApprovalDate: null,
-        operationsManagerApproval: false,
-        operationsManagerApprovalDate: null,
       })
       .returning();
     

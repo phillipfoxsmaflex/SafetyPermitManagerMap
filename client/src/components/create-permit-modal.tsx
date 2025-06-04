@@ -542,39 +542,48 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                 <Alert className="border-blue-200 bg-blue-50">
                   <Info className="h-4 w-4 text-safety-blue" />
                   <AlertDescription className="text-industrial-gray">
-                    <strong>Approval Process:</strong> Digital signatures required from authorized personnel before work can commence.
+                    <strong>Genehmigungsverfahren:</strong> Mindestens ein Abteilungsleiter und die Instandhaltung/Engineering müssen diese Arbeitserlaubnis genehmigen.
                   </AlertDescription>
                 </Alert>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-industrial-gray">Required Approvals</CardTitle>
+                    <CardTitle className="text-industrial-gray">Erforderliche Genehmiger zuweisen</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-secondary-gray">👤</div>
-                        <div>
-                          <p className="font-medium text-industrial-gray">Area Supervisor</p>
-                          <p className="text-sm text-secondary-gray">Responsible for work area oversight</p>
-                        </div>
-                      </div>
-                      <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-warning-orange">
-                        Pending
-                      </span>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="departmentHead"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Abteilungsleiter (Genehmiger) *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Name des Abteilungsleiters" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-secondary-gray">🛡️</div>
-                        <div>
-                          <p className="font-medium text-industrial-gray">Safety Officer</p>
-                          <p className="text-sm text-secondary-gray">Safety requirements verification</p>
-                        </div>
-                      </div>
-                      <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-warning-orange">
-                        Pending
-                      </span>
+                    <FormField
+                      control={form.control}
+                      name="maintenanceApprover"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Instandhaltung/Engineering-Genehmiger *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Name des Instandhaltungs-/Engineering-Genehmigers" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-industrial-gray">
+                        <strong>Hinweis:</strong> Diese Personen erhalten eine Benachrichtigung zur Genehmigung der Arbeitserlaubnis. 
+                        Beide Genehmigungen sind erforderlich, bevor die Arbeiten beginnen können.
+                      </p>
                     </div>
 
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
