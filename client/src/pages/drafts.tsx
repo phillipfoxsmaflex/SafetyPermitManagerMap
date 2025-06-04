@@ -58,11 +58,11 @@ export default function Drafts() {
     maintenanceApprover: ""
   });
 
-  const { data: permits = [] } = useQuery({
+  const { data: permits = [] } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
   });
 
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [] } = useQuery<any[]>({
     queryKey: ["/api/templates"],
   });
 
@@ -104,10 +104,13 @@ export default function Drafts() {
 
   const createDraftMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/permits", {
+      const response = await fetch("/api/permits", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, status: "draft" })
       });
+      if (!response.ok) throw new Error("Failed to create draft");
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: "Erfolg", description: "Entwurf erstellt und gespeichert." });
@@ -115,17 +118,21 @@ export default function Drafts() {
       setCreateModalOpen(false);
       resetForm();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Draft creation error:", error);
       toast({ title: "Fehler", description: "Entwurf konnte nicht erstellt werden.", variant: "destructive" });
     }
   });
 
   const submitForApprovalMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/permits", {
+      const response = await fetch("/api/permits", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, status: "pending" })
       });
+      if (!response.ok) throw new Error("Failed to submit for approval");
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: "Erfolg", description: "Genehmigung zur Prüfung eingereicht." });
@@ -133,30 +140,37 @@ export default function Drafts() {
       setCreateModalOpen(false);
       resetForm();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Submit for approval error:", error);
       toast({ title: "Fehler", description: "Genehmigung konnte nicht eingereicht werden.", variant: "destructive" });
     }
   });
 
   const deleteDraftMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/permits/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/permits/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete draft");
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: "Erfolg", description: "Entwurf gelöscht." });
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Delete draft error:", error);
       toast({ title: "Fehler", description: "Entwurf konnte nicht gelöscht werden.", variant: "destructive" });
     }
   });
 
   const createTemplateMutation = useMutation({
     mutationFn: async ({ name, permitData }: { name: string; permitData: any }) => {
-      return await apiRequest("/api/templates", {
+      const response = await fetch("/api/templates", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, template: permitData })
       });
+      if (!response.ok) throw new Error("Failed to create template");
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: "Erfolg", description: "Vorlage erstellt." });
@@ -165,7 +179,8 @@ export default function Drafts() {
       setTemplateName("");
       setSelectedDraft(null);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Create template error:", error);
       toast({ title: "Fehler", description: "Vorlage konnte nicht erstellt werden.", variant: "destructive" });
     }
   });
@@ -259,7 +274,7 @@ export default function Drafts() {
             <span className="font-medium">Abteilung:</span> {permit.department}
           </div>
           <div>
-            <span className="font-medium">Erstellt:</span> {format(new Date(permit.createdAt), "dd.MM.yyyy", { locale: de })}
+            <span className="font-medium">Erstellt:</span> {permit.createdAt ? format(new Date(permit.createdAt.toString()), "dd.MM.yyyy", { locale: de }) : "N/A"}
           </div>
         </div>
         
