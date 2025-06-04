@@ -152,8 +152,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
   const saveDraftMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
-      const response = await apiRequest(`/api/permits/${permit?.id}`, "PATCH", { ...data, status: "draft" });
-      return response;
+      console.log("Saving draft for permit:", permit?.id, "with data:", { ...data, status: "draft" });
+      const response = await fetch(`/api/permits/${permit?.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...data, status: "draft" }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
