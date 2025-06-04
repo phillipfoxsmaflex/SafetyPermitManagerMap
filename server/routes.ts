@@ -76,6 +76,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
+      console.log("Updating permit:", id, "with data:", updates);
+      
+      // Convert date strings to Date objects if needed
+      if (updates.startDate) {
+        updates.startDate = new Date(updates.startDate);
+      }
+      if (updates.endDate) {
+        updates.endDate = new Date(updates.endDate);
+      }
+      
       const permit = await storage.updatePermit(id, updates);
       
       if (!permit) {
@@ -84,6 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(permit);
     } catch (error) {
+      console.error("Error updating permit:", error);
       res.status(500).json({ message: "Failed to update permit" });
     }
   });
