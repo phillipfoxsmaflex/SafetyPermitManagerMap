@@ -27,6 +27,24 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
     });
   };
 
+  const handleView = (permit: Permit) => {
+    console.log("Viewing permit:", permit.permitId);
+    // In a real app, this would open a detailed view modal or navigate to permit details
+    alert(`Genehmigung ${permit.permitId} wird angezeigt`);
+  };
+
+  const handleEdit = (permit: Permit) => {
+    console.log("Editing permit:", permit.permitId);
+    // In a real app, this would open an edit modal or navigate to edit page
+    alert(`Genehmigung ${permit.permitId} wird bearbeitet`);
+  };
+
+  const handlePrint = (permit: Permit) => {
+    console.log("Printing permit:", permit.permitId);
+    // In a real app, this would generate and print the permit
+    window.print();
+  };
+
   const getPermitTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
       'confined_space': 'Enger Raum',
@@ -113,13 +131,28 @@ export function PermitTable({ permits, isLoading }: PermitTableProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleView(permit)}
+                      >
                         <Eye className="h-4 w-4 text-safety-blue" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(permit)}
+                      >
                         <Edit className="h-4 w-4 text-secondary-gray" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handlePrint(permit)}
+                      >
                         <Printer className="h-4 w-4 text-secondary-gray" />
                       </Button>
                     </div>

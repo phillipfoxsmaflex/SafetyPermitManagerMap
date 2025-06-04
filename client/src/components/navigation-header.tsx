@@ -10,12 +10,23 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function NavigationHeader() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
     if (path !== "/" && location.startsWith(path)) return true;
     return false;
+  };
+
+  const handleProfileClick = () => {
+    console.log("Profile clicked");
+    // In a real app, this would open a profile modal or navigate to profile page
+  };
+
+  const handleLogout = () => {
+    console.log("User logged out");
+    // In a real app, this would clear session and redirect to login
+    alert("Abmeldung erfolgreich");
   };
 
   return (
@@ -77,9 +88,9 @@ export function NavigationHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Profil</DropdownMenuItem>
-                <DropdownMenuItem>Einstellungen</DropdownMenuItem>
-                <DropdownMenuItem>Abmelden</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleProfileClick}>Profil</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/settings")}>Einstellungen</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Abmelden</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
