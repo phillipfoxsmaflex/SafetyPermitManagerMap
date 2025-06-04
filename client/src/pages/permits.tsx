@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Filter } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
-import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
+import { EditPermitModalSimple } from "@/components/edit-permit-modal-simple";
 import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,7 +146,7 @@ export default function Permits() {
         onOpenChange={setCreateModalOpen} 
       />
 
-      <EditPermitModalEnhanced
+      <EditPermitModalSimple
         permit={selectedPermit}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
