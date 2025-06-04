@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { NavigationHeader } from "@/components/navigation-header";
 import { 
   CheckCircle, 
   Clock, 
@@ -18,13 +19,16 @@ import {
   Building,
   Phone,
   Shield,
-  Eye
+  Eye,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import type { Permit } from "@shared/schema";
 
 export default function Approvals() {
@@ -299,15 +303,36 @@ export default function Approvals() {
   const myApprovals = getMyApprovals();
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-industrial-gray">Genehmigungen</h1>
-          <p className="text-secondary-gray mt-2">
-            Verwalten Sie Arbeitserlaubnis-Genehmigungen
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <NavigationHeader />
+      
+      <div className="container mx-auto p-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 mb-6">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="text-secondary-gray hover:text-industrial-gray">
+              <Home className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+          </Link>
+          <span className="text-secondary-gray">/</span>
+          <span className="text-industrial-gray font-medium">Genehmigungen</span>
         </div>
-      </div>
+
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-industrial-gray">Genehmigungen</h1>
+            <p className="text-secondary-gray mt-2">
+              Verwalten Sie Arbeitserlaubnis-Genehmigungen
+            </p>
+          </div>
+          <Link href="/dashboard">
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Zurück zum Dashboard
+            </Button>
+          </Link>
+        </div>
 
       <Alert className="mb-6 border-blue-200 bg-blue-50">
         <Shield className="h-4 w-4 text-safety-blue" />
@@ -392,6 +417,7 @@ export default function Approvals() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* Permit Viewing Dialog */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
