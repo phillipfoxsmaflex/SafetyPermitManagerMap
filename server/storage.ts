@@ -109,10 +109,10 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...insertPermit,
         permitId,
-        status: 'pending',
+        status: insertPermit.status || 'pending',
         requestorId: insertPermit.requestorId || null,
-        startDate: new Date(insertPermit.startDate),
-        endDate: new Date(insertPermit.endDate),
+        startDate: insertPermit.startDate ? new Date(insertPermit.startDate) : null,
+        endDate: insertPermit.endDate ? new Date(insertPermit.endDate) : null,
         createdAt: now,
         updatedAt: now,
         riskLevel: insertPermit.riskLevel || null,
