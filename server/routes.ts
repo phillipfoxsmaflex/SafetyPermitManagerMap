@@ -252,8 +252,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.cookie('sessionId', sessionId, { 
         httpOnly: true, 
         secure: false, // In production, set to true with HTTPS
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
+      
+      console.log('Setting session cookie:', sessionId);
       
       res.json({ 
         success: true, 
@@ -286,23 +289,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/user", async (req, res) => {
     try {
       const sessionId = req.cookies?.sessionId;
+      console.log('Auth check - cookies:', req.cookies);
+      console.log('Auth check - sessionId:', sessionId);
+      console.log('Auth check - active sessions:', Array.from(sessions.keys()));
+      
       if (!sessionId || !sessions.has(sessionId)) {
+        console.log('No valid session found');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const userId = sessions.get(sessionId);
       if (!userId) {
+        console.log('No userId for session');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(userId);
       if (!user) {
+        console.log('User not found in database');
         sessions.delete(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
+      console.log('Auth check successful for user:', user.username);
       res.json(user);
     } catch (error) {
+      console.error('Auth check error:', error);
       res.status(401).json({ message: "Not authenticated" });
     }
   });

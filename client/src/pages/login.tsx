@@ -63,7 +63,10 @@ export default function Login() {
         title: "Erfolgreich angemeldet",
         description: "Willkommen zurück!",
       });
-      setLocation("/");
+      // Use a slight delay to ensure the auth context is updated
+      setTimeout(() => {
+        setLocation("/");
+      }, 100);
     },
     onError: (error) => {
       toast({
