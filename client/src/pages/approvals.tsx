@@ -461,61 +461,82 @@ export default function Approvals() {
                   </div>
                 )}
 
-                {/* Sicherheitsmaßnahmen */}
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-industrial-gray mb-3">Erforderliche Sicherheitsmaßnahmen</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.atmosphereTest ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.atmosphereTest ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Atmosphärenüberwachung
-                    </div>
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.ventilation ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.ventilation ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Belüftung
-                    </div>
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.ppe ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.ppe ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Persönliche Schutzausrüstung
-                    </div>
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.emergencyProcedures ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.emergencyProcedures ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Notfallverfahren
-                    </div>
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.fireWatch ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.fireWatch ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Brandwache
-                    </div>
-                    <div className={`flex items-center gap-2 p-2 rounded text-sm ${viewingPermit.isolationLockout ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-600'}`}>
-                      {viewingPermit.isolationLockout ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                      Isolation/Lockout
-                    </div>
-                  </div>
-                </div>
-
-                {/* Atmosphärenüberwachung Details */}
-                {(viewingPermit.oxygenLevel || viewingPermit.lelLevel || viewingPermit.h2sLevel) && (
+                {/* TRBS Gefährdungsbeurteilung */}
+                {viewingPermit.selectedHazards && viewingPermit.selectedHazards.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-industrial-gray mb-3">Atmosphärenüberwachung Messwerte</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      {viewingPermit.oxygenLevel && (
-                        <div className="bg-blue-50 p-3 rounded">
-                          <p className="text-xs text-blue-600 font-medium">Sauerstoff (O₂)</p>
-                          <p className="text-lg font-bold text-blue-800">{viewingPermit.oxygenLevel}</p>
-                        </div>
-                      )}
-                      {viewingPermit.lelLevel && (
-                        <div className="bg-orange-50 p-3 rounded">
-                          <p className="text-xs text-orange-600 font-medium">LEL</p>
-                          <p className="text-lg font-bold text-orange-800">{viewingPermit.lelLevel}</p>
-                        </div>
-                      )}
-                      {viewingPermit.h2sLevel && (
-                        <div className="bg-red-50 p-3 rounded">
-                          <p className="text-xs text-red-600 font-medium">H₂S</p>
-                          <p className="text-lg font-bold text-red-800">{viewingPermit.h2sLevel}</p>
-                        </div>
-                      )}
+                    <p className="text-sm font-medium text-industrial-gray mb-3">TRBS Gefährdungsbeurteilung</p>
+                    <div className="space-y-3">
+                      {viewingPermit.selectedHazards.map((hazardId: string) => {
+                        const categories = [
+                          { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
+                          { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
+                          { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
+                          { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
+                          { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
+                          { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
+                          { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
+                          { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
+                          { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
+                          { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
+                          { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
+                        ];
+                        
+                        const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                        const category = categories.find(c => c.id === categoryId);
+                        const hazard = category?.hazards[hazardIndex];
+                        
+                        if (!category || !hazard) return null;
+                        
+                        return (
+                          <div key={hazardId} className="border rounded-lg p-3 bg-blue-50">
+                            <div className="flex items-start gap-3">
+                              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                              <div className="flex-1">
+                                <div className="font-medium text-sm text-industrial-gray">
+                                  {category.category}
+                                </div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  {hazard}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                    
+                    {viewingPermit.hazardNotes && viewingPermit.hazardNotes !== '{}' && (
+                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <h4 className="font-medium text-sm text-industrial-gray mb-2">Zusätzliche Notizen zu Gefahren:</h4>
+                        {Object.entries(JSON.parse(viewingPermit.hazardNotes)).map(([hazardId, note]) => {
+                          if (!note) return null;
+                          
+                          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                          const categories = [
+                            { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
+                            { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
+                            { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
+                            { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
+                            { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
+                            { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
+                            { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
+                            { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
+                            { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
+                            { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
+                            { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
+                          ];
+                          const category = categories.find(c => c.id === categoryId);
+                          const hazard = category?.hazards[hazardIndex];
+                          
+                          return (
+                            <div key={hazardId} className="text-sm mb-2">
+                              <span className="font-medium text-blue-700">{hazard}:</span>
+                              <span className="text-gray-600 ml-2">{note}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
