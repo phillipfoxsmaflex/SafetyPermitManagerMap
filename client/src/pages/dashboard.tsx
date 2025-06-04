@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PermitStats } from "@/lib/types";
 import type { Permit } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   const { data: stats, isLoading: statsLoading } = useQuery<PermitStats>({
     queryKey: ["/api/permits/stats"],
@@ -20,7 +24,81 @@ export default function Dashboard() {
     queryKey: ["/api/permits"],
   });
 
-  const recentPermits = permits.slice(0, 10);
+  const filteredPermits = useMemo(() => {
+    if (!searchTerm) return permits;
+    
+    const term = searchTerm.toLowerCase();
+    return permits.filter(permit => 
+      permit.permitId.toLowerCase().includes(term) ||
+      permit.location.toLowerCase().includes(term) ||
+      permit.requestorName.toLowerCase().includes(term) ||
+      permit.department.toLowerCase().includes(term) ||
+      permit.description.toLowerCase().includes(term)
+    );
+  }, [permits, searchTerm]);
+
+  const recentPermits = filteredPermits.slice(0, 10);
+
+  const handleExportReport = () => {
+    const csvContent = generateCSVReport(permits);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `arbeitserlaubnis-bericht-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Erfolgreich exportiert",
+      description: "Der Bericht wurde als CSV-Datei heruntergeladen",
+    });
+  };
+
+  const generateCSVReport = (permits: Permit[]) => {
+    const headers = [
+      'Genehmigungsnummer',
+      'Typ',
+      'Arbeitsort',
+      'Antragsteller',
+      'Abteilung',
+      'Status',
+      'Startdatum',
+      'Enddatum',
+      'Risikostufe',
+      'Beschreibung'
+    ];
+
+    const getPermitTypeLabel = (type: string) => {
+      const typeMap: Record<string, string> = {
+        'confined_space': 'Enger Raum',
+        'hot_work': 'Heißarbeiten',
+        'electrical': 'Elektrische Arbeiten',
+        'chemical': 'Chemische Arbeiten',
+        'height': 'Höhenarbeiten',
+      };
+      return typeMap[type] || type;
+    };
+
+    const rows = permits.map(permit => [
+      permit.permitId,
+      getPermitTypeLabel(permit.type),
+      permit.location,
+      permit.requestorName,
+      permit.department,
+      permit.status,
+      new Date(permit.startDate).toLocaleDateString('de-DE'),
+      new Date(permit.endDate).toLocaleDateString('de-DE'),
+      permit.riskLevel || 'Nicht angegeben',
+      permit.description.replace(/,/g, ';') // Replace commas to avoid CSV issues
+    ]);
+
+    return [headers, ...rows]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,12 +107,42 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Dashboard Header */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-industrial-gray mb-2">
-            Genehmigungsverwaltung Dashboard
-          </h2>
-          <p className="text-secondary-gray">
-            Überwachung und Verwaltung von Arbeitsgenehmigungen für enge Räume und chemische Umgebungen
-          </p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-industrial-gray mb-2">
+                Genehmigungsverwaltung Dashboard
+              </h2>
+              <p className="text-secondary-gray">
+                Überwachung und Verwaltung von Arbeitsgenehmigungen für enge Räume und chemische Umgebungen
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+                <Input
+                  placeholder="Genehmigung suchen..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              <Button 
+                onClick={handleExportReport}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Bericht exportieren
+              </Button>
+              <Button 
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-safety-blue text-white hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Neue Genehmigung
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -104,26 +212,12 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <Button 
-            className="bg-safety-blue text-white hover:bg-blue-700"
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Neue Genehmigung erstellen
-          </Button>
-          <Button variant="outline">
-            <Search className="w-4 h-4 mr-2" />
-            Genehmigungen suchen
-          </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Bericht exportieren
-          </Button>
+        {/* Permits Table */}
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-industrial-gray mb-4">
+            {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
+          </h3>
         </div>
-
-        {/* Recent Permits Table */}
         <PermitTable permits={recentPermits} isLoading={permitsLoading} />
       </main>
 

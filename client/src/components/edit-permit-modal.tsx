@@ -101,15 +101,17 @@ export function EditPermitModal({ permit, open, onOpenChange }: EditPermitModalP
     mutationFn: async (data: EditPermitFormData) => {
       if (!permit) throw new Error("Keine Genehmigung ausgewählt");
       
-      const response = await apiRequest(
-        "PATCH",
-        `/api/permits/${permit.id}`,
-        {
+      const response = await fetch(`/api/permits/${permit.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           ...data,
           startDate: new Date(data.startDate).toISOString(),
           endDate: new Date(data.endDate).toISOString(),
-        }
-      );
+        }),
+      });
       
       if (!response.ok) {
         throw new Error("Fehler beim Aktualisieren der Genehmigung");
