@@ -7,12 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Printer, Edit, FileText } from "lucide-react";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
+import { EditPermitModal } from "@/components/edit-permit-modal";
 import type { Permit } from "@shared/schema";
 import { Link } from "wouter";
+import { useState } from "react";
 
 export default function PermitDetails() {
   const [match, params] = useRoute("/permit/:id");
   const permitId = params?.id;
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
@@ -305,7 +308,10 @@ export default function PermitDetails() {
               <Printer className="w-4 h-4 mr-2" />
               Drucken
             </Button>
-            <Button className="bg-safety-blue text-white hover:bg-blue-700">
+            <Button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="bg-safety-blue text-white hover:bg-blue-700"
+            >
               <Edit className="w-4 h-4 mr-2" />
               Bearbeiten
             </Button>
@@ -536,6 +542,12 @@ export default function PermitDetails() {
             </CardContent>
           </Card>
         </div>
+
+        <EditPermitModal
+          permit={permit}
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+        />
       </main>
     </div>
   );
