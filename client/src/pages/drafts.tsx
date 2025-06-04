@@ -94,10 +94,7 @@ export default function Drafts() {
 
   const createTemplateMutation = useMutation({
     mutationFn: async (data: { name: string; template: any }) => {
-      return apiRequest("/api/templates", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("/api/templates", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
@@ -248,13 +245,15 @@ export default function Drafts() {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="flex gap-4 items-center">
                 <div className="flex-1">
-                  <Input
-                    placeholder="Suchen nach Genehmigungsnummer, Beschreibung oder Ort..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                    icon={<Search className="w-4 h-4" />}
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Suchen nach Genehmigungsnummer, Beschreibung oder Ort..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10"
+                    />
+                  </div>
                 </div>
                 <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger className="w-48">

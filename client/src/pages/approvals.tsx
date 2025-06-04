@@ -200,8 +200,8 @@ export default function Approvals() {
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-secondary-gray" />
             <span>
-              {format(new Date(permit.startDate), "dd.MM.yyyy", { locale: de })} - 
-              {format(new Date(permit.endDate), "dd.MM.yyyy", { locale: de })}
+              {permit.startDate ? format(new Date(permit.startDate), "dd.MM.yyyy", { locale: de }) : 'N/A'} - 
+              {permit.endDate ? format(new Date(permit.endDate), "dd.MM.yyyy", { locale: de }) : 'N/A'}
             </span>
           </div>
         </div>
@@ -424,13 +424,13 @@ export default function Approvals() {
                 <div>
                   <p className="text-sm font-medium text-industrial-gray">Startdatum</p>
                   <p className="text-secondary-gray">
-                    {format(new Date(viewingPermit.startDate), "dd.MM.yyyy", { locale: de })}
+                    {viewingPermit.startDate ? format(new Date(viewingPermit.startDate), "dd.MM.yyyy", { locale: de }) : 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-industrial-gray">Enddatum</p>
                   <p className="text-secondary-gray">
-                    {format(new Date(viewingPermit.endDate), "dd.MM.yyyy", { locale: de })}
+                    {viewingPermit.endDate ? format(new Date(viewingPermit.endDate), "dd.MM.yyyy", { locale: de }) : 'N/A'}
                   </p>
                 </div>
               </div>

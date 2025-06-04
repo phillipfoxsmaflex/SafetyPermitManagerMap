@@ -577,6 +577,35 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                               </div>
                             );
                           })}
+                          
+                          {/* Sonstige (Other) section */}
+                          <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-1 space-y-2">
+                                <div>
+                                  <h4 className="font-medium text-sm text-industrial-gray">
+                                    Sonstige Gefährdungen
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Weitere spezifische Gefährdungen oder Maßnahmen für diese Kategorie
+                                  </p>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-industrial-gray">
+                                    Zusätzliche Gefährdungen und Maßnahmen:
+                                  </label>
+                                  <Textarea
+                                    value={hazardNotes[`${category.id}-sonstige`] || ""}
+                                    onChange={(e) => updateHazardNote(`${category.id}-sonstige`, e.target.value)}
+                                    placeholder="Beschreiben Sie weitere Gefährdungen und erforderliche Schutzmaßnahmen..."
+                                    className="text-sm"
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     );
