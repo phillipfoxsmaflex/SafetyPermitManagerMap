@@ -102,8 +102,16 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
       return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
+      setResultType('success');
+      setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
+      setResultDialogOpen(true);
+    },
+    onError: () => {
+      setResultType('error');
+      setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
+      setResultDialogOpen(true);
     },
   });
 
@@ -288,6 +296,51 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           </div>
         )}
       </CardContent>
+
+      {/* Analysis Progress Dialog */}
+      <Dialog open={analysisDialogOpen} onOpenChange={setAnalysisDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>AI-Analyse läuft</DialogTitle>
+            <DialogDescription>
+              Die Genehmigung wird analysiert, um Verbesserungsvorschläge zu finden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-12 w-12 mx-auto animate-spin text-blue-600" />
+              <div className="space-y-2">
+                <p className="text-lg font-medium">Prüfe Genehmigung...</p>
+                <p className="text-sm text-gray-600">Denke nach über mögliche Verbesserungen</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Result Dialog */}
+      <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {resultType === 'success' ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-600" />
+              )}
+              {resultType === 'success' ? 'Erfolgreich' : 'Fehler'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">{resultMessage}</p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setResultDialogOpen(false)}>
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
