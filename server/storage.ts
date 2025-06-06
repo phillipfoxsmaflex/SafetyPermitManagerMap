@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
 
@@ -39,6 +39,20 @@ export interface IStorage {
   // Template operations
   getAllTemplates(): Promise<Template[]>;
   createTemplate(template: InsertTemplate): Promise<Template>;
+  
+  // AI Suggestions operations
+  getPermitSuggestions(permitId: number): Promise<AiSuggestion[]>;
+  createAiSuggestion(suggestion: InsertAiSuggestion): Promise<AiSuggestion>;
+  updateSuggestionStatus(id: number, status: string): Promise<AiSuggestion | undefined>;
+  applySuggestion(id: number): Promise<boolean>;
+  
+  // Webhook configuration operations
+  getAllWebhookConfigs(): Promise<WebhookConfig[]>;
+  getActiveWebhookConfig(): Promise<WebhookConfig | undefined>;
+  createWebhookConfig(config: InsertWebhookConfig): Promise<WebhookConfig>;
+  updateWebhookConfig(id: number, updates: Partial<WebhookConfig>): Promise<WebhookConfig | undefined>;
+  deleteWebhookConfig(id: number): Promise<boolean>;
+  testWebhookConnection(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -266,6 +280,153 @@ export class DatabaseStorage implements IStorage {
       .values(insertTemplate)
       .returning();
     return template;
+  }
+
+  // AI Suggestions operations
+  async getPermitSuggestions(permitId: number): Promise<AiSuggestion[]> {
+    return await db
+      .select()
+      .from(aiSuggestions)
+      .where(eq(aiSuggestions.permitId, permitId))
+      .orderBy(desc(aiSuggestions.createdAt));
+  }
+
+  async createAiSuggestion(insertSuggestion: InsertAiSuggestion): Promise<AiSuggestion> {
+    const [suggestion] = await db
+      .insert(aiSuggestions)
+      .values(insertSuggestion)
+      .returning();
+    return suggestion;
+  }
+
+  async updateSuggestionStatus(id: number, status: string): Promise<AiSuggestion | undefined> {
+    const [suggestion] = await db
+      .update(aiSuggestions)
+      .set({ 
+        status,
+        appliedAt: status === 'accepted' ? new Date() : null
+      })
+      .where(eq(aiSuggestions.id, id))
+      .returning();
+    return suggestion;
+  }
+
+  async applySuggestion(id: number): Promise<boolean> {
+    try {
+      const suggestion = await db
+        .select()
+        .from(aiSuggestions)
+        .where(eq(aiSuggestions.id, id))
+        .limit(1);
+
+      if (!suggestion.length) return false;
+
+      const { permitId, fieldName, suggestedValue } = suggestion[0];
+
+      if (fieldName) {
+        // Apply the suggestion to the permit
+        const updateData: any = {};
+        updateData[fieldName] = suggestedValue;
+        updateData.updatedAt = new Date();
+
+        await db
+          .update(permits)
+          .set(updateData)
+          .where(eq(permits.id, permitId));
+      }
+
+      // Mark suggestion as accepted
+      await this.updateSuggestionStatus(id, 'accepted');
+      return true;
+    } catch (error) {
+      console.error('Error applying suggestion:', error);
+      return false;
+    }
+  }
+
+  // Webhook configuration operations
+  async getAllWebhookConfigs(): Promise<WebhookConfig[]> {
+    return await db
+      .select()
+      .from(webhookConfig)
+      .orderBy(desc(webhookConfig.createdAt));
+  }
+
+  async getActiveWebhookConfig(): Promise<WebhookConfig | undefined> {
+    const [config] = await db
+      .select()
+      .from(webhookConfig)
+      .where(eq(webhookConfig.isActive, true))
+      .limit(1);
+    return config;
+  }
+
+  async createWebhookConfig(insertConfig: InsertWebhookConfig): Promise<WebhookConfig> {
+    const [config] = await db
+      .insert(webhookConfig)
+      .values(insertConfig)
+      .returning();
+    return config;
+  }
+
+  async updateWebhookConfig(id: number, updates: Partial<WebhookConfig>): Promise<WebhookConfig | undefined> {
+    const [config] = await db
+      .update(webhookConfig)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(webhookConfig.id, id))
+      .returning();
+    return config;
+  }
+
+  async deleteWebhookConfig(id: number): Promise<boolean> {
+    const result = await db
+      .delete(webhookConfig)
+      .where(eq(webhookConfig.id, id));
+    return result.rowCount > 0;
+  }
+
+  async testWebhookConnection(id: number): Promise<boolean> {
+    try {
+      const config = await db
+        .select()
+        .from(webhookConfig)
+        .where(eq(webhookConfig.id, id))
+        .limit(1);
+
+      if (!config.length) return false;
+
+      const testPayload = {
+        test: true,
+        timestamp: new Date().toISOString(),
+        message: 'Test connection from permit management system'
+      };
+
+      const response = await fetch(config[0].webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testPayload),
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+
+      const success = response.ok;
+
+      // Update test status
+      await this.updateWebhookConfig(id, {
+        lastTestedAt: new Date(),
+        lastTestStatus: success ? 'success' : 'failed'
+      });
+
+      return success;
+    } catch (error) {
+      // Update test status on error
+      await this.updateWebhookConfig(id, {
+        lastTestedAt: new Date(),
+        lastTestStatus: 'failed'
+      });
+      return false;
+    }
   }
 }
 

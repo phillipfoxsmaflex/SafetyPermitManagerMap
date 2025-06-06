@@ -70,6 +70,31 @@ export const templates = pgTable("templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const aiSuggestions = pgTable("ai_suggestions", {
+  id: serial("id").primaryKey(),
+  permitId: integer("permit_id").references(() => permits.id).notNull(),
+  suggestionType: text("suggestion_type").notNull(), // 'improvement', 'safety', 'compliance'
+  fieldName: text("field_name"), // Which permit field this suggestion applies to
+  originalValue: text("original_value"),
+  suggestedValue: text("suggested_value").notNull(),
+  reasoning: text("reasoning").notNull(),
+  priority: text("priority").notNull(), // 'low', 'medium', 'high', 'critical'
+  status: text("status").notNull().default('pending'), // 'pending', 'accepted', 'rejected'
+  appliedAt: timestamp("applied_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const webhookConfig = pgTable("webhook_config", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  webhookUrl: text("webhook_url").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastTestedAt: timestamp("last_tested_at"),
+  lastTestStatus: text("last_test_status"), // 'success', 'failed'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -95,6 +120,17 @@ export const insertTemplateSchema = createInsertSchema(templates).omit({
   updatedAt: true,
 });
 
+export const insertAiSuggestionSchema = createInsertSchema(aiSuggestions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWebhookConfigSchema = createInsertSchema(webhookConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -103,3 +139,7 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
 export type Template = typeof templates.$inferSelect;
+export type InsertAiSuggestion = z.infer<typeof insertAiSuggestionSchema>;
+export type AiSuggestion = typeof aiSuggestions.$inferSelect;
+export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;
+export type WebhookConfig = typeof webhookConfig.$inferSelect;
