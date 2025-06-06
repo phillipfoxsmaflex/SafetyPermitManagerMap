@@ -249,7 +249,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
 
   const createPermitMutation = useMutation({
     mutationFn: async (data: CreatePermitFormData) => {
-      const response = await apiRequest("POST", "/api/permits", data);
+      const response = await apiRequest("/api/permits", "POST", data);
       return response.json();
     },
     onSuccess: () => {

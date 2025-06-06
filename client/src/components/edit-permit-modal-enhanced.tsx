@@ -270,7 +270,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
-      const response = await apiRequest("PATCH", `/api/permits/${permit?.id}`, data);
+      const response = await apiRequest(`/api/permits/${permit?.id}`, "PATCH", data);
       return response.json();
     },
     onSuccess: () => {
