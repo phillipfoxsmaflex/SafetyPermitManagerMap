@@ -309,6 +309,9 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
           <DialogTitle className="text-industrial-gray">
             Arbeitserlaubnis bearbeiten - {permit.permitId}
           </DialogTitle>
+          <DialogDescription>
+            Bearbeiten Sie die Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung und AI-unterstützten Verbesserungsvorschlägen.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

@@ -380,6 +380,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
               )}
               {resultType === 'success' ? 'Erfolgreich' : 'Fehler'}
             </DialogTitle>
+            <DialogDescription>
+              {resultType === 'success' 
+                ? 'Die Aktion wurde erfolgreich ausgeführt.' 
+                : 'Bei der Ausführung ist ein Fehler aufgetreten.'
+              }
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-gray-700">{resultMessage}</p>

@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -300,6 +301,9 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
           <DialogTitle className="text-lg font-semibold text-industrial-gray">
             Neue Arbeitsgenehmigung erstellen
           </DialogTitle>
+          <DialogDescription>
+            Erstellen Sie eine neue Arbeitserlaubnis mit vollständiger Sicherheitsbewertung und TRBS-konformer Gefährdungsbeurteilung.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
