@@ -553,6 +553,256 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Suggestions and Webhook routes
+  
+  // Send permit to AI for analysis
+  app.post("/api/permits/:id/analyze", async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const permit = await storage.getPermit(permitId);
+      
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+
+      const webhookConfig = await storage.getActiveWebhookConfig();
+      if (!webhookConfig) {
+        return res.status(400).json({ message: "No active webhook configuration found" });
+      }
+
+      // Prepare permit data for AI analysis
+      const permitData = {
+        permitId: permit.permitId,
+        type: permit.type,
+        location: permit.location,
+        description: permit.description,
+        department: permit.department,
+        riskLevel: permit.riskLevel,
+        selectedHazards: permit.selectedHazards,
+        hazardNotes: permit.hazardNotes,
+        completedMeasures: permit.completedMeasures,
+        identifiedHazards: permit.identifiedHazards,
+        additionalComments: permit.additionalComments,
+        timestamp: new Date().toISOString(),
+        analysisType: 'permit_improvement'
+      };
+
+      // Send to webhook
+      const response = await fetch(webhookConfig.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(permitData),
+        signal: AbortSignal.timeout(30000) // 30 second timeout
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.status}`);
+      }
+
+      res.json({ 
+        message: "Permit sent for AI analysis successfully",
+        status: "processing" 
+      });
+    } catch (error) {
+      console.error("Error sending permit for analysis:", error);
+      res.status(500).json({ message: "Failed to send permit for analysis" });
+    }
+  });
+
+  // Receive AI suggestions from webhook
+  app.post("/api/webhooks/suggestions", async (req, res) => {
+    try {
+      const { permitId, suggestions } = req.body;
+      
+      if (!permitId || !suggestions || !Array.isArray(suggestions)) {
+        return res.status(400).json({ message: "Invalid webhook payload" });
+      }
+
+      // Find permit by permitId (string)
+      const permit = await storage.getPermitByPermitId(permitId);
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+
+      // Create AI suggestions
+      const createdSuggestions = [];
+      for (const suggestion of suggestions) {
+        const aiSuggestion = await storage.createAiSuggestion({
+          permitId: permit.id,
+          suggestionType: suggestion.type || 'improvement',
+          fieldName: suggestion.fieldName || null,
+          originalValue: suggestion.originalValue || null,
+          suggestedValue: suggestion.suggestedValue,
+          reasoning: suggestion.reasoning,
+          priority: suggestion.priority || 'medium',
+          status: 'pending'
+        });
+        createdSuggestions.push(aiSuggestion);
+      }
+
+      res.json({ 
+        message: "AI suggestions received successfully",
+        suggestionsCount: createdSuggestions.length 
+      });
+    } catch (error) {
+      console.error("Error receiving AI suggestions:", error);
+      res.status(500).json({ message: "Failed to process AI suggestions" });
+    }
+  });
+
+  // Get suggestions for a permit
+  app.get("/api/permits/:id/suggestions", async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const suggestions = await storage.getPermitSuggestions(permitId);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
+  // Apply a suggestion
+  app.post("/api/suggestions/:id/apply", async (req, res) => {
+    try {
+      const suggestionId = parseInt(req.params.id);
+      const success = await storage.applySuggestion(suggestionId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Suggestion not found or could not be applied" });
+      }
+
+      res.json({ message: "Suggestion applied successfully" });
+    } catch (error) {
+      console.error("Error applying suggestion:", error);
+      res.status(500).json({ message: "Failed to apply suggestion" });
+    }
+  });
+
+  // Update suggestion status
+  app.patch("/api/suggestions/:id/status", async (req, res) => {
+    try {
+      const suggestionId = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!['pending', 'accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const suggestion = await storage.updateSuggestionStatus(suggestionId, status);
+      if (!suggestion) {
+        return res.status(404).json({ message: "Suggestion not found" });
+      }
+
+      res.json(suggestion);
+    } catch (error) {
+      console.error("Error updating suggestion status:", error);
+      res.status(500).json({ message: "Failed to update suggestion status" });
+    }
+  });
+
+  // Webhook configuration routes
+  app.get("/api/webhook-configs", async (req, res) => {
+    try {
+      const configs = await storage.getAllWebhookConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Error fetching webhook configs:", error);
+      res.status(500).json({ message: "Failed to fetch webhook configurations" });
+    }
+  });
+
+  app.post("/api/webhook-configs", async (req, res) => {
+    try {
+      const { name, webhookUrl, isActive } = req.body;
+      
+      if (!name || !webhookUrl) {
+        return res.status(400).json({ message: "Name and webhook URL are required" });
+      }
+
+      // If setting as active, deactivate others
+      if (isActive) {
+        const existingConfigs = await storage.getAllWebhookConfigs();
+        for (const config of existingConfigs) {
+          if (config.isActive) {
+            await storage.updateWebhookConfig(config.id, { isActive: false });
+          }
+        }
+      }
+
+      const config = await storage.createWebhookConfig({
+        name,
+        webhookUrl,
+        isActive: isActive || false
+      });
+
+      res.status(201).json(config);
+    } catch (error) {
+      console.error("Error creating webhook config:", error);
+      res.status(500).json({ message: "Failed to create webhook configuration" });
+    }
+  });
+
+  app.patch("/api/webhook-configs/:id", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      const updates = req.body;
+
+      // If setting as active, deactivate others
+      if (updates.isActive) {
+        const existingConfigs = await storage.getAllWebhookConfigs();
+        for (const config of existingConfigs) {
+          if (config.isActive && config.id !== configId) {
+            await storage.updateWebhookConfig(config.id, { isActive: false });
+          }
+        }
+      }
+
+      const config = await storage.updateWebhookConfig(configId, updates);
+      if (!config) {
+        return res.status(404).json({ message: "Webhook configuration not found" });
+      }
+
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating webhook config:", error);
+      res.status(500).json({ message: "Failed to update webhook configuration" });
+    }
+  });
+
+  app.delete("/api/webhook-configs/:id", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      const success = await storage.deleteWebhookConfig(configId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Webhook configuration not found" });
+      }
+
+      res.json({ message: "Webhook configuration deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting webhook config:", error);
+      res.status(500).json({ message: "Failed to delete webhook configuration" });
+    }
+  });
+
+  app.post("/api/webhook-configs/:id/test", async (req, res) => {
+    try {
+      const configId = parseInt(req.params.id);
+      const success = await storage.testWebhookConnection(configId);
+      
+      res.json({ 
+        success,
+        message: success ? "Connection test successful" : "Connection test failed"
+      });
+    } catch (error) {
+      console.error("Error testing webhook connection:", error);
+      res.status(500).json({ message: "Failed to test webhook connection" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

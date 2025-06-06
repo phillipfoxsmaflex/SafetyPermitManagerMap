@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,10 +23,375 @@ import {
   Mail,
   Server,
   Key,
-  Lock
+  Lock,
+  Webhook,
+  Plus,
+  TestTube,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  Edit
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+
+interface WebhookConfig {
+  id: number;
+  name: string;
+  webhookUrl: string;
+  isActive: boolean;
+  lastTestedAt?: string;
+  lastTestStatus?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function WebhookConfigSection() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedConfig, setSelectedConfig] = useState<WebhookConfig | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    webhookUrl: "",
+    isActive: false
+  });
+
+  const { data: webhookConfigs = [], isLoading } = useQuery<WebhookConfig[]>({
+    queryKey: ["/api/webhook-configs"],
+  });
+
+  const createConfigMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      return apiRequest("/api/webhook-configs", "POST", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/webhook-configs"] });
+      setCreateModalOpen(false);
+      setFormData({ name: "", webhookUrl: "", isActive: false });
+      toast({
+        title: "Webhook erstellt",
+        description: "Die Webhook-Konfiguration wurde erfolgreich erstellt.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Webhook-Konfiguration konnte nicht erstellt werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<WebhookConfig> }) => {
+      return apiRequest(`/api/webhook-configs/${id}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/webhook-configs"] });
+      setEditModalOpen(false);
+      toast({
+        title: "Webhook aktualisiert",
+        description: "Die Webhook-Konfiguration wurde erfolgreich aktualisiert.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Webhook-Konfiguration konnte nicht aktualisiert werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteConfigMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/webhook-configs/${id}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/webhook-configs"] });
+      toast({
+        title: "Webhook gelöscht",
+        description: "Die Webhook-Konfiguration wurde erfolgreich gelöscht.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Webhook-Konfiguration konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const testConnectionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/webhook-configs/${id}/test`, "POST");
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/webhook-configs"] });
+      toast({
+        title: data.success ? "Verbindung erfolgreich" : "Verbindung fehlgeschlagen",
+        description: data.message,
+        variant: data.success ? "default" : "destructive",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Verbindungstest konnte nicht durchgeführt werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreate = () => {
+    if (!formData.name || !formData.webhookUrl) {
+      toast({
+        title: "Fehler",
+        description: "Name und Webhook-URL sind erforderlich.",
+        variant: "destructive",
+      });
+      return;
+    }
+    createConfigMutation.mutate(formData);
+  };
+
+  const handleEdit = (config: WebhookConfig) => {
+    setSelectedConfig(config);
+    setFormData({
+      name: config.name,
+      webhookUrl: config.webhookUrl,
+      isActive: config.isActive
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedConfig || !formData.name || !formData.webhookUrl) {
+      toast({
+        title: "Fehler",
+        description: "Name und Webhook-URL sind erforderlich.",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateConfigMutation.mutate({ id: selectedConfig.id, data: formData });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Sind Sie sicher, dass Sie diese Webhook-Konfiguration löschen möchten?")) {
+      deleteConfigMutation.mutate(id);
+    }
+  };
+
+  const handleTest = (id: number) => {
+    testConnectionMutation.mutate(id);
+  };
+
+  const getStatusBadge = (config: WebhookConfig) => {
+    if (!config.lastTestedAt) {
+      return <Badge variant="secondary">Nicht getestet</Badge>;
+    }
+    if (config.lastTestStatus === 'success') {
+      return <Badge variant="default" className="bg-green-100 text-green-800">Erfolgreich</Badge>;
+    }
+    return <Badge variant="destructive">Fehlgeschlagen</Badge>;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <Webhook className="h-5 w-5" />
+            AI Webhook-Konfiguration
+          </CardTitle>
+          <Button onClick={() => setCreateModalOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Webhook hinzufügen
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <p className="text-sm text-secondary-gray">
+            Konfigurieren Sie n8n Webhook-URLs für AI-gestützte Genehmigungsverbesserungen.
+          </p>
+
+          {isLoading ? (
+            <div className="text-center py-4">Lade Webhook-Konfigurationen...</div>
+          ) : webhookConfigs.length === 0 ? (
+            <div className="text-center py-8 text-secondary-gray">
+              <Webhook className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Keine Webhook-Konfigurationen vorhanden</p>
+              <p className="text-sm">Fügen Sie eine Konfiguration hinzu, um zu beginnen</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {webhookConfigs.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-medium">{config.name}</h4>
+                      {config.isActive && (
+                        <Badge variant="default">Aktiv</Badge>
+                      )}
+                      {getStatusBadge(config)}
+                    </div>
+                    <p className="text-sm text-secondary-gray font-mono">
+                      {config.webhookUrl}
+                    </p>
+                    {config.lastTestedAt && (
+                      <p className="text-xs text-secondary-gray mt-1">
+                        Zuletzt getestet: {new Date(config.lastTestedAt).toLocaleString('de-DE')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleTest(config.id)}
+                      disabled={testConnectionMutation.isPending}
+                    >
+                      <Test className="h-4 w-4 mr-1" />
+                      Test
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(config)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Bearbeiten
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(config.id)}
+                      disabled={deleteConfigMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Löschen
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Create Webhook Modal */}
+        <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Neue Webhook-Konfiguration</DialogTitle>
+              <DialogDescription>
+                Fügen Sie eine neue n8n Webhook-URL für AI-Verbesserungen hinzu.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="z.B. n8n AI Workflow"
+                />
+              </div>
+              <div>
+                <Label>Webhook-URL *</Label>
+                <Input
+                  value={formData.webhookUrl}
+                  onChange={(e) => setFormData({ ...formData, webhookUrl: e.target.value })}
+                  placeholder="https://your-n8n-instance.com/webhook/..."
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                />
+                <Label>Als aktive Konfiguration festlegen</Label>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleCreate}
+                  disabled={createConfigMutation.isPending}
+                  className="flex-1"
+                >
+                  Erstellen
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCreateModalOpen(false)}
+                  className="flex-1"
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Webhook Modal */}
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Webhook-Konfiguration bearbeiten</DialogTitle>
+              <DialogDescription>
+                Bearbeiten Sie die Webhook-Konfiguration.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="z.B. n8n AI Workflow"
+                />
+              </div>
+              <div>
+                <Label>Webhook-URL *</Label>
+                <Input
+                  value={formData.webhookUrl}
+                  onChange={(e) => setFormData({ ...formData, webhookUrl: e.target.value })}
+                  placeholder="https://your-n8n-instance.com/webhook/..."
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                />
+                <Label>Als aktive Konfiguration festlegen</Label>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleUpdate}
+                  disabled={updateConfigMutation.isPending}
+                  className="flex-1"
+                >
+                  Aktualisieren
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditModalOpen(false)}
+                  className="flex-1"
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Settings() {
   const { toast } = useToast();
@@ -349,6 +715,11 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Webhook Configuration - Only for Admins */}
+          {isAdmin && (
+            <WebhookConfigSection />
+          )}
 
           {/* System Settings - Only for Admins */}
           {isAdmin && (
