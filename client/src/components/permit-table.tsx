@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PermitStatusBadge } from "./permit-status-badge";
+import { printPermit } from "@/lib/print-utils";
 import type { Permit } from "@shared/schema";
 import { useLocation } from "wouter";
 
@@ -287,8 +288,8 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
               <div class="field-label">Arbeit abgeschlossen:</div>
               <div class="field-value">${new Date(permit.workCompletedAt).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>` : ''}
-            <div style="margin-top: 30px; border-top: 1px solid #000; width: 300px; padding-top: 10px; text-align: center;">
-              Unterschrift Durchführer
+            <div style="margin-top: 30px; text-align: center;">
+              ${permit.performerSignature ? `<img src="${permit.performerSignature}" style="max-width: 200px; max-height: 80px; border-bottom: 1px solid #000;" alt="Unterschrift Durchführer" />` : '<div style="border-top: 1px solid #000; width: 300px; padding-top: 10px;">Unterschrift Durchführer</div>'}
             </div>
           </div>` : ''}
 

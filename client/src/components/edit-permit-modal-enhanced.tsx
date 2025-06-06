@@ -36,6 +36,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { AiSuggestions } from "@/components/ai-suggestions";
+import { SignaturePad } from "@/components/signature-pad";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
 
 interface EditPermitModalEnhancedProps {
@@ -65,6 +66,7 @@ const editPermitSchema = z.object({
   completedMeasures: z.array(z.string()).optional(),
   status: z.string().optional(),
   performerName: z.string().optional(),
+  performerSignature: z.string().optional(),
   workStartedAt: z.string().optional(),
   workCompletedAt: z.string().optional(),
 });
@@ -256,6 +258,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       hazardNotes: permit?.hazardNotes || "{}",
       completedMeasures: permit?.completedMeasures || [],
       performerName: permit?.performerName || "",
+      performerSignature: permit?.performerSignature || "",
       workStartedAt: permit?.workStartedAt ? new Date(permit.workStartedAt).toISOString().slice(0, 16) : "",
       workCompletedAt: permit?.workCompletedAt ? new Date(permit.workCompletedAt).toISOString().slice(0, 16) : "",
     },
@@ -793,11 +796,17 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                           />
                         </div>
 
+                        <SignaturePad
+                          onSignatureChange={(signature) => form.setValue("performerSignature", signature)}
+                          existingSignature={form.watch("performerSignature")}
+                          disabled={false}
+                        />
+
                         <Alert>
                           <AlertTriangle className="h-4 w-4" />
                           <AlertDescription>
-                            Wichtig: Der Durchführer muss die physische Arbeitserlaubnis unterschreiben, bevor die Arbeit beginnt. 
-                            Diese Informationen dienen der digitalen Dokumentation.
+                            Die digitale Unterschrift wird auf dem gedruckten Arbeitserlaubnis angezeigt. 
+                            Stellen Sie sicher, dass alle Informationen korrekt sind, bevor Sie unterschreiben.
                           </AlertDescription>
                         </Alert>
                       </>
