@@ -266,7 +266,7 @@ export default function PermitDetails() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Genehmigung nicht gefunden</h2>
           <p className="text-gray-600 mb-6">Die angeforderte Genehmigung konnte nicht gefunden werden.</p>
-          <Link href="/dashboard">
+          <Link href="/">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Zurück zum Dashboard
@@ -282,7 +282,7 @@ export default function PermitDetails() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Zurück
