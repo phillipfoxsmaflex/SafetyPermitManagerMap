@@ -118,7 +118,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     updateStatusMutation.mutate({ suggestionId, status: 'rejected' });
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string | undefined) => {
+    if (!priority) return 'bg-gray-100 text-gray-800 border-gray-200';
     switch (priority) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -128,7 +129,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
+  const getPriorityIcon = (priority: string | undefined) => {
+    if (!priority) return <Lightbulb className="h-4 w-4" />;
     switch (priority) {
       case 'critical': return <AlertTriangle className="h-4 w-4" />;
       case 'high': return <AlertTriangle className="h-4 w-4" />;
@@ -194,7 +196,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
                       className={getPriorityColor(suggestion.priority)}
                     >
                       {getPriorityIcon(suggestion.priority)}
-                      <span className="ml-1">{suggestion.priority.charAt(0).toUpperCase() + suggestion.priority.slice(1)}</span>
+                      <span className="ml-1">{suggestion.priority ? suggestion.priority.charAt(0).toUpperCase() + suggestion.priority.slice(1) : 'Unbekannt'}</span>
                     </Badge>
                     <Badge variant="secondary">
                       {getTypeLabel(suggestion.suggestionType)}
