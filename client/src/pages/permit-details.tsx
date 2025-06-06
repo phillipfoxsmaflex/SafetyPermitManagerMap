@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, Printer, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
+import { AiSuggestions } from "@/components/ai-suggestions";
 import { Permit } from "@shared/schema";
 
 export default function PermitDetails() {
@@ -547,6 +548,9 @@ export default function PermitDetails() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Suggestions */}
+        <AiSuggestions permitId={permit.id} />
       </div>
 
       <EditPermitModalEnhanced
