@@ -263,10 +263,22 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
       form.reset();
       setActiveTab("basic");
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = "Genehmigung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.";
+      
+      try {
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+      } catch (e) {
+        // Use default message if error parsing fails
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to create permit. Please try again.",
+        title: "Fehler beim Erstellen der Genehmigung",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -694,18 +706,6 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-secondary-gray">⚙️</div>
-                        <div>
-                          <p className="font-medium text-industrial-gray">Operations Manager</p>
-                          <p className="text-sm text-secondary-gray">Final authorization for critical work</p>
-                        </div>
-                      </div>
-                      <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-warning-orange">
-                        Pending
-                      </span>
-                    </div>
                   </CardContent>
                 </Card>
 
@@ -714,42 +714,16 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                   name="additionalComments"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Additional Comments</FormLabel>
+                      <FormLabel>Zusätzliche Kommentare</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Any additional safety considerations or special instructions..."
+                          placeholder="Weitere Sicherheitsüberlegungen oder spezielle Anweisungen..."
                           {...field}
                         />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Emergency Contacts</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-3 bg-red-50 rounded-lg">
-                        <p className="font-medium text-alert-red">Emergency Services</p>
-                        <p className="text-lg font-bold text-alert-red">112</p>
-                      </div>
-                      <div className="p-3 bg-orange-50 rounded-lg">
-                        <p className="font-medium text-caution-orange">Plant Emergency</p>
-                        <p className="text-lg font-bold text-caution-orange">+49 123 456-7890</p>
-                      </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="font-medium text-safety-blue">Safety Department</p>
-                        <p className="text-lg font-bold text-safety-blue">+49 123 456-7891</p>
-                      </div>
-                      <div className="p-3 bg-green-50 rounded-lg">
-                        <p className="font-medium text-safety-green">Medical</p>
-                        <p className="text-lg font-bold text-safety-green">+49 123 456-7892</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </TabsContent>
             </Tabs>
 

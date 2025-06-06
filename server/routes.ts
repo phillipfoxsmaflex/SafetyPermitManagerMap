@@ -58,12 +58,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Creating permit with data:", JSON.stringify(req.body, null, 2));
       
-      // Convert empty date strings to null
-      const processedData = {
-        ...req.body,
-        startDate: req.body.startDate === "" ? null : req.body.startDate,
-        endDate: req.body.endDate === "" ? null : req.body.endDate,
-      };
+      // Validate and convert dates
+      const processedData = { ...req.body };
+      
+      // Check if dates are valid
+      if (req.body.startDate) {
+        const startDate = new Date(req.body.startDate);
+        if (isNaN(startDate.getTime())) {
+          return res.status(400).json({ 
+            message: "Ungültiges Startdatum. Bitte geben Sie ein gültiges Datum ein." 
+          });
+        }
+        processedData.startDate = startDate.toISOString();
+      } else {
+        processedData.startDate = null;
+      }
+      
+      if (req.body.endDate) {
+        const endDate = new Date(req.body.endDate);
+        if (isNaN(endDate.getTime())) {
+          return res.status(400).json({ 
+            message: "Ungültiges Enddatum. Bitte geben Sie ein gültiges Datum ein." 
+          });
+        }
+        processedData.endDate = endDate.toISOString();
+      } else {
+        processedData.endDate = null;
+      }
+      
+      // Check if end date is after start date
+      if (processedData.startDate && processedData.endDate) {
+        const start = new Date(processedData.startDate);
+        const end = new Date(processedData.endDate);
+        if (end < start) {
+          return res.status(400).json({ 
+            message: "Enddatum muss nach dem Startdatum liegen." 
+          });
+        }
+      }
       
       const validatedData = insertPermitSchema.parse(processedData);
       console.log("Validated data:", JSON.stringify(validatedData, null, 2));
@@ -78,12 +110,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         console.log("Validation errors:", error.errors);
         return res.status(400).json({ 
-          message: "Validation error", 
+          message: "Validierungsfehler. Bitte überprüfen Sie alle Pflichtfelder.", 
           errors: error.errors 
         });
       }
       
-      res.status(500).json({ message: "Failed to create permit" });
+      res.status(500).json({ 
+        message: "Genehmigung konnte nicht erstellt werden. Bitte überprüfen Sie alle Eingaben und versuchen Sie es erneut." 
+      });
     }
   });
 
