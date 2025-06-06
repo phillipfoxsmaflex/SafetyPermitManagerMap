@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Bot, 
@@ -40,6 +41,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [resultDialogOpen, setResultDialogOpen] = useState(false);
+  const [resultMessage, setResultMessage] = useState('');
+  const [resultType, setResultType] = useState<'success' | 'error'>('success');
 
   const { data: allSuggestions = [], isLoading } = useQuery<AiSuggestion[]>({
     queryKey: ["/api/permits", permitId, "suggestions"],
@@ -53,11 +58,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
     onSuccess: () => {
+      setAnalysisDialogOpen(true);
       setIsAnalyzing(true);
-      toast({
-        title: "AI-Analyse gestartet",
-        description: "Die Genehmigung wird zur Verbesserung analysiert. Vorschläge werden in Kürze verfügbar sein.",
-      });
       
       // Poll for new suggestions
       const pollInterval = setInterval(() => {
@@ -68,14 +70,13 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setTimeout(() => {
         clearInterval(pollInterval);
         setIsAnalyzing(false);
+        setAnalysisDialogOpen(false);
       }, 120000);
     },
     onError: (error: any) => {
-      toast({
-        title: "Fehler bei AI-Analyse",
-        description: error.message || "Die AI-Analyse konnte nicht gestartet werden.",
-        variant: "destructive",
-      });
+      setResultType('error');
+      setResultMessage(error.message || "Die AI-Analyse konnte nicht gestartet werden.");
+      setResultDialogOpen(true);
     },
   });
 
@@ -86,17 +87,14 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId] });
-      toast({
-        title: "Vorschlag übernommen",
-        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
-      });
+      setResultType('success');
+      setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
+      setResultDialogOpen(true);
     },
     onError: () => {
-      toast({
-        title: "Fehler",
-        description: "Der Vorschlag konnte nicht übernommen werden.",
-        variant: "destructive",
-      });
+      setResultType('error');
+      setResultMessage('Der Vorschlag konnte nicht übernommen werden.');
+      setResultDialogOpen(true);
     },
   });
 

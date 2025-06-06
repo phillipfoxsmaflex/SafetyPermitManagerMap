@@ -34,6 +34,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { AiSuggestions } from "@/components/ai-suggestions";
 import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
 
 const createPermitSchema = z.object({
@@ -304,15 +305,18 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic" className="text-sm">
                   1. Grundinformationen
                 </TabsTrigger>
                 <TabsTrigger value="safety" className="text-sm">
                   2. Sicherheitsbewertung
                 </TabsTrigger>
+                <TabsTrigger value="ai" className="text-sm">
+                  3. AI-Verbesserungen
+                </TabsTrigger>
                 <TabsTrigger value="approval" className="text-sm">
-                  3. Genehmigung & Freigabe
+                  4. Genehmigung & Freigabe
                 </TabsTrigger>
               </TabsList>
 
@@ -738,6 +742,20 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     </FormItem>
                   )}
                 />
+              </TabsContent>
+
+              <TabsContent value="ai" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-industrial-gray">AI-Unterstützte Verbesserungen</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-secondary-gray">
+                      <p className="mb-4">AI-Verbesserungen sind nur nach dem Erstellen der Genehmigung verfügbar.</p>
+                      <p className="text-sm">Erstellen Sie zunächst die Genehmigung, um AI-Analyse zu nutzen.</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
 
