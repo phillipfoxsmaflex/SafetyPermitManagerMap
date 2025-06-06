@@ -41,9 +41,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const queryClient = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { data: suggestions = [], isLoading } = useQuery<AiSuggestion[]>({
+  const { data: allSuggestions = [], isLoading } = useQuery<AiSuggestion[]>({
     queryKey: ["/api/permits", permitId, "suggestions"],
   });
+
+  // Only show pending suggestions for one-time chat behavior
+  const suggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {

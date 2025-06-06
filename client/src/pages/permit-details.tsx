@@ -549,8 +549,8 @@ export default function PermitDetails() {
           </CardContent>
         </Card>
 
-        {/* AI Suggestions */}
-        <AiSuggestions permitId={permit.id} />
+        {/* AI Suggestions - only show in edit mode */}
+        {isEditModalOpen && <AiSuggestions permitId={permit.id} />}
       </div>
 
       <EditPermitModalEnhanced

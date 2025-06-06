@@ -34,6 +34,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { AiSuggestions } from "@/components/ai-suggestions";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
 
 interface EditPermitModalEnhancedProps {
@@ -312,10 +313,11 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
         <Form {...form}>
           <form className="space-y-6">
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="details">Arbeitsdetails</TabsTrigger>
                 <TabsTrigger value="safety">Sicherheitsbewertung</TabsTrigger>
                 <TabsTrigger value="approval">Genehmigung</TabsTrigger>
+                <TabsTrigger value="ai">AI-Verbesserungen</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-6">
@@ -716,6 +718,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                     />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="ai" className="space-y-6">
+                <AiSuggestions permitId={permit.id} />
               </TabsContent>
             </Tabs>
 
