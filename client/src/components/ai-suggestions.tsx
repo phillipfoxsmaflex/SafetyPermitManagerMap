@@ -51,8 +51,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     queryKey: ["/api/permits", permitId, "suggestions"],
   });
 
-  // Only show pending suggestions for one-time chat behavior
-  const suggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
+  // Only show the latest pending suggestion for one-time chat behavior
+  const pendingSuggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
+  const suggestions = pendingSuggestions.length > 0 ? [pendingSuggestions[pendingSuggestions.length - 1]] : [];
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -118,8 +119,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
     onSuccess: () => {
+      // Only invalidate suggestions, not the permit data to keep edit form open
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId] });
       setResultType('success');
       setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
