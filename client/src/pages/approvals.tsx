@@ -46,7 +46,7 @@ export default function Approvals() {
   });
 
   const approvePermitMutation = useMutation({
-    mutationFn: async ({ permitId, approvalType }: { permitId: number; approvalType: 'department_head' | 'maintenance' }) => {
+    mutationFn: async ({ permitId, approvalType }: { permitId: number; approvalType: 'department_head' | 'maintenance' | 'safety_officer' }) => {
       const response = await fetch(`/api/permits/${permitId}/approve`, {
         method: "POST",
         headers: {
@@ -115,13 +115,18 @@ export default function Approvals() {
     
     return permits.filter((permit: Permit) => {
       // Department head approvals
-      if (currentUser.role === 'supervisor' || currentUser.role === 'admin') {
+      if (currentUser.role === 'department_head' || currentUser.role === 'admin') {
         return permit.status === 'pending' && !permit.departmentHeadApproval;
       }
       
       // Maintenance/Engineering approvals
       if (currentUser.role === 'maintenance' || currentUser.role === 'admin') {
         return permit.status === 'pending' && !permit.maintenanceApproval;
+      }
+      
+      // Safety officer approvals (optional)
+      if (currentUser.role === 'safety_officer' || currentUser.role === 'admin') {
+        return permit.status === 'pending' && !permit.safetyOfficerApproval;
       }
       
       return false;
@@ -136,11 +141,14 @@ export default function Approvals() {
     if (!currentUser) return [];
     
     return permits.filter((permit: Permit) => {
-      if (currentUser.role === 'supervisor' || currentUser.role === 'admin') {
+      if (currentUser.role === 'department_head' || currentUser.role === 'admin') {
         return permit.departmentHeadApproval;
       }
       if (currentUser.role === 'maintenance' || currentUser.role === 'admin') {
         return permit.maintenanceApproval;
+      }
+      if (currentUser.role === 'safety_officer' || currentUser.role === 'admin') {
+        return permit.safetyOfficerApproval;
       }
       return false;
     });
@@ -152,12 +160,14 @@ export default function Approvals() {
   };
 
   const handleApprove = (permit: Permit) => {
-    let approvalType: 'department_head' | 'maintenance';
+    let approvalType: 'department_head' | 'maintenance' | 'safety_officer';
     
-    if (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') {
+    if (currentUser?.role === 'department_head' || currentUser?.role === 'admin') {
       approvalType = 'department_head';
     } else if (currentUser?.role === 'maintenance') {
       approvalType = 'maintenance';
+    } else if (currentUser?.role === 'safety_officer') {
+      approvalType = 'safety_officer';
     } else {
       return;
     }

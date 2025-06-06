@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
   department: text("department").notNull(),
-  role: text("role").notNull(), // 'supervisor', 'safety_officer', 'operations_manager', 'worker'
+  role: text("role").notNull(), // 'admin', 'department_head', 'safety_officer', 'maintenance', 'employee'
 });
 
 export const permits = pgTable("permits", {

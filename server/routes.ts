@@ -185,6 +185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (approvalType === "maintenance") {
         updates.maintenanceApproval = true;
         updates.maintenanceApprovalDate = new Date();
+      } else if (approvalType === "safety_officer") {
+        updates.safetyOfficerApproval = true;
+        updates.safetyOfficerApprovalDate = new Date();
       }
       
       // Check if both required approvals are now complete
