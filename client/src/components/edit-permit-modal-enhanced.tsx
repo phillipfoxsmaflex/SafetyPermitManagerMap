@@ -64,6 +64,9 @@ const editPermitSchema = z.object({
   hazardNotes: z.string().optional(),
   completedMeasures: z.array(z.string()).optional(),
   status: z.string().optional(),
+  performerName: z.string().optional(),
+  workStartedAt: z.string().optional(),
+  workCompletedAt: z.string().optional(),
 });
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
@@ -252,6 +255,9 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       selectedHazards: permit?.selectedHazards || [],
       hazardNotes: permit?.hazardNotes || "{}",
       completedMeasures: permit?.completedMeasures || [],
+      performerName: permit?.performerName || "",
+      workStartedAt: permit?.workStartedAt ? new Date(permit.workStartedAt).toISOString().slice(0, 16) : "",
+      workCompletedAt: permit?.workCompletedAt ? new Date(permit.workCompletedAt).toISOString().slice(0, 16) : "",
     },
   });
 
@@ -317,10 +323,11 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
         <Form {...form}>
           <form className="space-y-6">
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="details">Arbeitsdetails</TabsTrigger>
                 <TabsTrigger value="safety">Sicherheitsbewertung</TabsTrigger>
                 <TabsTrigger value="approval">Genehmigung</TabsTrigger>
+                <TabsTrigger value="performer">Durchführer</TabsTrigger>
                 <TabsTrigger value="ai">AI-Verbesserungen</TabsTrigger>
               </TabsList>
 

@@ -46,6 +46,12 @@ export const permits = pgTable("permits", {
   safetyOfficerApproval: boolean("safety_officer_approval").default(false),
   safetyOfficerApprovalDate: timestamp("safety_officer_approval_date"),
   
+  // Performer information - filled after approval
+  performerName: text("performer_name"),
+  performerSignature: text("performer_signature"),
+  workStartedAt: timestamp("work_started_at"),
+  workCompletedAt: timestamp("work_completed_at"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

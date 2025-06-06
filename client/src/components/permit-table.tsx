@@ -269,6 +269,28 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
               </div>
             </div>
           </div>
+          
+          ${permit.performerName ? `
+          <div class="section" style="margin-top: 40px;">
+            <div class="section-title">DURCHFÜHRER</div>
+            <div class="field-row">
+              <div class="field-label">Name des Durchführers:</div>
+              <div class="field-value">${permit.performerName}</div>
+            </div>
+            ${permit.workStartedAt ? `
+            <div class="field-row">
+              <div class="field-label">Arbeit begonnen:</div>
+              <div class="field-value">${new Date(permit.workStartedAt).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>` : ''}
+            ${permit.workCompletedAt ? `
+            <div class="field-row">
+              <div class="field-label">Arbeit abgeschlossen:</div>
+              <div class="field-value">${new Date(permit.workCompletedAt).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>` : ''}
+            <div style="margin-top: 30px; border-top: 1px solid #000; width: 300px; padding-top: 10px; text-align: center;">
+              Unterschrift Durchführer
+            </div>
+          </div>` : ''}
 
           <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #666;">
             Erstellt am: ${permit.createdAt ? new Date(permit.createdAt).toLocaleDateString('de-DE') : ''} | 
