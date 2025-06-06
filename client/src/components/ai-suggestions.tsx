@@ -45,6 +45,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const [resultMessage, setResultMessage] = useState('');
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
+  const [analysisStage, setAnalysisStage] = useState('checking');
 
   const { data: allSuggestions = [], isLoading } = useQuery<AiSuggestion[]>({
     queryKey: ["/api/permits", permitId, "suggestions"],
@@ -55,12 +56,42 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
+      setAnalysisStage('checking');
+      
+      // Check if webhook is configured before starting analysis
+      const response = await fetch('/api/webhook-configs');
+      const webhookConfigs = await response.json();
+      const activeWebhook = webhookConfigs.find((config: any) => config.isActive);
+      
+      if (!activeWebhook) {
+        throw new Error('Keine aktive Webhook-Konfiguration gefunden. Bitte konfigurieren Sie eine n8n Webhook-URL in den Einstellungen.');
+      }
+
+      setAnalysisStage('testing');
+      
+      // Test webhook connection before proceeding
+      try {
+        const testResponse = await fetch(`/api/webhook-configs/${activeWebhook.id}/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const testResult = await testResponse.json();
+        
+        if (!testResult.success) {
+          throw new Error('Webhook-Verbindung fehlgeschlagen. Bitte überprüfen Sie die Konfiguration in den Einstellungen.');
+        }
+      } catch (testError) {
+        throw new Error('Webhook nicht erreichbar. Bitte überprüfen Sie die n8n Webhook-URL in den Einstellungen.');
+      }
+
+      setAnalysisStage('analyzing');
       return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
-    onSuccess: () => {
+    onMutate: () => {
       setAnalysisDialogOpen(true);
       setIsAnalyzing(true);
-      
+    },
+    onSuccess: () => {
       // Poll for new suggestions
       const pollInterval = setInterval(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
@@ -74,6 +105,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       }, 120000);
     },
     onError: (error: any) => {
+      setIsAnalyzing(false);
+      setAnalysisDialogOpen(false);
       setResultType('error');
       setResultMessage(error.message || "Die AI-Analyse konnte nicht gestartet werden.");
       setResultDialogOpen(true);
@@ -310,8 +343,24 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 mx-auto animate-spin text-blue-600" />
               <div className="space-y-2">
-                <p className="text-lg font-medium">Prüfe Genehmigung...</p>
-                <p className="text-sm text-gray-600">Denke nach über mögliche Verbesserungen</p>
+                {analysisStage === 'checking' && (
+                  <>
+                    <p className="text-lg font-medium">Prüfe Webhook-Konfiguration...</p>
+                    <p className="text-sm text-gray-600">Überprüfe AI-System Verfügbarkeit</p>
+                  </>
+                )}
+                {analysisStage === 'testing' && (
+                  <>
+                    <p className="text-lg font-medium">Teste Verbindung...</p>
+                    <p className="text-sm text-gray-600">Verbinde mit n8n Webhook</p>
+                  </>
+                )}
+                {analysisStage === 'analyzing' && (
+                  <>
+                    <p className="text-lg font-medium">Analysiere Genehmigung...</p>
+                    <p className="text-sm text-gray-600">Denke nach über mögliche Verbesserungen</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
