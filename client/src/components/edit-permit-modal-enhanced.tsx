@@ -731,6 +731,81 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 </Card>
               </TabsContent>
 
+              <TabsContent value="performer" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-industrial-gray">
+                      <CheckCircle className="h-5 w-5" />
+                      Durchführer-Informationen
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {permit.status !== 'approved' && permit.status !== 'active' && permit.status !== 'completed' ? (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Durchführer-Informationen können erst nach der Genehmigung der Arbeitserlaubnis ausgefüllt werden.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="performerName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name des Durchführers</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Vollständiger Name der Person, die die Arbeit durchführt" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="workStartedAt"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Arbeit begonnen am</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="workCompletedAt"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Arbeit abgeschlossen am</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            Wichtig: Der Durchführer muss die physische Arbeitserlaubnis unterschreiben, bevor die Arbeit beginnt. 
+                            Diese Informationen dienen der digitalen Dokumentation.
+                          </AlertDescription>
+                        </Alert>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="ai" className="space-y-6">
                 <AiSuggestions permitId={permit.id} />
               </TabsContent>
