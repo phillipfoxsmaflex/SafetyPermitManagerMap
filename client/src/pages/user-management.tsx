@@ -139,9 +139,9 @@ export default function UserManagement() {
   const getRoleLabel = (role: string) => {
     const roleMap: Record<string, string> = {
       'admin': 'Administrator',
-      'operations_manager': 'Betriebsleiter',
       'safety_officer': 'Sicherheitsbeauftragter',
-      'supervisor': 'Vorgesetzter',
+      'department_head': 'Abteilungsleiter',
+      'maintenance': 'Technik',
       'employee': 'Mitarbeiter',
     };
     return roleMap[role] || role;
@@ -151,12 +151,12 @@ export default function UserManagement() {
     switch (role) {
       case 'admin':
         return 'default';
-      case 'operations_manager':
-        return 'destructive';
       case 'safety_officer':
         return 'secondary';
-      case 'supervisor':
+      case 'department_head':
         return 'outline';
+      case 'maintenance':
+        return 'destructive';
       default:
         return 'secondary';
     }
@@ -315,9 +315,9 @@ export default function UserManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="admin">Administrator</SelectItem>
-                            <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
                             <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
-                            <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                            <SelectItem value="department_head">Abteilungsleiter</SelectItem>
+                            <SelectItem value="maintenance">Technik</SelectItem>
                             <SelectItem value="employee">Mitarbeiter</SelectItem>
                           </SelectContent>
                         </Select>
@@ -402,9 +402,9 @@ export default function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Administrator</SelectItem>
-                  <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
                   <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
-                  <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                  <SelectItem value="department_head">Abteilungsleiter</SelectItem>
+                  <SelectItem value="maintenance">Technik</SelectItem>
                   <SelectItem value="employee">Mitarbeiter</SelectItem>
                 </SelectContent>
               </Select>
@@ -500,9 +500,9 @@ export default function UserManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="operations_manager">Betriebsleiter</SelectItem>
                     <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
-                    <SelectItem value="supervisor">Vorgesetzter</SelectItem>
+                    <SelectItem value="department_head">Abteilungsleiter</SelectItem>
+                    <SelectItem value="maintenance">Technik</SelectItem>
                     <SelectItem value="employee">Mitarbeiter</SelectItem>
                   </SelectContent>
                 </Select>
