@@ -598,7 +598,7 @@ export default function Approvals() {
                       </p>
                     </div>
                     <div className="bg-gray-50 p-3 rounded">
-                      <p className="text-xs text-gray-600 font-medium">Instandhaltung/Engineering</p>
+                      <p className="text-xs text-gray-600 font-medium">Technik</p>
                       <p className="text-sm font-semibold text-industrial-gray">
                         {viewingPermit.maintenanceApprover || 'Nicht zugewiesen'}
                       </p>

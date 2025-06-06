@@ -236,7 +236,7 @@ export default function PermitDetails() {
               </div>
             </div>
             <div class="signature-box">
-              <div>Wartungsgenehmiger</div>
+              <div>Technik</div>
               <div style="margin-top: 20px; font-size: 10px;">
                 ${permit.maintenanceApproval ? `Genehmigt: ${permit.maintenanceApprovalDate ? formatDateTime(permit.maintenanceApprovalDate) : ''}` : 'Ausstehend'}
               </div>
@@ -527,7 +527,7 @@ export default function PermitDetails() {
 
               {/* Maintenance Approver */}
               <div className="text-center p-4 border rounded-lg">
-                <div className="font-medium text-gray-900 mb-2">Wartungsgenehmiger</div>
+                <div className="font-medium text-gray-900 mb-2">Technik</div>
                 <div className="text-sm text-gray-600 mb-3">{permit.maintenanceApprover}</div>
                 <div className="flex items-center justify-center mb-2">
                   {permit.maintenanceApproval ? (

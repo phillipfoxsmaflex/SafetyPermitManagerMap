@@ -687,12 +687,26 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
 
                     <FormField
                       control={form.control}
+                      name="safetyOfficer"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sicherheitsbeauftragter</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Name des Sicherheitsbeauftragten" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="maintenanceApprover"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Instandhaltung/Engineering-Genehmiger *</FormLabel>
+                          <FormLabel>Technik *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Name des Instandhaltungs-/Engineering-Genehmigers" {...field} />
+                            <Input placeholder="Name des Technik-Genehmigers" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

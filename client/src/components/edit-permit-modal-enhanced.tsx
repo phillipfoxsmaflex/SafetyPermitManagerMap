@@ -669,12 +669,26 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
                       <FormField
                         control={form.control}
+                        name="safetyOfficer"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sicherheitsbeauftragter</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Name des Sicherheitsbeauftragten" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
                         name="maintenanceApprover"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Instandhaltung/Engineering</FormLabel>
+                            <FormLabel>Technik</FormLabel>
                             <FormControl>
-                              <Input placeholder="Name des Instandhaltungsverantwortlichen" {...field} />
+                              <Input placeholder="Name des Technik-Genehmigers" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
