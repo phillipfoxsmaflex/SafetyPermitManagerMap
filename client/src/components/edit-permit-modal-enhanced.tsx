@@ -696,45 +696,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="riskLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Risikostufe (Optional)</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Risikostufe auswählen..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="low">Niedrig</SelectItem>
-                                <SelectItem value="medium">Mittel</SelectItem>
-                                <SelectItem value="high">Hoch</SelectItem>
-                                <SelectItem value="critical">Kritisch</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="safetyOfficer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Sicherheitsbeauftragter (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Name des Sicherheitsbeauftragten" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
 
                     <FormField
                       control={form.control}
