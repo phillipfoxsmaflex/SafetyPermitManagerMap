@@ -570,30 +570,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No active webhook configuration found" });
       }
 
-      // Prepare permit data for AI analysis
-      const permitData = {
-        permitId: permit.permitId,
-        type: permit.type,
-        location: permit.location,
-        description: permit.description,
-        department: permit.department,
-        riskLevel: permit.riskLevel,
-        selectedHazards: permit.selectedHazards,
-        hazardNotes: permit.hazardNotes,
-        completedMeasures: permit.completedMeasures,
-        identifiedHazards: permit.identifiedHazards,
-        additionalComments: permit.additionalComments,
-        timestamp: new Date().toISOString(),
-        analysisType: 'permit_improvement'
-      };
+      // Create URL with permit ID for GET request to n8n
+      const url = new URL(webhookConfig.webhookUrl);
+      url.searchParams.append('permitId', permit.permitId);
+      url.searchParams.append('internalId', permit.id.toString());
+      url.searchParams.append('analysisType', 'permit_improvement');
+      url.searchParams.append('timestamp', new Date().toISOString());
 
-      // Send to webhook
-      const response = await fetch(webhookConfig.webhookUrl, {
-        method: 'POST',
+      // Send GET request to webhook
+      const response = await fetch(url.toString(), {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(permitData),
         signal: AbortSignal.timeout(30000) // 30 second timeout
       });
 
