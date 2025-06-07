@@ -431,7 +431,20 @@ export class DatabaseStorage implements IStorage {
 
       return success;
     } catch (error) {
-      console.error('Webhook test error:', error);
+      console.error('Webhook test error for URL:', config[0]?.webhookUrl);
+      console.error('Error details:', error);
+      
+      // Provide specific error information
+      let errorType = 'Unknown error';
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorType = 'Network connection failed';
+      } else if (error instanceof DOMException && error.name === 'AbortError') {
+        errorType = 'Request timeout (10 seconds)';
+      } else if (error instanceof Error) {
+        errorType = error.message;
+      }
+      
+      console.error('Error type:', errorType);
       
       // Update test status on error
       await this.updateWebhookConfig(id, {
