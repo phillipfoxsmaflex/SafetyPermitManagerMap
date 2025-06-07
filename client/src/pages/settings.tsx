@@ -127,9 +127,10 @@ function WebhookConfigSection() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/webhook-configs/${id}/test`, "POST");
+      const response = await apiRequest(`/api/webhook-configs/${id}/test`, "POST");
+      return await response.json() as { success: boolean; message: string };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { success: boolean; message: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/webhook-configs"] });
       toast({
         title: data.success ? "Verbindung erfolgreich" : "Verbindung fehlgeschlagen",

@@ -393,7 +393,12 @@ export class DatabaseStorage implements IStorage {
         .where(eq(webhookConfig.id, id))
         .limit(1);
 
-      if (!config.length) return false;
+      if (!config.length) {
+        console.error('Webhook config not found for id:', id);
+        return false;
+      }
+
+      console.log('Testing webhook connection to:', config[0].webhookUrl);
 
       const testPayload = {
         test: true,
@@ -411,6 +416,12 @@ export class DatabaseStorage implements IStorage {
       });
 
       const success = response.ok;
+      
+      if (success) {
+        console.log('Webhook test successful. Response status:', response.status);
+      } else {
+        console.error('Webhook test failed. Response status:', response.status, 'Status text:', response.statusText);
+      }
 
       // Update test status
       await this.updateWebhookConfig(id, {
@@ -420,6 +431,8 @@ export class DatabaseStorage implements IStorage {
 
       return success;
     } catch (error) {
+      console.error('Webhook test error:', error);
+      
       // Update test status on error
       await this.updateWebhookConfig(id, {
         lastTestedAt: new Date(),
