@@ -256,7 +256,7 @@ function WebhookConfigSection() {
                       onClick={() => handleTest(config.id)}
                       disabled={testConnectionMutation.isPending}
                     >
-                      <Test className="h-4 w-4 mr-1" />
+                      <TestTube className="h-4 w-4 mr-1" />
                       Test
                     </Button>
                     <Button
