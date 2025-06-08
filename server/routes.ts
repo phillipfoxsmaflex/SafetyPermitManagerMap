@@ -1108,7 +1108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/webhook-configs/:id", async (req, res) => {
+  app.delete("/api/webhook-configs/:id", requireAuth, async (req, res) => {
     try {
       const configId = parseInt(req.params.id);
       const success = await storage.deleteWebhookConfig(configId);
@@ -1150,7 +1150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/work-locations/active", async (req, res) => {
+  app.get("/api/work-locations/active", requireAuth, async (req, res) => {
     try {
       const locations = await storage.getActiveWorkLocations();
       res.json(locations);
@@ -1160,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/work-locations", async (req, res) => {
+  app.post("/api/work-locations", requireAuth, async (req, res) => {
     try {
       const { name, description, building, area, isActive } = req.body;
       
@@ -1183,7 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/work-locations/:id", async (req, res) => {
+  app.patch("/api/work-locations/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { name, description, building, area, isActive } = req.body;
@@ -1207,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/work-locations/:id", async (req, res) => {
+  app.delete("/api/work-locations/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteWorkLocation(id);
@@ -1224,7 +1224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User role-based routes for dropdowns
-  app.get("/api/users/department-heads", async (req, res) => {
+  app.get("/api/users/department-heads", requireAuth, async (req, res) => {
     try {
       const users = await storage.getDepartmentHeads();
       res.json(users);
@@ -1234,7 +1234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/safety-officers", async (req, res) => {
+  app.get("/api/users/safety-officers", requireAuth, async (req, res) => {
     try {
       const users = await storage.getSafetyOfficers();
       res.json(users);
@@ -1244,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/maintenance-approvers", async (req, res) => {
+  app.get("/api/users/maintenance-approvers", requireAuth, async (req, res) => {
     try {
       const users = await storage.getMaintenanceApprovers();
       res.json(users);
@@ -1254,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/by-role/:role", async (req, res) => {
+  app.get("/api/users/by-role/:role", requireAuth, async (req, res) => {
     try {
       const role = req.params.role;
       const users = await storage.getUsersByRole(role);
@@ -1266,7 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Permit Attachment routes
-  app.get("/api/permits/:id/attachments", async (req, res) => {
+  app.get("/api/permits/:id/attachments", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       const attachments = await storage.getPermitAttachments(permitId);
@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/permits/:id/attachments", upload.single('file'), async (req, res) => {
+  app.post("/api/permits/:id/attachments", requireAuth, upload.single('file'), async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       
