@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Approve permit
-  app.post("/api/permits/:id/approve", async (req, res) => {
+  app.post("/api/permits/:id/approve", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       const { approvalType } = req.body;
@@ -362,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reject permit
-  app.post("/api/permits/:id/reject", async (req, res) => {
+  app.post("/api/permits/:id/reject", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       const { reason } = req.body;
@@ -572,7 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id/password", async (req, res) => {
+  app.patch("/api/users/:id/password", requireAuth, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { password } = req.body;
@@ -594,7 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Templates routes
-  app.get("/api/templates", async (req, res) => {
+  app.get("/api/templates", requireAuth, async (req, res) => {
     try {
       const templates = await storage.getAllTemplates();
       res.json(templates);
@@ -604,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/templates", async (req, res) => {
+  app.post("/api/templates", requireAuth, async (req, res) => {
     try {
       console.log("Creating template with data:", JSON.stringify(req.body, null, 2));
       
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User management routes
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", requireAuth, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id/role", async (req, res) => {
+  app.patch("/api/users/:id/role", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { role } = req.body;
