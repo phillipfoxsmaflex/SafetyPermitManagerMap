@@ -63,11 +63,10 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       }
       const data = await response.json();
       console.log(`Received ${data.length} attachments for permit ${permitId}:`, data);
-      return data;
+      return data as PermitAttachment[];
     },
     enabled: !!permitId,
     staleTime: 0,
-    cacheTime: 0,
   });
 
   console.log('Attachments query result:', { 
