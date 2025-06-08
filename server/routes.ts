@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
+import fs from "fs";
 import { storage } from "./storage";
 import { insertPermitSchema } from "@shared/schema";
 import { z } from "zod";
@@ -973,11 +974,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve documentation file as raw markdown
   app.get("/api/documentation/n8n-integration", (req, res) => {
-    const fs = require('fs');
     const filePath = "n8n-ai-agent-integration.md";
     
     fs.readFile(filePath, 'utf8', (err: any, data: string) => {
       if (err) {
+        console.error('Error reading documentation file:', err);
         return res.status(404).json({ message: "Documentation not found" });
       }
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
