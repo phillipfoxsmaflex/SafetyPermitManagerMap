@@ -221,47 +221,6 @@ function WebhookConfigSection() {
             Konfigurieren Sie n8n Webhook-URLs für AI-gestützte Genehmigungsverbesserungen.
           </p>
 
-          {/* Response URL Information */}
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  Antwort-Format für n8n (POST Request zurück)
-                </h4>
-                <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                  Senden Sie die Analyseergebnisse per POST Request an:
-                </p>
-                <div className="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded p-3 font-mono text-sm">
-                  <div className="flex items-center justify-between">
-                    <code className="text-blue-600 dark:text-blue-400">
-                      {window.location.origin}/api/webhooks/suggestions
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/suggestions`);
-                        toast({
-                          title: "URL kopiert",
-                          description: "Die Webhook-URL wurde in die Zwischenablage kopiert.",
-                        });
-                      }}
-                      className="ml-2"
-                    >
-                      Kopieren
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                  Verwenden Sie diese URL in Ihrem n8n Workflow, um AI-Analyseergebnisse zurückzusenden.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {isLoading ? (
             <div className="text-center py-4">Lade Webhook-Konfigurationen...</div>
           ) : webhookConfigs.length === 0 ? (
