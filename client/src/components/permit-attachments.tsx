@@ -48,25 +48,40 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log('PermitAttachments rendered with permitId:', permitId);
+
   // Fetch attachments for this permit
   const { data: attachments = [], isLoading } = useQuery<PermitAttachment[]>({
     queryKey: ["/api/permits", permitId, "attachments"],
+    enabled: !!permitId,
   });
 
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch(`/api/permits/${permitId}/attachments`, {
-        method: 'POST',
-        body: formData,
-      });
+      console.log(`Starting upload for permit ${permitId}`);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
+      try {
+        const response = await fetch(`/api/permits/${permitId}/attachments`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        console.log(`Upload response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Upload failed:', error);
+          throw new Error(error.message || 'Upload failed');
+        }
+        
+        const result = await response.json();
+        console.log('Upload successful:', result);
+        return result;
+      } catch (error) {
+        console.error('Upload error:', error);
+        throw error;
       }
-      
-      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "attachments"] });
