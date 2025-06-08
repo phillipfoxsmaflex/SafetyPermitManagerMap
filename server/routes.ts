@@ -10,6 +10,40 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Authentication middleware
+  const requireAuth = async (req: any, res: any, next: any) => {
+    try {
+      const sessionId = req.cookies?.sessionId;
+      
+      if (!sessionId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const session = await storage.getSessionBySessionId(sessionId);
+      if (!session) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Check if session has expired
+      if (session.expiresAt < new Date()) {
+        await storage.deleteSession(sessionId);
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        await storage.deleteSession(sessionId);
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  };
+  
   // Configure multer for file uploads
   const uploadDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadDir)) {
@@ -65,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get permit statistics (must come before /api/permits/:id)
-  app.get("/api/permits/stats", async (req, res) => {
+  app.get("/api/permits/stats", requireAuth, async (req, res) => {
     try {
       const stats = await storage.getPermitStats();
       res.json(stats);
@@ -75,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get permits by status (must come before /api/permits/:id)
-  app.get("/api/permits/status/:status", async (req, res) => {
+  app.get("/api/permits/status/:status", requireAuth, async (req, res) => {
     try {
       const status = req.params.status;
       const permits = await storage.getPermitsByStatus(status);
@@ -86,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all permits
-  app.get("/api/permits", async (req, res) => {
+  app.get("/api/permits", requireAuth, async (req, res) => {
     try {
       const permits = await storage.getAllPermits();
       res.json(permits);
@@ -96,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get permit by ID
-  app.get("/api/permits/:id", async (req, res) => {
+  app.get("/api/permits/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const permit = await storage.getPermit(id);
@@ -112,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new permit
-  app.post("/api/permits", async (req, res) => {
+  app.post("/api/permits", requireAuth, async (req, res) => {
     try {
       console.log("Creating permit with data:", JSON.stringify(req.body, null, 2));
       
@@ -180,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update permit
-  app.patch("/api/permits/:id", async (req, res) => {
+  app.patch("/api/permits/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
@@ -275,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete permit
-  app.delete("/api/permits/:id", async (req, res) => {
+  app.delete("/api/permits/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deletePermit(id);
@@ -392,9 +426,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple session storage (in production, use Redis or database)
-  const sessions = new Map<string, number>();
-
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -405,9 +436,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Create session
+      // Clean up expired sessions first
+      await storage.cleanupExpiredSessions();
+      
+      // Create session with proper expiration
       const sessionId = `session_${Date.now()}_${Math.random()}`;
-      sessions.set(sessionId, user.id);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      await storage.createSession({
+        sessionId,
+        userId: user.id,
+        expiresAt
+      });
       
       // Set session cookie
       res.cookie('sessionId', sessionId, { 
@@ -417,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
       
-      console.log('Setting session cookie:', sessionId);
+      console.log('Created database session:', sessionId, 'for user:', user.username);
       
       res.json({ 
         success: true, 
@@ -438,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sessionId = req.cookies?.sessionId;
       if (sessionId) {
-        sessions.delete(sessionId);
+        await storage.deleteSession(sessionId);
       }
       res.clearCookie('sessionId');
       res.json({ success: true });
@@ -450,25 +490,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/user", async (req, res) => {
     try {
       const sessionId = req.cookies?.sessionId;
-      console.log('Auth check - cookies:', req.cookies);
       console.log('Auth check - sessionId:', sessionId);
-      console.log('Auth check - active sessions:', Array.from(sessions.keys()));
       
-      if (!sessionId || !sessions.has(sessionId)) {
-        console.log('No valid session found');
+      if (!sessionId) {
+        console.log('No session ID found');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const userId = sessions.get(sessionId);
-      if (!userId) {
-        console.log('No userId for session');
+      const session = await storage.getSessionBySessionId(sessionId);
+      if (!session) {
+        console.log('No valid session found in database');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const user = await storage.getUser(userId);
+      // Check if session has expired
+      if (session.expiresAt < new Date()) {
+        console.log('Session expired');
+        await storage.deleteSession(sessionId);
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const user = await storage.getUser(session.userId);
       if (!user) {
         console.log('User not found in database');
-        sessions.delete(sessionId);
+        await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
