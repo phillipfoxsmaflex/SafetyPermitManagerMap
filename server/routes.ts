@@ -618,10 +618,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         systemVersion: '1.0'
       };
 
-      // Create URL with base64 encoded permit data for GET request
+      // Create URL with JSON permit data for GET request
       const url = new URL(webhookConfig.webhookUrl);
       url.searchParams.append('action', 'analyze_permit');
-      url.searchParams.append('permitData', Buffer.from(JSON.stringify(permitAnalysisData)).toString('base64'));
+      url.searchParams.append('permitData', JSON.stringify(permitAnalysisData));
 
       console.log('Sending permit for AI analysis:', {
         permitId: permit.permitId,
@@ -629,6 +629,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         webhookUrl: webhookConfig.webhookUrl,
         dataSize: JSON.stringify(permitAnalysisData).length
       });
+
+      console.log('Full webhook URL:', url.toString().substring(0, 200) + '...');
+      console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
 
       // Send GET request to webhook
       const response = await fetch(url.toString(), {
