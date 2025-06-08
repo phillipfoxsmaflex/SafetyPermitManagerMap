@@ -452,7 +452,7 @@ export class DatabaseStorage implements IStorage {
 
       return success;
     } catch (error) {
-      console.error('Webhook test error for URL:', config[0]?.webhookUrl);
+      console.error('Webhook test error for config ID:', id);
       console.error('Error details:', error);
       
       // Provide specific error information
