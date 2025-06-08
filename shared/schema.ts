@@ -101,6 +101,17 @@ export const webhookConfig = pgTable("webhook_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const workLocations = pgTable("work_locations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  building: text("building"),
+  area: text("area"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -137,6 +148,12 @@ export const insertWebhookConfigSchema = createInsertSchema(webhookConfig).omit(
   updatedAt: true,
 });
 
+export const insertWorkLocationSchema = createInsertSchema(workLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -149,3 +166,5 @@ export type InsertAiSuggestion = z.infer<typeof insertAiSuggestionSchema>;
 export type AiSuggestion = typeof aiSuggestions.$inferSelect;
 export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;
 export type WebhookConfig = typeof webhookConfig.$inferSelect;
+export type InsertWorkLocation = z.infer<typeof insertWorkLocationSchema>;
+export type WorkLocation = typeof workLocations.$inferSelect;

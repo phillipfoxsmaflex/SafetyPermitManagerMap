@@ -972,6 +972,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Work Location routes
+  app.get("/api/work-locations", async (req, res) => {
+    try {
+      const locations = await storage.getAllWorkLocations();
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching work locations:", error);
+      res.status(500).json({ message: "Failed to fetch work locations" });
+    }
+  });
+
+  app.get("/api/work-locations/active", async (req, res) => {
+    try {
+      const locations = await storage.getActiveWorkLocations();
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching active work locations:", error);
+      res.status(500).json({ message: "Failed to fetch active work locations" });
+    }
+  });
+
+  app.post("/api/work-locations", async (req, res) => {
+    try {
+      const { name, description, building, area, isActive } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Name is required" });
+      }
+
+      const location = await storage.createWorkLocation({
+        name,
+        description,
+        building,
+        area,
+        isActive: isActive ?? true
+      });
+      
+      res.status(201).json(location);
+    } catch (error) {
+      console.error("Error creating work location:", error);
+      res.status(500).json({ message: "Failed to create work location" });
+    }
+  });
+
+  app.patch("/api/work-locations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, description, building, area, isActive } = req.body;
+      
+      const location = await storage.updateWorkLocation(id, {
+        name,
+        description,
+        building,
+        area,
+        isActive
+      });
+      
+      if (!location) {
+        return res.status(404).json({ message: "Work location not found" });
+      }
+      
+      res.json(location);
+    } catch (error) {
+      console.error("Error updating work location:", error);
+      res.status(500).json({ message: "Failed to update work location" });
+    }
+  });
+
+  app.delete("/api/work-locations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteWorkLocation(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Work location not found" });
+      }
+      
+      res.json({ message: "Work location deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting work location:", error);
+      res.status(500).json({ message: "Failed to delete work location" });
+    }
+  });
+
+  // User role-based routes for dropdowns
+  app.get("/api/users/department-heads", async (req, res) => {
+    try {
+      const users = await storage.getDepartmentHeads();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching department heads:", error);
+      res.status(500).json({ message: "Failed to fetch department heads" });
+    }
+  });
+
+  app.get("/api/users/safety-officers", async (req, res) => {
+    try {
+      const users = await storage.getSafetyOfficers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching safety officers:", error);
+      res.status(500).json({ message: "Failed to fetch safety officers" });
+    }
+  });
+
+  app.get("/api/users/maintenance-approvers", async (req, res) => {
+    try {
+      const users = await storage.getMaintenanceApprovers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching maintenance approvers:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance approvers" });
+    }
+  });
+
+  app.get("/api/users/by-role/:role", async (req, res) => {
+    try {
+      const role = req.params.role;
+      const users = await storage.getUsersByRole(role);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users by role:", error);
+      res.status(500).json({ message: "Failed to fetch users by role" });
+    }
+  });
+
   // Serve documentation file as raw markdown
   app.get("/api/documentation/n8n-integration", (req, res) => {
     const filePath = "n8n-ai-agent-integration.md";

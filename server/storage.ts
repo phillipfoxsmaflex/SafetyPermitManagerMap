@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
 
@@ -53,6 +53,19 @@ export interface IStorage {
   updateWebhookConfig(id: number, updates: Partial<WebhookConfig>): Promise<WebhookConfig | undefined>;
   deleteWebhookConfig(id: number): Promise<boolean>;
   testWebhookConnection(id: number): Promise<boolean>;
+  
+  // Work Location operations
+  getAllWorkLocations(): Promise<WorkLocation[]>;
+  getActiveWorkLocations(): Promise<WorkLocation[]>;
+  createWorkLocation(location: InsertWorkLocation): Promise<WorkLocation>;
+  updateWorkLocation(id: number, updates: Partial<WorkLocation>): Promise<WorkLocation | undefined>;
+  deleteWorkLocation(id: number): Promise<boolean>;
+  
+  // User role filtering operations
+  getUsersByRole(role: string): Promise<User[]>;
+  getDepartmentHeads(): Promise<User[]>;
+  getSafetyOfficers(): Promise<User[]>;
+  getMaintenanceApprovers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -460,6 +473,62 @@ export class DatabaseStorage implements IStorage {
       });
       return false;
     }
+  }
+
+  // Work Location operations
+  async getAllWorkLocations(): Promise<WorkLocation[]> {
+    return await db.select().from(workLocations).orderBy(desc(workLocations.createdAt));
+  }
+
+  async getActiveWorkLocations(): Promise<WorkLocation[]> {
+    return await db.select()
+      .from(workLocations)
+      .where(eq(workLocations.isActive, true))
+      .orderBy(workLocations.name);
+  }
+
+  async createWorkLocation(insertLocation: InsertWorkLocation): Promise<WorkLocation> {
+    const [location] = await db
+      .insert(workLocations)
+      .values(insertLocation)
+      .returning();
+    return location;
+  }
+
+  async updateWorkLocation(id: number, updates: Partial<WorkLocation>): Promise<WorkLocation | undefined> {
+    const [location] = await db
+      .update(workLocations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(workLocations.id, id))
+      .returning();
+    return location || undefined;
+  }
+
+  async deleteWorkLocation(id: number): Promise<boolean> {
+    const result = await db
+      .delete(workLocations)
+      .where(eq(workLocations.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // User role filtering operations
+  async getUsersByRole(role: string): Promise<User[]> {
+    return await db.select()
+      .from(users)
+      .where(eq(users.role, role))
+      .orderBy(users.fullName);
+  }
+
+  async getDepartmentHeads(): Promise<User[]> {
+    return await this.getUsersByRole('department_head');
+  }
+
+  async getSafetyOfficers(): Promise<User[]> {
+    return await this.getUsersByRole('safety_officer');
+  }
+
+  async getMaintenanceApprovers(): Promise<User[]> {
+    return await this.getUsersByRole('maintenance');
   }
 }
 
