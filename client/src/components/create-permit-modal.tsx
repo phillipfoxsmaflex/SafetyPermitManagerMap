@@ -328,18 +328,21 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="basic" className="text-sm">
-                  1. Grundinformationen
+                  1. Grunddaten
                 </TabsTrigger>
                 <TabsTrigger value="safety" className="text-sm">
-                  2. Sicherheitsbewertung
+                  2. Sicherheit
+                </TabsTrigger>
+                <TabsTrigger value="attachments" className="text-sm">
+                  3. Anhänge
                 </TabsTrigger>
                 <TabsTrigger value="ai" className="text-sm">
-                  3. AI-Verbesserungen
+                  4. AI-Analyse
                 </TabsTrigger>
                 <TabsTrigger value="approval" className="text-sm">
-                  4. Genehmigung & Freigabe
+                  5. Genehmigung
                 </TabsTrigger>
               </TabsList>
 
@@ -811,6 +814,20 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     </FormItem>
                   )}
                 />
+              </TabsContent>
+
+              <TabsContent value="attachments" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-industrial-gray">Dokumente und Anhänge</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-secondary-gray">
+                      <p className="mb-4">Dateianhänge sind nach dem Erstellen der Genehmigung verfügbar.</p>
+                      <p className="text-sm">Erstellen Sie zunächst die Genehmigung, um Dokumente hochzuladen.</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="ai" className="space-y-6">

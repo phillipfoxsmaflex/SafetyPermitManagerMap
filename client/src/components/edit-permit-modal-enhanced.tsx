@@ -37,6 +37,7 @@ import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { SignaturePad } from "@/components/signature-pad";
+import { PermitAttachments } from "@/components/permit-attachments";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
 
 interface EditPermitModalEnhancedProps {
@@ -343,9 +344,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
         <Form {...form}>
           <form className="space-y-6">
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="details">Arbeitsdetails</TabsTrigger>
                 <TabsTrigger value="safety">Sicherheitsbewertung</TabsTrigger>
+                <TabsTrigger value="attachments">Anhänge</TabsTrigger>
                 <TabsTrigger value="approval">Genehmigung</TabsTrigger>
                 <TabsTrigger value="performer">Durchführer</TabsTrigger>
                 <TabsTrigger value="ai">AI-Verbesserungen</TabsTrigger>
@@ -670,6 +672,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              <TabsContent value="attachments" className="space-y-6">
+                {permit && <PermitAttachments permitId={permit.id} />}
               </TabsContent>
 
               <TabsContent value="approval" className="space-y-6">
