@@ -1,6 +1,15 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Sessions table for authentication
+export const sessions = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 255 }).notNull().unique(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -173,6 +182,11 @@ export const insertPermitAttachmentSchema = createInsertSchema(permitAttachments
   createdAt: true,
 });
 
+export const insertSessionSchema = createInsertSchema(sessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -189,3 +203,5 @@ export type InsertWorkLocation = z.infer<typeof insertWorkLocationSchema>;
 export type WorkLocation = typeof workLocations.$inferSelect;
 export type InsertPermitAttachment = z.infer<typeof insertPermitAttachmentSchema>;
 export type PermitAttachment = typeof permitAttachments.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type Session = typeof sessions.$inferSelect;

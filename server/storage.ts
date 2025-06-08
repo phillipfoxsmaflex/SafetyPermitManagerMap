@@ -1,6 +1,6 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, like } from "drizzle-orm";
+import { eq, and, desc, like, lt } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -72,6 +72,12 @@ export interface IStorage {
   createPermitAttachment(attachment: InsertPermitAttachment): Promise<PermitAttachment>;
   deletePermitAttachment(id: number): Promise<boolean>;
   getAttachmentById(id: number): Promise<PermitAttachment | undefined>;
+  
+  // Session operations
+  createSession(session: InsertSession): Promise<Session>;
+  getSessionBySessionId(sessionId: string): Promise<Session | undefined>;
+  deleteSession(sessionId: string): Promise<boolean>;
+  cleanupExpiredSessions(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -569,6 +575,37 @@ export class DatabaseStorage implements IStorage {
       .where(eq(permitAttachments.id, id))
       .limit(1);
     return attachment || undefined;
+  }
+
+  // Session operations
+  async createSession(insertSession: InsertSession): Promise<Session> {
+    const [session] = await db
+      .insert(sessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async getSessionBySessionId(sessionId: string): Promise<Session | undefined> {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.sessionId, sessionId))
+      .limit(1);
+    return session || undefined;
+  }
+
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const result = await db
+      .delete(sessions)
+      .where(eq(sessions.sessionId, sessionId));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    await db
+      .delete(sessions)
+      .where(lt(sessions.expiresAt, new Date()));
   }
 }
 
