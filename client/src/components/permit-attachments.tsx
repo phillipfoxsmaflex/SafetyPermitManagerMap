@@ -68,9 +68,10 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "attachments"] });
       setDescription("");
+      console.log('File uploaded successfully:', data);
       toast({
         title: "Erfolg",
         description: "Datei erfolgreich hochgeladen",
@@ -272,7 +273,10 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
                 
                 <Button
                   variant="outline"
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={() => {
+                    console.log('Camera button clicked');
+                    cameraInputRef.current?.click();
+                  }}
                   disabled={uploading}
                   className="flex items-center gap-2"
                 >
