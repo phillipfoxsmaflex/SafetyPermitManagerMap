@@ -149,7 +149,13 @@ export class DatabaseStorage implements IStorage {
     const [permit] = await db
       .insert(permits)
       .values({
-        ...insertPermit,
+        type: insertPermit.type,
+        location: insertPermit.location,
+        description: insertPermit.description,
+        requestorName: insertPermit.requestorName,
+        department: insertPermit.department,
+        contactNumber: insertPermit.contactNumber,
+        emergencyContact: insertPermit.emergencyContact,
         permitId,
         status: insertPermit.status || 'pending',
         requestorId: insertPermit.requestorId || null,
@@ -161,15 +167,9 @@ export class DatabaseStorage implements IStorage {
         safetyOfficer: insertPermit.safetyOfficer || null,
         identifiedHazards: insertPermit.identifiedHazards || null,
         additionalComments: insertPermit.additionalComments || null,
-        atmosphereTest: insertPermit.atmosphereTest || false,
-        ventilation: insertPermit.ventilation || false,
-        ppe: insertPermit.ppe || false,
-        emergencyProcedures: insertPermit.emergencyProcedures || false,
-        fireWatch: insertPermit.fireWatch || false,
-        isolationLockout: insertPermit.isolationLockout || false,
-        oxygenLevel: insertPermit.oxygenLevel || null,
-        lelLevel: insertPermit.lelLevel || null,
-        h2sLevel: insertPermit.h2sLevel || null,
+        selectedHazards: insertPermit.selectedHazards || [],
+        hazardNotes: insertPermit.hazardNotes || '{}',
+        completedMeasures: insertPermit.completedMeasures || [],
         departmentHead: insertPermit.departmentHead || null,
         maintenanceApprover: insertPermit.maintenanceApprover || null,
         departmentHeadApproval: false,
@@ -215,6 +215,7 @@ export class DatabaseStorage implements IStorage {
       activePermits: allPermits.filter(p => p.status === 'active').length,
       pendingApproval: allPermits.filter(p => p.status === 'pending').length,
       expiredToday: allPermits.filter(p => {
+        if (!p.endDate) return false;
         const endDate = new Date(p.endDate);
         return endDate >= today && endDate < tomorrow && p.status === 'expired';
       }).length,
@@ -395,7 +396,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(webhookConfig)
       .where(eq(webhookConfig.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async testWebhookConnection(id: number): Promise<boolean> {

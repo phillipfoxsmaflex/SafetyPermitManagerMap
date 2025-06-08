@@ -748,7 +748,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {safetyOfficers.map((user: any) => (
+                              {(safetyOfficers as any[]).map((user: any) => (
                                 <SelectItem key={user.id} value={user.fullName}>
                                   {user.fullName} - {user.department}
                                 </SelectItem>
@@ -773,7 +773,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {maintenanceApprovers.map((user: any) => (
+                              {(maintenanceApprovers as any[]).map((user: any) => (
                                 <SelectItem key={user.id} value={user.fullName}>
                                   {user.fullName} - {user.department}
                                 </SelectItem>

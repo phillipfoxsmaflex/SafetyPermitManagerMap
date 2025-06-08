@@ -80,6 +80,23 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
 
+  // Fetch dropdown data
+  const { data: workLocations = [] } = useQuery({
+    queryKey: ["/api/work-locations/active"],
+  });
+
+  const { data: departmentHeads = [] } = useQuery({
+    queryKey: ["/api/users/department-heads"],
+  });
+
+  const { data: safetyOfficers = [] } = useQuery({
+    queryKey: ["/api/users/safety-officers"],
+  });
+
+  const { data: maintenanceApprovers = [] } = useQuery({
+    queryKey: ["/api/users/maintenance-approvers"],
+  });
+
   // TRBS hazard categories data
   const categories = [
     {
