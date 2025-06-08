@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationErrors.push("Enddatum ist erforderlich");
       }
       
-      if (updates.startDate && updates.endDate && updates.startDate >= updates.endDate) {
+      if (updates.startDate && updates.endDate && updates.startDate.getTime() > updates.endDate.getTime()) {
         validationErrors.push("Das Enddatum muss nach dem Startdatum liegen");
       }
       
