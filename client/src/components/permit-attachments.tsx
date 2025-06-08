@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,8 +43,8 @@ interface PermitAttachmentsProps {
 export function PermitAttachments({ permitId, readonly = false }: PermitAttachmentsProps) {
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [triggerFileSelect, setTriggerFileSelect] = useState(false);
+  const [triggerCameraSelect, setTriggerCameraSelect] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -205,9 +205,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('File input changed:', event.target.files?.length || 0, 'files');
     handleFileUpload(event.target.files);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    event.target.value = '';
   };
 
   const handleCameraCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,9 +214,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       console.log('Camera captured file:', files[0].name, files[0].type);
       await handleFileUpload(files);
     }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-    }
+    event.target.value = '';
   };
 
   const handleDownload = (attachment: PermitAttachment) => {
@@ -315,45 +311,46 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               </div>
               
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    console.log('File upload button clicked');
-                    const fileInput = document.getElementById(`file-input-${permitId}`) as HTMLInputElement;
-                    console.log('fileInput element:', fileInput);
-                    if (fileInput) {
-                      fileInput.click();
-                      console.log('File input clicked');
-                    } else {
-                      console.log('File input element not found');
-                    }
-                  }}
-                  disabled={uploading}
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Datei hochladen
-                </Button>
+                <label className="cursor-pointer">
+                  <Button
+                    variant="outline"
+                    disabled={uploading}
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <span>
+                      <Upload className="h-4 w-4" />
+                      Datei hochladen
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    onChange={handleFileInputChange}
+                    accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.xls,.xlsx"
+                    className="hidden"
+                  />
+                </label>
                 
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    console.log('Camera button clicked');
-                    const cameraInput = document.getElementById(`camera-input-${permitId}`) as HTMLInputElement;
-                    console.log('cameraInput element:', cameraInput);
-                    if (cameraInput) {
-                      cameraInput.click();
-                      console.log('Camera input clicked');
-                    } else {
-                      console.log('Camera input element not found');
-                    }
-                  }}
-                  disabled={uploading}
-                  className="flex items-center gap-2"
-                >
-                  <Camera className="h-4 w-4" />
-                  Foto aufnehmen
-                </Button>
+                <label className="cursor-pointer">
+                  <Button
+                    variant="outline"
+                    disabled={uploading}
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <span>
+                      <Camera className="h-4 w-4" />
+                      Foto aufnehmen
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    onChange={handleCameraCapture}
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                  />
+                </label>
               </div>
               
               {uploading && (
@@ -366,24 +363,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               )}
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleFileInputChange}
-              accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.xls,.xlsx"
-              style={{ display: 'none' }}
-              id={`file-input-${permitId}`}
-            />
-            
-            <input
-              ref={cameraInputRef}
-              type="file"
-              onChange={handleCameraCapture}
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              id={`camera-input-${permitId}`}
-            />
+
           </div>
         )}
 
