@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import { insertPermitSchema } from "@shared/schema";
 import { z } from "zod";
@@ -968,6 +969,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error testing webhook connection:", error);
       res.status(500).json({ message: "Failed to test webhook connection" });
     }
+  });
+
+  // Serve documentation file as raw markdown
+  app.get("/api/documentation/n8n-integration", (req, res) => {
+    const fs = require('fs');
+    const filePath = "n8n-ai-agent-integration.md";
+    
+    fs.readFile(filePath, 'utf8', (err: any, data: string) => {
+      if (err) {
+        return res.status(404).json({ message: "Documentation not found" });
+      }
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="n8n-ai-agent-integration.md"');
+      res.send(data);
+    });
   });
 
   const httpServer = createServer(app);

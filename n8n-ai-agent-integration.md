@@ -181,21 +181,235 @@ Jede Suggestion wird einzeln in der AI-Suggestions Komponente angezeigt mit:
 - Begründung und Priorität
 - Direkte Anwendung auf das entsprechende Feld bei Akzeptierung
 
-### Beispiel n8n Workflow Structure
+## Detaillierte n8n Workflow Konfiguration
+
+### Schritt 1: Webhook Trigger Node
+**Node Type:** Webhook
+**Settings:**
+- HTTP Method: `GET`
+- Path: `/webhook/safety` (oder Ihr gewählter Pfad)
+- Response Mode: `Respond to Webhook`
+- Response Code: `200`
+
+### Schritt 2: Code Node - Daten Parser
+**Node Type:** Code
+**Name:** "Parse Permit Data"
 ```javascript
-// 1. Webhook Trigger (GET)
-// 2. JavaScript Code Node - Parse Data:
+// Parse die eingehenden Permit-Daten
 const permitData = JSON.parse($json.query.permitData);
 
-// 3. AI Analysis (z.B. OpenAI Node)
-// 4. JavaScript Code Node - Format Response:
-return {
-  permitId: permitData.permitId,
-  analysisComplete: true,
-  suggestions: [
-    // Formatierte Vorschläge wie oben gezeigt
-  ]
-};
+// Ausgabe für Debugging (optional)
+console.log('Received permit:', permitData.permitId);
+console.log('Risk level:', permitData.riskLevel);
+console.log('Selected hazards:', permitData.selectedHazards);
 
-// 5. HTTP Request Node - POST Response zurück
+return {
+  json: {
+    permitData: permitData,
+    action: $json.query.action
+  }
+};
 ```
+
+### Schritt 3: OpenAI/Claude Node (AI Analysis)
+**Node Type:** OpenAI/HTTP Request
+**Settings für OpenAI Node:**
+- Operation: `Message a model`
+- Model: `gpt-4` oder `gpt-3.5-turbo`
+- Messages:
+  ```json
+  {
+    "role": "system",
+    "content": "Du bist ein Experte für industrielle Sicherheit und TRBS-Standards. Analysiere Arbeitsgenehmigungen und gib spezifische Verbesserungsvorschläge."
+  },
+  {
+    "role": "user", 
+    "content": "Analysiere diese Arbeitsgenehmigung und gib Verbesserungsvorschläge:\n\nPermit ID: {{ $json.permitData.permitId }}\nTyp: {{ $json.permitData.type }}\nOrt: {{ $json.permitData.location }}\nBeschreibung: {{ $json.permitData.description }}\nRisikostufe: {{ $json.permitData.riskLevel }}\nGefährdungen: {{ $json.permitData.selectedHazards }}\nSchutzmaßnahmen: {{ $json.permitData.completedMeasures }}\n\nBitte gib strukturierte Vorschläge für Verbesserungen in den Bereichen:\n1. Sicherheitsmaßnahmen\n2. Personalanforderungen\n3. Risikobewertung\n4. Dokumentation\n\nFormat: Für jeden Vorschlag gib an:\n- Feld das geändert werden soll\n- Aktueller Wert\n- Vorgeschlagener Wert\n- Begründung\n- Priorität (low/medium/high)"
+  }
+  ```
+
+### Schritt 4: Code Node - Antwort Formatierung
+**Node Type:** Code
+**Name:** "Format AI Response"
+```javascript
+// AI Antwort verarbeiten
+const aiResponse = $json.message.content;
+const permitData = $('Parse Permit Data').item(0).json.permitData;
+
+// Hier implementieren Sie die Logik um die AI-Antwort zu parsen
+// und in das erforderliche Format zu konvertieren
+
+// Beispiel-Implementierung (anpassen je nach AI-Antwort Format):
+const suggestions = [
+  {
+    type: "safety_improvement",
+    priority: "high",
+    fieldName: "riskLevel",
+    originalValue: permitData.riskLevel,
+    suggestedValue: "medium",
+    reasoning: "Basierend auf der Analyse sollte das Risiko höher eingestuft werden."
+  },
+  {
+    type: "personnel_requirement", 
+    priority: "high",
+    fieldName: "safetyOfficer",
+    originalValue: permitData.safetyOfficer || "",
+    suggestedValue: "Dr. Klaus Weber",
+    reasoning: "Für diese Art von Arbeit ist ein qualifizierter Sicherheitsbeauftragter erforderlich."
+  }
+  // Weitere Vorschläge basierend auf AI-Analyse...
+];
+
+return {
+  json: {
+    permitId: permitData.permitId,
+    analysisComplete: true,
+    riskAssessment: {
+      overallRisk: "medium", // Aus AI-Analyse extrahieren
+      riskFactors: [
+        "Unvollständige Risikobeurteilung",
+        "Fehlende Schutzmaßnahmen"
+      ],
+      complianceScore: 75 // Berechnet basierend auf Analyse
+    },
+    suggestions: suggestions,
+    recommendations: {
+      immediate_actions: [
+        "Sicherheitsbeauftragten zuweisen",
+        "Risikobeurteilung aktualisieren"
+      ],
+      before_work_starts: [
+        "Zusätzliche PSA bereitstellen",
+        "Notfallverfahren überprüfen"
+      ]
+    },
+    compliance_notes: {
+      trbs_conformity: "Teilweise konform - siehe Verbesserungsvorschläge",
+      missing_requirements: [
+        "TRBS 2152: Zusätzliche Überwachung erforderlich"
+      ]
+    }
+  }
+};
+```
+
+### Schritt 5: HTTP Request Node - Antwort senden
+**Node Type:** HTTP Request
+**Name:** "Send Response to Permit System"
+**Settings:**
+- Method: `POST`
+- URL: `{{ $json.webhookEndpoint || "https://your-permit-system.com/api/webhooks/suggestions" }}`
+- Send Body: `true`
+- Body Content Type: `JSON`
+- Body: `{{ $json }}`
+- Headers:
+  ```json
+  {
+    "Content-Type": "application/json"
+  }
+  ```
+
+## Erweiterte AI-Analyse Implementierung
+
+### Intelligente Parsing-Logik für AI-Antworten
+```javascript
+// Erweiterte Implementierung für Schritt 4
+function parseAiAnalysis(aiText, permitData) {
+  const suggestions = [];
+  
+  // Regex Patterns für verschiedene Vorschlagstypen
+  const patterns = {
+    riskLevel: /Risiko.*?sollte.*?(low|medium|high|critical)/gi,
+    safetyOfficer: /Sicherheitsbeauftragter.*?([A-Z][a-z]+ [A-Z][a-z]+)/gi,
+    completedMeasures: /Schutzmaßnahmen.*?([\w\s,]+)/gi
+  };
+  
+  // Risk Level Analyse
+  const riskMatch = patterns.riskLevel.exec(aiText);
+  if (riskMatch && riskMatch[1] !== permitData.riskLevel) {
+    suggestions.push({
+      type: "safety_improvement",
+      priority: "high", 
+      fieldName: "riskLevel",
+      originalValue: permitData.riskLevel,
+      suggestedValue: riskMatch[1],
+      reasoning: "AI-Analyse empfiehlt Anpassung der Risikostufe basierend auf Arbeitsart und Umgebung."
+    });
+  }
+  
+  // Safety Officer Analyse
+  const officerMatch = patterns.safetyOfficer.exec(aiText);
+  if (officerMatch && !permitData.safetyOfficer) {
+    suggestions.push({
+      type: "personnel_requirement",
+      priority: "high",
+      fieldName: "safetyOfficer", 
+      originalValue: permitData.safetyOfficer || "",
+      suggestedValue: officerMatch[1],
+      reasoning: "Qualifizierter Sicherheitsbeauftragter für diese Arbeitsart erforderlich."
+    });
+  }
+  
+  return suggestions;
+}
+
+// Verwendung im Code Node:
+const aiResponse = $json.message.content;
+const permitData = $('Parse Permit Data').item(0).json.permitData;
+const suggestions = parseAiAnalysis(aiResponse, permitData);
+
+return {
+  json: {
+    permitId: permitData.permitId,
+    analysisComplete: true,
+    suggestions: suggestions
+    // ... weitere Felder
+  }
+};
+```
+
+## Fehlerbehandlung und Debugging
+
+### Error Handling im Workflow
+```javascript
+// In jedem Code Node Error Handling hinzufügen:
+try {
+  // Hauptlogik hier
+  const result = processPermitData($json);
+  
+  return {
+    json: result
+  };
+} catch (error) {
+  console.error('Error processing permit:', error);
+  
+  return {
+    json: {
+      permitId: $json.permitData?.permitId || "unknown",
+      analysisComplete: false,
+      error: {
+        code: "PROCESSING_ERROR",
+        message: error.message,
+        details: "Fehler bei der Verarbeitung der Permit-Daten"
+      }
+    }
+  };
+}
+```
+
+### Debugging-Tipps
+1. **Console Logs:** Nutzen Sie `console.log()` in Code Nodes für Debugging
+2. **Test Workflow:** Testen Sie mit dem "Test Workflow" Button
+3. **Webhook Testing:** Nutzen Sie den Test-Button im Permit System
+4. **Error Monitoring:** Aktivieren Sie Error Workflows für Fehlermeldungen
+
+## Deployment Checklist
+
+- [ ] Webhook Trigger korrekt konfiguriert (GET Method)
+- [ ] AI Service API Key konfiguriert
+- [ ] Code Nodes getestet und funktionsfähig
+- [ ] HTTP Request Node URL korrekt gesetzt
+- [ ] Workflow aktiviert (grüner Schalter)
+- [ ] Test mit echten Permit-Daten durchgeführt
+- [ ] Error Handling implementiert
+- [ ] Logging für Monitoring aktiviert
