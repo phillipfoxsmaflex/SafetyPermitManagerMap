@@ -319,7 +319,14 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
                   variant="outline"
                   onClick={() => {
                     console.log('File upload button clicked');
-                    fileInputRef.current?.click();
+                    const fileInput = document.getElementById(`file-input-${permitId}`) as HTMLInputElement;
+                    console.log('fileInput element:', fileInput);
+                    if (fileInput) {
+                      fileInput.click();
+                      console.log('File input clicked');
+                    } else {
+                      console.log('File input element not found');
+                    }
                   }}
                   disabled={uploading}
                   className="flex items-center gap-2"
@@ -332,7 +339,14 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
                   variant="outline"
                   onClick={() => {
                     console.log('Camera button clicked');
-                    cameraInputRef.current?.click();
+                    const cameraInput = document.getElementById(`camera-input-${permitId}`) as HTMLInputElement;
+                    console.log('cameraInput element:', cameraInput);
+                    if (cameraInput) {
+                      cameraInput.click();
+                      console.log('Camera input clicked');
+                    } else {
+                      console.log('Camera input element not found');
+                    }
                   }}
                   disabled={uploading}
                   className="flex items-center gap-2"
@@ -358,7 +372,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               onChange={handleFileInputChange}
               accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.xls,.xlsx"
               style={{ display: 'none' }}
-              key={`file-${permitId}`}
+              id={`file-input-${permitId}`}
             />
             
             <input
@@ -368,7 +382,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               accept="image/*"
               capture="environment"
               style={{ display: 'none' }}
-              key={`camera-${permitId}`}
+              id={`camera-input-${permitId}`}
             />
           </div>
         )}
