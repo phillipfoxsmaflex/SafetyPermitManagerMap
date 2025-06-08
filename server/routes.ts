@@ -1329,7 +1329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/attachments/:id/download", async (req, res) => {
+  app.get("/api/attachments/:id/download", requireAuth, async (req, res) => {
     try {
       const attachmentId = parseInt(req.params.id);
       const attachment = await storage.getAttachmentById(attachmentId);
@@ -1352,7 +1352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/attachments/:id", async (req, res) => {
+  app.delete("/api/attachments/:id", requireAuth, async (req, res) => {
     try {
       const attachmentId = parseInt(req.params.id);
       const attachment = await storage.getAttachmentById(attachmentId);
