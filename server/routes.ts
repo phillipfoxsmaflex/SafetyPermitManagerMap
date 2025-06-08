@@ -555,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", requireAuth, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const updates = req.body;
@@ -725,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Suggestions and Webhook routes
   
   // Send permit to AI for analysis
-  app.post("/api/permits/:id/analyze", async (req, res) => {
+  app.post("/api/permits/:id/analyze", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       const permit = await storage.getPermit(permitId);
@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Apply a suggestion
-  app.post("/api/suggestions/:id/apply", async (req, res) => {
+  app.post("/api/suggestions/:id/apply", requireAuth, async (req, res) => {
     try {
       const suggestionId = parseInt(req.params.id);
       const success = await storage.applySuggestion(suggestionId);
@@ -1018,7 +1018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update suggestion status
-  app.patch("/api/suggestions/:id/status", async (req, res) => {
+  app.patch("/api/suggestions/:id/status", requireAuth, async (req, res) => {
     try {
       const suggestionId = parseInt(req.params.id);
       const { status } = req.body;
@@ -1040,7 +1040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Webhook configuration routes
-  app.get("/api/webhook-configs", async (req, res) => {
+  app.get("/api/webhook-configs", requireAuth, async (req, res) => {
     try {
       const configs = await storage.getAllWebhookConfigs();
       res.json(configs);
@@ -1050,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/webhook-configs", async (req, res) => {
+  app.post("/api/webhook-configs", requireAuth, async (req, res) => {
     try {
       const { name, webhookUrl, isActive } = req.body;
       
@@ -1081,7 +1081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/webhook-configs/:id", async (req, res) => {
+  app.patch("/api/webhook-configs/:id", requireAuth, async (req, res) => {
     try {
       const configId = parseInt(req.params.id);
       const updates = req.body;
