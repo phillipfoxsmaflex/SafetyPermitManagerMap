@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
+import type { User, WorkLocation } from "@shared/schema";
 
 const createPermitSchema = z.object({
   type: z.string().min(1, "Permit type is required"),
@@ -382,7 +383,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {workLocations.map((location: any) => (
+                            {(workLocations as any[]).map((location: any) => (
                               <SelectItem key={location.id} value={location.name}>
                                 {location.name}
                                 {location.building && ` - ${location.building}`}
@@ -722,7 +723,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {departmentHeads.map((user: any) => (
+                              {(departmentHeads as any[]).map((user: any) => (
                                 <SelectItem key={user.id} value={user.fullName}>
                                   {user.fullName} - {user.department}
                                 </SelectItem>
@@ -765,9 +766,20 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Technik *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Name des Technik-Genehmigers" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Technik-Genehmiger auswählen..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {maintenanceApprovers.map((user: any) => (
+                                <SelectItem key={user.id} value={user.fullName}>
+                                  {user.fullName} - {user.department}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
