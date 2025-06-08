@@ -131,9 +131,17 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
   });
 
   const handleFileUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log('No files selected');
+      return;
+    }
 
     const file = files[0];
+    console.log(`Preparing to upload file for permit ${permitId}:`, {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
     
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
@@ -145,18 +153,27 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       return;
     }
 
-    console.log(`Uploading file for permit ${permitId}:`, file.name, file.type, file.size);
+    // Validate permitId
+    if (!permitId || isNaN(permitId)) {
+      console.error('Invalid permit ID:', permitId);
+      toast({
+        title: "Fehler",
+        description: "Ungültige Genehmigungsnummer",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
-    if (description) {
-      formData.append('description', description);
+    if (description.trim()) {
+      formData.append('description', description.trim());
     }
 
     setUploading(true);
     try {
-      await uploadMutation.mutateAsync(formData);
-      console.log(`File uploaded successfully for permit ${permitId}`);
+      const result = await uploadMutation.mutateAsync(formData);
+      console.log(`File uploaded successfully for permit ${permitId}:`, result);
     } catch (error) {
       console.error(`Failed to upload file for permit ${permitId}:`, error);
     } finally {
@@ -165,6 +182,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed:', event.target.files?.length || 0, 'files');
     handleFileUpload(event.target.files);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -278,7 +296,10 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    console.log('File upload button clicked');
+                    fileInputRef.current?.click();
+                  }}
                   disabled={uploading}
                   className="flex items-center gap-2"
                 >
