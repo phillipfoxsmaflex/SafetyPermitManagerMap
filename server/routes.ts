@@ -2,11 +2,47 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import fs from "fs";
+import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
 import { storage } from "./storage";
-import { insertPermitSchema } from "@shared/schema";
+import { insertPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Configure multer for file uploads
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueId = uuidv4();
+        const extension = path.extname(file.originalname);
+        cb(null, `${uniqueId}${extension}`);
+      }
+    }),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow images and common document formats
+      const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|xls|xlsx/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Dateityp nicht unterstützt'));
+      }
+    }
+  });
   
   // Get permit statistics (must come before /api/permits/:id)
   app.get("/api/permits/stats", async (req, res) => {
@@ -1095,6 +1131,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching users by role:", error);
       res.status(500).json({ message: "Failed to fetch users by role" });
+    }
+  });
+
+  // Permit Attachment routes
+  app.get("/api/permits/:id/attachments", async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const attachments = await storage.getPermitAttachments(permitId);
+      res.json(attachments);
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      res.status(500).json({ message: "Failed to fetch attachments" });
+    }
+  });
+
+  app.post("/api/permits/:id/attachments", upload.single('file'), async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Determine file type based on mime type
+      let fileType = 'other';
+      if (req.file.mimetype.startsWith('image/')) {
+        fileType = 'image';
+      } else if (req.file.mimetype === 'application/pdf' || 
+                 req.file.mimetype.includes('document') ||
+                 req.file.mimetype.includes('text') ||
+                 req.file.mimetype.includes('spreadsheet')) {
+        fileType = 'document';
+      }
+
+      const attachmentData = {
+        permitId,
+        fileName: req.file.filename,
+        originalName: req.file.originalname,
+        fileType,
+        mimeType: req.file.mimetype,
+        fileSize: req.file.size,
+        filePath: req.file.path,
+        uploadedBy: 1, // TODO: Get from session
+        description: req.body.description || null
+      };
+
+      const attachment = await storage.createPermitAttachment(attachmentData);
+      res.status(201).json(attachment);
+    } catch (error) {
+      console.error("Error uploading attachment:", error);
+      res.status(500).json({ message: "Failed to upload attachment" });
+    }
+  });
+
+  app.get("/api/attachments/:id/download", async (req, res) => {
+    try {
+      const attachmentId = parseInt(req.params.id);
+      const attachment = await storage.getAttachmentById(attachmentId);
+      
+      if (!attachment) {
+        return res.status(404).json({ message: "Attachment not found" });
+      }
+
+      const filePath = attachment.filePath;
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      res.setHeader('Content-Type', attachment.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName}"`);
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Error downloading attachment:", error);
+      res.status(500).json({ message: "Failed to download attachment" });
+    }
+  });
+
+  app.delete("/api/attachments/:id", async (req, res) => {
+    try {
+      const attachmentId = parseInt(req.params.id);
+      const attachment = await storage.getAttachmentById(attachmentId);
+      
+      if (!attachment) {
+        return res.status(404).json({ message: "Attachment not found" });
+      }
+
+      // Delete file from disk
+      if (fs.existsSync(attachment.filePath)) {
+        fs.unlinkSync(attachment.filePath);
+      }
+
+      // Delete from database
+      const deleted = await storage.deletePermitAttachment(attachmentId);
+      
+      if (deleted) {
+        res.json({ message: "Attachment deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete attachment" });
+      }
+    } catch (error) {
+      console.error("Error deleting attachment:", error);
+      res.status(500).json({ message: "Failed to delete attachment" });
     }
   });
 

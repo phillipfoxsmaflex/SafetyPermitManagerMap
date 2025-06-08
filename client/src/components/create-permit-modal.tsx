@@ -36,6 +36,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AiSuggestions } from "@/components/ai-suggestions";
+import { PermitAttachments } from "@/components/permit-attachments";
 import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
 import type { User, WorkLocation } from "@shared/schema";
 
