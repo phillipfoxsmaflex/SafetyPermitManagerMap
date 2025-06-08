@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
 
@@ -66,6 +66,12 @@ export interface IStorage {
   getDepartmentHeads(): Promise<User[]>;
   getSafetyOfficers(): Promise<User[]>;
   getMaintenanceApprovers(): Promise<User[]>;
+  
+  // Permit Attachment operations
+  getPermitAttachments(permitId: number): Promise<PermitAttachment[]>;
+  createPermitAttachment(attachment: InsertPermitAttachment): Promise<PermitAttachment>;
+  deletePermitAttachment(id: number): Promise<boolean>;
+  getAttachmentById(id: number): Promise<PermitAttachment | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -530,6 +536,39 @@ export class DatabaseStorage implements IStorage {
 
   async getMaintenanceApprovers(): Promise<User[]> {
     return await this.getUsersByRole('maintenance');
+  }
+
+  // Permit Attachment operations
+  async getPermitAttachments(permitId: number): Promise<PermitAttachment[]> {
+    return await db
+      .select()
+      .from(permitAttachments)
+      .where(eq(permitAttachments.permitId, permitId))
+      .orderBy(desc(permitAttachments.createdAt));
+  }
+
+  async createPermitAttachment(insertAttachment: InsertPermitAttachment): Promise<PermitAttachment> {
+    const [attachment] = await db
+      .insert(permitAttachments)
+      .values(insertAttachment)
+      .returning();
+    return attachment;
+  }
+
+  async deletePermitAttachment(id: number): Promise<boolean> {
+    const result = await db
+      .delete(permitAttachments)
+      .where(eq(permitAttachments.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAttachmentById(id: number): Promise<PermitAttachment | undefined> {
+    const [attachment] = await db
+      .select()
+      .from(permitAttachments)
+      .where(eq(permitAttachments.id, id))
+      .limit(1);
+    return attachment || undefined;
   }
 }
 

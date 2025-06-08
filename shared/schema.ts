@@ -112,6 +112,20 @@ export const workLocations = pgTable("work_locations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const permitAttachments = pgTable("permit_attachments", {
+  id: serial("id").primaryKey(),
+  permitId: integer("permit_id").references(() => permits.id).notNull(),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileType: text("file_type").notNull(), // 'image', 'document', 'other'
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(), // in bytes
+  filePath: text("file_path").notNull(),
+  uploadedBy: integer("uploaded_by").references(() => users.id),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -154,6 +168,11 @@ export const insertWorkLocationSchema = createInsertSchema(workLocations).omit({
   updatedAt: true,
 });
 
+export const insertPermitAttachmentSchema = createInsertSchema(permitAttachments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -168,3 +187,5 @@ export type InsertWebhookConfig = z.infer<typeof insertWebhookConfigSchema>;
 export type WebhookConfig = typeof webhookConfig.$inferSelect;
 export type InsertWorkLocation = z.infer<typeof insertWorkLocationSchema>;
 export type WorkLocation = typeof workLocations.$inferSelect;
+export type InsertPermitAttachment = z.infer<typeof insertPermitAttachmentSchema>;
+export type PermitAttachment = typeof permitAttachments.$inferSelect;
