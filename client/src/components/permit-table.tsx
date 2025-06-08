@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Eye, Edit, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PermitStatusBadge } from "./permit-status-badge";
-import { printPermit } from "@/lib/print-utils";
+import { PermitPrintView } from "./permit-print-view";
 import type { Permit } from "@shared/schema";
 import { useLocation } from "wouter";
 
@@ -21,6 +22,7 @@ interface PermitTableProps {
 
 export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
   const [, setLocation] = useLocation();
+  const [printPermit, setPrintPermit] = useState<Permit | null>(null);
 
   const formatDateTime = (date: Date | string | null) => {
     if (!date) return 'Nicht angegeben';
