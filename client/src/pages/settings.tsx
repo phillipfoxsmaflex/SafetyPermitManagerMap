@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
+import { WorkLocationManagement } from "@/components/work-location-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,8 @@ import {
   CheckCircle,
   XCircle,
   Trash2,
-  Edit
+  Edit,
+  MapPin
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
