@@ -31,15 +31,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req, file, cb) => {
-      // Allow images and common document formats
-      const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|xls|xlsx/;
-      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = allowedTypes.test(file.mimetype);
+      console.log(`File upload attempt: ${file.originalname}, mimetype: ${file.mimetype}`);
       
-      if (mimetype && extname) {
+      // Allow images and common document formats
+      const allowedExtensions = /\.(jpeg|jpg|png|gif|pdf|doc|docx|txt|xls|xlsx)$/i;
+      const allowedMimeTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain', 'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/octet-stream' // For some mobile uploads
+      ];
+      
+      const hasValidExtension = allowedExtensions.test(file.originalname);
+      const hasValidMimeType = allowedMimeTypes.includes(file.mimetype);
+      
+      // Special handling for camera captures that might have generic MIME types
+      const isCameraCapture = file.originalname.toLowerCase().includes('image') || 
+                            file.mimetype.startsWith('image/') ||
+                            file.originalname.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/i);
+      
+      if (hasValidExtension || hasValidMimeType || isCameraCapture) {
+        console.log(`File accepted: ${file.originalname}`);
         return cb(null, true);
       } else {
-        cb(new Error('Dateityp nicht unterstützt'));
+        console.log(`File rejected: ${file.originalname}, mimetype: ${file.mimetype}`);
+        cb(new Error(`Dateityp nicht unterstützt: ${file.mimetype}`));
       }
     }
   });
