@@ -300,6 +300,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
       const response = await apiRequest(`/api/permits/${permit?.id}`, "PATCH", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -310,11 +314,29 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       });
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      let errorMessage = "Die Genehmigung konnte nicht aktualisiert werden.";
+      let errorDetails = "";
+      
+      try {
+        const errorData = JSON.parse(error.message);
+        errorMessage = errorData.message || errorMessage;
+        
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorDetails = errorData.errors.join("\n• ");
+          errorMessage = errorData.message;
+        } else if (errorData.field) {
+          errorDetails = `Fehler in Feld: ${errorData.field}`;
+        }
+      } catch (e) {
+        // Use default error message if parsing fails
+      }
+      
       toast({
-        title: "Fehler",
-        description: "Die Genehmigung konnte nicht aktualisiert werden.",
+        title: "Speichern fehlgeschlagen",
+        description: errorDetails ? `${errorMessage}\n\n• ${errorDetails}` : errorMessage,
         variant: "destructive",
+        duration: 8000, // Show longer for detailed errors
       });
     },
   });

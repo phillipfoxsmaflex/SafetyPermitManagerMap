@@ -271,36 +271,46 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
   const createPermitMutation = useMutation({
     mutationFn: async (data: CreatePermitFormData) => {
       const response = await apiRequest("/api/permits", "POST", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
       toast({
-        title: "Success",
-        description: "Permit submitted for approval successfully!",
+        title: "Genehmigung erstellt",
+        description: "Die Arbeitserlaubnis wurde erfolgreich zur Genehmigung eingereicht.",
       });
       onOpenChange(false);
       form.reset();
       setActiveTab("basic");
     },
     onError: (error: any) => {
-      let errorMessage = "Genehmigung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.";
+      let errorMessage = "Die Genehmigung konnte nicht erstellt werden.";
+      let errorDetails = "";
       
       try {
-        if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error?.message) {
-          errorMessage = error.message;
+        const errorData = JSON.parse(error.message);
+        errorMessage = errorData.message || errorMessage;
+        
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorDetails = errorData.errors.join("\n• ");
+          errorMessage = errorData.message;
+        } else if (errorData.field) {
+          errorDetails = `Fehler in Feld: ${errorData.field}`;
         }
       } catch (e) {
-        // Use default message if error parsing fails
+        // Use default error message if parsing fails
       }
       
       toast({
-        title: "Fehler beim Erstellen der Genehmigung",
-        description: errorMessage,
+        title: "Erstellung fehlgeschlagen",
+        description: errorDetails ? `${errorMessage}\n\n• ${errorDetails}` : errorMessage,
         variant: "destructive",
+        duration: 8000,
       });
     },
   });

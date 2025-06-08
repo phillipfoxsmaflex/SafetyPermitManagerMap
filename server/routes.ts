@@ -187,24 +187,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Updating permit:", id, "with data:", updates);
       
-      // Convert date strings to Date objects if needed
-      if (updates.startDate) {
-        updates.startDate = new Date(updates.startDate);
+      // Validate and clean up date fields
+      const dateFields = ['startDate', 'endDate', 'workStartedAt', 'workCompletedAt'];
+      for (const field of dateFields) {
+        if (updates[field] !== undefined) {
+          if (updates[field] === '' || updates[field] === null) {
+            updates[field] = null;
+          } else {
+            const date = new Date(updates[field]);
+            if (isNaN(date.getTime())) {
+              return res.status(400).json({ 
+                message: `Ungültiges Datum für Feld "${field}". Bitte geben Sie ein gültiges Datum ein.`,
+                field: field
+              });
+            }
+            updates[field] = date;
+          }
+        }
       }
-      if (updates.endDate) {
-        updates.endDate = new Date(updates.endDate);
+      
+      // Validate required fields based on permit type
+      const validationErrors = [];
+      
+      if (!updates.startDate && updates.status !== 'draft') {
+        validationErrors.push("Startdatum ist erforderlich");
+      }
+      
+      if (!updates.endDate && updates.status !== 'draft') {
+        validationErrors.push("Enddatum ist erforderlich");
+      }
+      
+      if (updates.startDate && updates.endDate && updates.startDate >= updates.endDate) {
+        validationErrors.push("Das Enddatum muss nach dem Startdatum liegen");
+      }
+      
+      if (!updates.location?.trim()) {
+        validationErrors.push("Arbeitsort ist erforderlich");
+      }
+      
+      if (!updates.description?.trim()) {
+        validationErrors.push("Beschreibung ist erforderlich");
+      }
+      
+      if (!updates.requestorName?.trim()) {
+        validationErrors.push("Name des Antragstellers ist erforderlich");
+      }
+      
+      if (!updates.department?.trim()) {
+        validationErrors.push("Abteilung ist erforderlich");
+      }
+      
+      if (validationErrors.length > 0) {
+        return res.status(400).json({ 
+          message: "Bitte korrigieren Sie die folgenden Fehler:",
+          errors: validationErrors
+        });
       }
       
       const permit = await storage.updatePermit(id, updates);
       
       if (!permit) {
-        return res.status(404).json({ message: "Permit not found" });
+        return res.status(404).json({ 
+          message: "Genehmigung nicht gefunden. Möglicherweise wurde sie bereits gelöscht."
+        });
       }
       
       res.json(permit);
     } catch (error) {
       console.error("Error updating permit:", error);
-      res.status(500).json({ message: "Failed to update permit" });
+      
+      if (error instanceof Error && error.message?.includes('toISOString')) {
+        return res.status(400).json({ 
+          message: "Ungültiges Datumsformat. Bitte überprüfen Sie alle Datumsfelder und versuchen Sie es erneut."
+        });
+      }
+      
+      if (error instanceof Error && error.message?.includes('validation')) {
+        return res.status(400).json({ 
+          message: "Validierungsfehler. Bitte überprüfen Sie alle Eingaben auf Korrektheit."
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Die Genehmigung konnte nicht gespeichert werden. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut."
+      });
     }
   });
 
