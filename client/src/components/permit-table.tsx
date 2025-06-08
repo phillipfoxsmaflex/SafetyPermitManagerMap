@@ -59,7 +59,7 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
 
   const handlePrint = (permit: Permit) => {
     console.log("Printing permit:", permit.permitId);
-    printPermit(permit);
+    setPrintPermit(permit);
   };
 
   if (isLoading) {
@@ -169,6 +169,14 @@ export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
           </TableBody>
         </Table>
       </div>
+      
+      {/* Print View Modal */}
+      {printPermit && (
+        <PermitPrintView
+          permit={printPermit}
+          onClose={() => setPrintPermit(null)}
+        />
+      )}
     </div>
   );
 }
