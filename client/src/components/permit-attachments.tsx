@@ -51,9 +51,31 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
   console.log('PermitAttachments rendered with permitId:', permitId);
 
   // Fetch attachments for this permit
-  const { data: attachments = [], isLoading } = useQuery<PermitAttachment[]>({
-    queryKey: ["/api/permits", permitId, "attachments"],
+  const { data: attachments = [], isLoading, error } = useQuery<PermitAttachment[]>({
+    queryKey: [`attachments-${permitId}`],
+    queryFn: async () => {
+      console.log(`Fetching attachments for permit ${permitId}`);
+      const response = await fetch(`/api/permits/${permitId}/attachments`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch attachments');
+      }
+      const data = await response.json();
+      console.log(`Received ${data.length} attachments for permit ${permitId}:`, data);
+      return data;
+    },
     enabled: !!permitId,
+    staleTime: 0,
+    cacheTime: 0,
+  });
+
+  console.log('Attachments query result:', { 
+    permitId, 
+    attachments: attachments.length, 
+    isLoading, 
+    error,
+    attachmentsData: attachments.slice(0, 2) // Only show first 2 for debugging
   });
 
   // Upload mutation
@@ -84,7 +106,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "attachments"] });
+      queryClient.invalidateQueries({ queryKey: [`attachments-${permitId}`] });
       setDescription("");
       console.log('File uploaded successfully:', data);
       toast({
@@ -337,6 +359,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               onChange={handleFileInputChange}
               accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.xls,.xlsx"
               style={{ display: 'none' }}
+              key={`file-${permitId}`}
             />
             
             <input
@@ -346,6 +369,7 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
               accept="image/*"
               capture="environment"
               style={{ display: 'none' }}
+              key={`camera-${permitId}`}
             />
           </div>
         )}
