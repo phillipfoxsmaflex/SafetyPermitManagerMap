@@ -570,12 +570,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No active webhook configuration found" });
       }
 
-      // Create URL with permit ID for GET request to n8n
+      // Create comprehensive permit data for analysis
+      const permitAnalysisData = {
+        // Basic permit information
+        permitId: permit.permitId,
+        internalId: permit.id,
+        type: permit.type,
+        location: permit.location,
+        description: permit.description,
+        department: permit.department,
+        riskLevel: permit.riskLevel,
+        status: permit.status,
+        
+        // Personnel information
+        requestorName: permit.requestorName,
+        contactNumber: permit.contactNumber,
+        emergencyContact: permit.emergencyContact,
+        safetyOfficer: permit.safetyOfficer,
+        departmentHead: permit.departmentHead,
+        maintenanceApprover: permit.maintenanceApprover,
+        performerName: permit.performerName,
+        
+        // Dates and timing
+        startDate: permit.startDate?.toISOString(),
+        endDate: permit.endDate?.toISOString(),
+        workStartedAt: permit.workStartedAt?.toISOString(),
+        workCompletedAt: permit.workCompletedAt?.toISOString(),
+        
+        // Safety assessment
+        selectedHazards: permit.selectedHazards,
+        hazardNotes: permit.hazardNotes,
+        completedMeasures: permit.completedMeasures,
+        identifiedHazards: permit.identifiedHazards,
+        additionalComments: permit.additionalComments,
+        
+        // Approval status
+        departmentHeadApproval: permit.departmentHeadApproval,
+        departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
+        maintenanceApproval: permit.maintenanceApproval,
+        maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
+        safetyOfficerApproval: permit.safetyOfficerApproval,
+        safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
+        
+        // Analysis metadata
+        analysisType: 'permit_improvement',
+        timestamp: new Date().toISOString(),
+        systemVersion: '1.0'
+      };
+
+      // Create URL with base64 encoded permit data for GET request
       const url = new URL(webhookConfig.webhookUrl);
-      url.searchParams.append('permitId', permit.permitId);
-      url.searchParams.append('internalId', permit.id.toString());
-      url.searchParams.append('analysisType', 'permit_improvement');
-      url.searchParams.append('timestamp', new Date().toISOString());
+      url.searchParams.append('action', 'analyze_permit');
+      url.searchParams.append('permitData', Buffer.from(JSON.stringify(permitAnalysisData)).toString('base64'));
+
+      console.log('Sending permit for AI analysis:', {
+        permitId: permit.permitId,
+        internalId: permit.id,
+        webhookUrl: webhookConfig.webhookUrl,
+        dataSize: JSON.stringify(permitAnalysisData).length
+      });
 
       // Send GET request to webhook
       const response = await fetch(url.toString(), {
@@ -587,8 +640,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!response.ok) {
+        console.error('Webhook request failed:', response.status, response.statusText);
         throw new Error(`Webhook request failed: ${response.status}`);
       }
+
+      console.log('Permit data sent successfully to AI analysis webhook');
 
       res.json({ 
         message: "Permit sent for AI analysis successfully",
@@ -603,19 +659,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Receive AI suggestions from webhook
   app.post("/api/webhooks/suggestions", async (req, res) => {
     try {
-      const { permitId, suggestions } = req.body;
+      console.log('Received AI analysis response:', JSON.stringify(req.body, null, 2));
       
-      if (!permitId || !suggestions || !Array.isArray(suggestions)) {
-        return res.status(400).json({ message: "Invalid webhook payload" });
+      const { 
+        permitId, 
+        analysisComplete, 
+        suggestions, 
+        riskAssessment, 
+        recommendations,
+        compliance_notes,
+        error 
+      } = req.body;
+      
+      if (!permitId) {
+        return res.status(400).json({ message: "permitId is required" });
+      }
+
+      // Handle analysis errors
+      if (!analysisComplete && error) {
+        console.error('AI analysis failed for permit:', permitId, error);
+        return res.status(200).json({ 
+          message: "Analysis error received",
+          error: error 
+        });
+      }
+
+      if (!suggestions || !Array.isArray(suggestions)) {
+        console.log('No suggestions provided for permit:', permitId);
+        return res.status(200).json({ message: "No suggestions to process" });
       }
 
       // Find permit by permitId (string)
       const permit = await storage.getPermitByPermitId(permitId);
       if (!permit) {
+        console.error('Permit not found:', permitId);
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      // Create AI suggestions
+      console.log(`Processing ${suggestions.length} AI suggestions for permit ${permitId}`);
+
+      // Create AI suggestions with enhanced data
       const createdSuggestions = [];
       for (const suggestion of suggestions) {
         const aiSuggestion = await storage.createAiSuggestion({
@@ -623,12 +706,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           suggestionType: suggestion.type || 'improvement',
           fieldName: suggestion.fieldName || null,
           originalValue: suggestion.originalValue || null,
-          suggestedValue: suggestion.suggestedValue,
-          reasoning: suggestion.reasoning,
+          suggestedValue: suggestion.suggestedValue || suggestion.title,
+          reasoning: suggestion.reasoning || suggestion.impact || 'AI analysis recommendation',
           priority: suggestion.priority || 'medium',
           status: 'pending'
         });
         createdSuggestions.push(aiSuggestion);
+      }
+
+      // Log additional analysis data for monitoring
+      if (riskAssessment) {
+        console.log('Risk assessment for permit', permitId, ':', {
+          overallRisk: riskAssessment.overallRisk,
+          complianceScore: riskAssessment.complianceScore,
+          riskFactors: riskAssessment.riskFactors?.length || 0
+        });
+      }
+
+      if (recommendations) {
+        console.log('Recommendations for permit', permitId, ':', {
+          immediateActions: recommendations.immediate_actions?.length || 0,
+          beforeWorkStarts: recommendations.before_work_starts?.length || 0,
+          monitoring: recommendations.monitoring_requirements?.length || 0
+        });
       }
 
       res.json({ 
