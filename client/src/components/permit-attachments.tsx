@@ -129,6 +129,8 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
       return;
     }
 
+    console.log(`Uploading file for permit ${permitId}:`, file.name, file.type, file.size);
+
     const formData = new FormData();
     formData.append('file', file);
     if (description) {
@@ -138,6 +140,9 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
     setUploading(true);
     try {
       await uploadMutation.mutateAsync(formData);
+      console.log(`File uploaded successfully for permit ${permitId}`);
+    } catch (error) {
+      console.error(`Failed to upload file for permit ${permitId}:`, error);
     } finally {
       setUploading(false);
     }
@@ -150,8 +155,12 @@ export function PermitAttachments({ permitId, readonly = false }: PermitAttachme
     }
   };
 
-  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileUpload(event.target.files);
+  const handleCameraCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      console.log('Camera captured file:', files[0].name, files[0].type);
+      await handleFileUpload(files);
+    }
     if (cameraInputRef.current) {
       cameraInputRef.current.value = '';
     }

@@ -1150,9 +1150,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const permitId = parseInt(req.params.id);
       
+      if (isNaN(permitId)) {
+        return res.status(400).json({ message: "Invalid permit ID" });
+      }
+      
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
+
+      // Verify permit exists
+      const permit = await storage.getPermit(permitId);
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+
+      console.log(`Uploading attachment for permit ${permitId}: ${req.file.originalname}`);
 
       // Determine file type based on mime type
       let fileType = 'other';
@@ -1178,6 +1190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const attachment = await storage.createPermitAttachment(attachmentData);
+      console.log(`Attachment created successfully for permit ${permitId}:`, attachment.id);
       res.status(201).json(attachment);
     } catch (error) {
       console.error("Error uploading attachment:", error);
