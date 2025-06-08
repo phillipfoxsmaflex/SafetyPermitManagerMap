@@ -752,6 +752,21 @@ export default function Settings() {
             <WebhookConfigSection />
           )}
 
+          {/* Work Location Management - Only for Admins */}
+          {isAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Arbeitsorte verwalten
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WorkLocationManagement />
+              </CardContent>
+            </Card>
+          )}
+
           {/* System Settings - Only for Admins */}
           {isAdmin && (
             <Card>

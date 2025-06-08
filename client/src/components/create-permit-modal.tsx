@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { X, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield, ArrowLeft, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import {
@@ -71,6 +71,23 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
   const [hazardNotes, setHazardNotes] = useState<HazardNote>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch dropdown data
+  const { data: workLocations = [] } = useQuery({
+    queryKey: ["/api/work-locations/active"],
+  });
+
+  const { data: departmentHeads = [] } = useQuery({
+    queryKey: ["/api/users/department-heads"],
+  });
+
+  const { data: safetyOfficers = [] } = useQuery({
+    queryKey: ["/api/users/safety-officers"],
+  });
+
+  const { data: maintenanceApprovers = [] } = useQuery({
+    queryKey: ["/api/users/maintenance-approvers"],
+  });
 
   // TRBS hazard categories data
   const categories: HazardCategory[] = [
@@ -358,9 +375,22 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Arbeitsort</FormLabel>
-                        <FormControl>
-                          <Input placeholder="z.B. Tank A-104, Gebäude 3" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Arbeitsort auswählen..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {workLocations.map((location: any) => (
+                              <SelectItem key={location.id} value={location.name}>
+                                {location.name}
+                                {location.building && ` - ${location.building}`}
+                                {location.area && ` (${location.area})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -685,9 +715,20 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Abteilungsleiter (Genehmiger) *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Name des Abteilungsleiters" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Abteilungsleiter auswählen..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {departmentHeads.map((user: any) => (
+                                <SelectItem key={user.id} value={user.fullName}>
+                                  {user.fullName} - {user.department}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -699,9 +740,20 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Sicherheitsbeauftragter</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Name des Sicherheitsbeauftragten" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {safetyOfficers.map((user: any) => (
+                                <SelectItem key={user.id} value={user.fullName}>
+                                  {user.fullName} - {user.department}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
