@@ -659,6 +659,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to simulate AI response
+  app.post("/api/webhooks/test-suggestions", async (req, res) => {
+    try {
+      const { permitId } = req.body;
+      
+      if (!permitId) {
+        return res.status(400).json({ message: "permitId is required" });
+      }
+
+      // Simulate AI analysis response
+      const mockAiResponse = {
+        permitId: permitId,
+        analysisComplete: true,
+        riskAssessment: {
+          overallRisk: "medium",
+          riskFactors: [
+            "Unvollständige Risikobeurteilung",
+            "Fehlende Schutzmaßnahmen",
+            "Keine Sicherheitsbeauftragter zugewiesen"
+          ],
+          complianceScore: 65
+        },
+        suggestions: [
+          {
+            type: "safety_improvement",
+            priority: "high",
+            fieldName: "riskLevel",
+            originalValue: null,
+            suggestedValue: "medium",
+            reasoning: "Basierend auf der Arbeitsbeschreibung und dem Standort Tank 1 sollte das Risiko als 'medium' eingestuft werden. Dies erfordert zusätzliche Sicherheitsmaßnahmen und Überwachung."
+          },
+          {
+            type: "personnel_requirement",
+            priority: "high", 
+            fieldName: "safetyOfficer",
+            originalValue: "",
+            suggestedValue: "Dr. Klaus Weber",
+            reasoning: "Für Arbeiten an Tank 1 ist ein qualifizierter Sicherheitsbeauftragter erforderlich. Dr. Weber ist für chemische Anlagen zertifiziert und verfügbar."
+          },
+          {
+            type: "safety_improvement",
+            priority: "medium",
+            fieldName: "completedMeasures", 
+            originalValue: [],
+            suggestedValue: ["atmospheric_monitoring", "ventilation", "ppe", "emergency_procedures"],
+            reasoning: "Für Arbeiten an Tankbehältern werden standardmäßig Atmosphärenüberwachung, Belüftung, PSA und Notfallverfahren empfohlen."
+          },
+          {
+            type: "documentation_improvement",
+            priority: "medium",
+            fieldName: "identifiedHazards",
+            originalValue: "",
+            suggestedValue: "Chemische Dämpfe, Sauerstoffmangel, Explosionsgefahr, Sturz in Behälter",
+            reasoning: "Vollständige Identifikation aller typischen Gefahren bei Tankarbeiten für bessere Risikobewertung und Vorbereitung."
+          }
+        ]
+      };
+
+      // Forward to actual suggestions endpoint
+      const response = await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/suggestions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mockAiResponse)
+      });
+
+      const result = await response.json();
+      res.json({ message: "Test AI analysis sent", result });
+    } catch (error) {
+      console.error("Error in test suggestions:", error);
+      res.status(500).json({ message: "Failed to send test suggestions" });
+    }
+  });
+
   // Receive AI suggestions from webhook
   app.post("/api/webhooks/suggestions", async (req, res) => {
     try {
