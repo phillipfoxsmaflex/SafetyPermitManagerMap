@@ -807,27 +807,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         systemVersion: '1.0'
       };
 
-      // Create URL with JSON permit data for GET request
-      const url = new URL(webhookConfig.webhookUrl);
-      url.searchParams.append('action', 'analyze_permit');
-      url.searchParams.append('permitData', JSON.stringify(permitAnalysisData));
+      // Prepare webhook payload for POST request
+      const webhookPayload = {
+        action: 'analyze_permit',
+        permitData: permitAnalysisData
+      };
 
       console.log('Sending permit for AI analysis:', {
         permitId: permit.permitId,
         internalId: permit.id,
         webhookUrl: webhookConfig.webhookUrl,
-        dataSize: JSON.stringify(permitAnalysisData).length
+        dataSize: JSON.stringify(webhookPayload).length
       });
 
-      console.log('Full webhook URL:', url.toString().substring(0, 200) + '...');
       console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
 
-      // Send GET request to webhook
-      const response = await fetch(url.toString(), {
-        method: 'GET',
+      // Send POST request to webhook with data in body
+      const response = await fetch(webhookConfig.webhookUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(webhookPayload),
         signal: AbortSignal.timeout(30000) // 30 second timeout
       });
 
