@@ -156,8 +156,8 @@ export const insertDraftPermitSchema = createInsertSchema(permits).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
   type: z.string().optional(),
   location: z.string().optional(),
   description: z.string().optional(),

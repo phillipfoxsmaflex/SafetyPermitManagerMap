@@ -153,6 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate and convert dates
       const processedData = { ...req.body };
       
+      // Handle dates based on whether it's a draft
+      const isDraft = processedData.status === "draft";
+      
       // Check if dates are valid
       if (req.body.startDate) {
         const startDate = new Date(req.body.startDate);
@@ -163,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         processedData.startDate = startDate.toISOString();
       } else {
-        processedData.startDate = null;
+        processedData.startDate = isDraft ? undefined : null;
       }
       
       if (req.body.endDate) {
@@ -175,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         processedData.endDate = endDate.toISOString();
       } else {
-        processedData.endDate = null;
+        processedData.endDate = isDraft ? undefined : null;
       }
       
       // Check if end date is after start date
@@ -190,12 +193,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Use appropriate validation schema based on status
-      const isDraft = processedData.status === "draft";
       const validationSchema = isDraft ? insertDraftPermitSchema : insertPermitSchema;
       const validatedData = validationSchema.parse(processedData);
       console.log("Validated data:", JSON.stringify(validatedData, null, 2));
       
-      const permit = await storage.createPermit(validatedData);
+      // Handle draft permits with proper defaults
+      const permitData = {
+        type: validatedData.type || "",
+        location: validatedData.location || "",
+        description: validatedData.description || "",
+        requestorName: validatedData.requestorName || "",
+        department: validatedData.department || "",
+        contactNumber: validatedData.contactNumber || "",
+        emergencyContact: validatedData.emergencyContact || "",
+        startDate: processedData.startDate || "",
+        endDate: processedData.endDate || "",
+        status: validatedData.status || "pending",
+        ...validatedData
+      };
+      
+      const permit = await storage.createPermit(permitData as any);
       console.log("Created permit:", permit);
       
       res.status(201).json(permit);
