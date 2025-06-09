@@ -68,23 +68,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
         throw new Error('Keine aktive Webhook-Konfiguration gefunden. Bitte konfigurieren Sie eine n8n Webhook-URL in den Einstellungen.');
       }
 
-      setAnalysisStage('testing');
-      
-      // Test webhook connection before proceeding
-      try {
-        const testResponse = await fetch(`/api/webhook-configs/${activeWebhook.id}/test`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        const testResult = await testResponse.json();
-        
-        if (!testResult.success) {
-          throw new Error('Webhook-Verbindung fehlgeschlagen. Bitte überprüfen Sie die Konfiguration in den Einstellungen.');
-        }
-      } catch (testError) {
-        throw new Error('Webhook nicht erreichbar. Bitte überprüfen Sie die n8n Webhook-URL in den Einstellungen.');
-      }
-
       setAnalysisStage('analyzing');
       return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
