@@ -5,7 +5,7 @@ import fs from "fs";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "./storage";
-import { insertPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
+import { insertPermitSchema, insertDraftPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -189,7 +189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const validatedData = insertPermitSchema.parse(processedData);
+      // Use appropriate validation schema based on status
+      const isDraft = processedData.status === "draft";
+      const validationSchema = isDraft ? insertDraftPermitSchema : insertPermitSchema;
+      const validatedData = validationSchema.parse(processedData);
       console.log("Validated data:", JSON.stringify(validatedData, null, 2));
       
       const permit = await storage.createPermit(validatedData);

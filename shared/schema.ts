@@ -149,6 +149,34 @@ export const insertPermitSchema = createInsertSchema(permits).omit({
   endDate: z.string(),
 });
 
+// Schema for draft permits with optional fields
+export const insertDraftPermitSchema = createInsertSchema(permits).omit({
+  id: true,
+  permitId: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  type: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  requestorName: z.string().optional(),
+  department: z.string().optional(),
+  contactNumber: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  riskLevel: z.string().optional(),
+  safetyOfficer: z.string().optional(),
+  departmentHead: z.string().optional(),
+  maintenanceApprover: z.string().optional(),
+  identifiedHazards: z.string().optional(),
+  additionalComments: z.string().optional(),
+  selectedHazards: z.array(z.string()).optional(),
+  hazardNotes: z.string().optional(),
+  completedMeasures: z.array(z.string()).optional(),
+  status: z.string().default("draft"),
+}).partial();
+
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,

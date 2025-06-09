@@ -315,8 +315,61 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
     },
   });
 
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data: CreatePermitFormData) => {
+      const draftData = { ...data, status: "draft" };
+      const response = await apiRequest("/api/permits", "POST", draftData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
+      toast({
+        title: "Entwurf gespeichert",
+        description: "Die Arbeitserlaubnis wurde als Entwurf gespeichert.",
+      });
+      onOpenChange(false);
+      form.reset();
+      setActiveTab("basic");
+    },
+    onError: (error: any) => {
+      let errorMessage = "Der Entwurf konnte nicht gespeichert werden.";
+      let errorDetails = "";
+      
+      try {
+        const errorData = JSON.parse(error.message);
+        errorMessage = errorData.message || errorMessage;
+        
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorDetails = errorData.errors.join("\n• ");
+          errorMessage = errorData.message;
+        } else if (errorData.field) {
+          errorDetails = `Fehler in Feld: ${errorData.field}`;
+        }
+      } catch (e) {
+        // Use default error message if parsing fails
+      }
+      
+      toast({
+        title: "Speichern fehlgeschlagen",
+        description: errorDetails ? `${errorMessage}\n\n• ${errorDetails}` : errorMessage,
+        variant: "destructive",
+        duration: 8000,
+      });
+    },
+  });
+
   const onSubmit = (data: CreatePermitFormData) => {
     createPermitMutation.mutate(data);
+  };
+
+  const onSaveDraft = () => {
+    const currentData = form.getValues();
+    saveDraftMutation.mutate(currentData);
   };
 
   const handleTabChange = (tab: string) => {
@@ -867,9 +920,10 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={createPermitMutation.isPending}
+                  onClick={onSaveDraft}
+                  disabled={saveDraftMutation.isPending || createPermitMutation.isPending}
                 >
-                  Save Draft
+                  {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
                 </Button>
                 <Button
                   type="submit"
