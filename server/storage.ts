@@ -365,12 +365,52 @@ export class DatabaseStorage implements IStorage {
         // Prepare update data with proper type handling
         const updateData: any = { updatedAt: new Date() };
         
-        // Handle special fields that might need JSON parsing
-        if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes' || fieldName === 'completedMeasures') {
+        // Handle special fields that might need JSON parsing or array conversion
+        if (fieldName === 'selectedHazards') {
           try {
-            updateData[fieldName] = Array.isArray(suggestedValue) ? suggestedValue : JSON.parse(suggestedValue);
+            if (Array.isArray(suggestedValue)) {
+              updateData[fieldName] = suggestedValue;
+            } else if (typeof suggestedValue === 'string') {
+              // Try to parse as JSON first, otherwise split by comma
+              try {
+                updateData[fieldName] = JSON.parse(suggestedValue);
+              } catch {
+                updateData[fieldName] = suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+              }
+            } else {
+              updateData[fieldName] = [];
+            }
           } catch {
-            updateData[fieldName] = suggestedValue;
+            updateData[fieldName] = [];
+          }
+        } else if (fieldName === 'hazardNotes') {
+          try {
+            if (typeof suggestedValue === 'object') {
+              updateData[fieldName] = suggestedValue;
+            } else if (typeof suggestedValue === 'string') {
+              updateData[fieldName] = JSON.parse(suggestedValue);
+            } else {
+              updateData[fieldName] = {};
+            }
+          } catch {
+            updateData[fieldName] = {};
+          }
+        } else if (fieldName === 'completedMeasures') {
+          try {
+            if (Array.isArray(suggestedValue)) {
+              updateData[fieldName] = suggestedValue;
+            } else if (typeof suggestedValue === 'string') {
+              // Try to parse as JSON first, otherwise split by comma
+              try {
+                updateData[fieldName] = JSON.parse(suggestedValue);
+              } catch {
+                updateData[fieldName] = suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+              }
+            } else {
+              updateData[fieldName] = [];
+            }
+          } catch {
+            updateData[fieldName] = [];
           }
         } else {
           updateData[fieldName] = suggestedValue;
@@ -381,6 +421,9 @@ export class DatabaseStorage implements IStorage {
           .update(permits)
           .set(updateData)
           .where(eq(permits.id, permitId));
+
+        // Map suggestion to TRBS categories if it's a hazard-related suggestion
+        await this.mapSuggestionToTRBS(suggestion, currentPermit);
       }
 
       // Mark suggestion as accepted and applied
@@ -396,6 +439,112 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error applying suggestion:', error);
       return false;
+    }
+  }
+
+  async mapSuggestionToTRBS(suggestion: any, permit: any): Promise<void> {
+    try {
+      const { fieldName, suggestedValue, reasoning, suggestionType } = suggestion;
+      
+      // TRBS hazard category mappings based on keywords and suggestion type
+      const trbsMapping: Record<string, string[]> = {
+        'mechanical': ['0-0', '0-1', '0-2', '0-3', '0-4'],
+        'absturz': ['1-0', '1-1', '1-2', '1-3'],
+        'brand': ['2-0', '2-1', '2-2'],
+        'explosion': ['3-0', '3-1', '3-2'],
+        'electrical': ['4-0', '4-1', '4-2'],
+        'chemisch': ['5-0', '5-1', '5-2', '5-3'],
+        'biologisch': ['6-0', '6-1'],
+        'physikalisch': ['7-0', '7-1', '7-2'],
+        'ergonomisch': ['8-0', '8-1'],
+        'psychisch': ['9-0', '9-1']
+      };
+
+      let currentSelectedHazards: string[] = [];
+      let currentHazardNotes: Record<string, string> = {};
+
+      try {
+        currentSelectedHazards = permit.selectedHazards ? 
+          (Array.isArray(permit.selectedHazards) ? permit.selectedHazards : JSON.parse(permit.selectedHazards)) : [];
+        currentHazardNotes = permit.hazardNotes ? 
+          (typeof permit.hazardNotes === 'object' ? permit.hazardNotes : JSON.parse(permit.hazardNotes)) : {};
+      } catch (e) {
+        console.error('Error parsing current hazard data:', e);
+      }
+
+      // Analyze suggestion content for TRBS category mapping
+      const suggestionText = `${suggestedValue} ${reasoning}`.toLowerCase();
+      let mappedHazards: string[] = [];
+      let hasNewMapping = false;
+
+      // Map based on content analysis
+      for (const [keyword, hazardIds] of Object.entries(trbsMapping)) {
+        if (suggestionText.includes(keyword)) {
+          // Add relevant hazard if not already present
+          for (const hazardId of hazardIds) {
+            if (!currentSelectedHazards.includes(hazardId)) {
+              currentSelectedHazards.push(hazardId);
+              mappedHazards.push(hazardId);
+              hasNewMapping = true;
+            }
+          }
+          
+          // Add or update hazard notes
+          if (hazardIds.length > 0) {
+            const primaryHazard = hazardIds[0];
+            if (!(primaryHazard in currentHazardNotes)) {
+              currentHazardNotes[primaryHazard] = reasoning;
+              hasNewMapping = true;
+            }
+          }
+        }
+      }
+
+      // Specific field-based mapping
+      if (fieldName === 'identifiedHazards' && suggestionType === 'safety_improvement') {
+        // Extract specific hazards from suggested value
+        const hazardKeywords: Record<string, string[]> = {
+          'absturz': ['1-0', '1-1'],
+          'brand': ['2-0'],
+          'explosion': ['3-0'],
+          'elektrisch': ['4-0'],
+          'chemisch': ['5-0'],
+          'biologisch': ['6-0'],
+          'lärm': ['7-0'],
+          'vibration': ['7-1'],
+          'ergonomisch': ['8-0'],
+          'stress': ['9-0']
+        };
+
+        for (const [keyword, hazardIds] of Object.entries(hazardKeywords)) {
+          if (suggestedValue.toLowerCase().includes(keyword)) {
+            for (const hazardId of hazardIds) {
+              if (!currentSelectedHazards.includes(hazardId)) {
+                currentSelectedHazards.push(hazardId);
+                currentHazardNotes[hazardId] = `AI-Vorschlag: ${reasoning}`;
+                hasNewMapping = true;
+              }
+            }
+          }
+        }
+      }
+
+      // Update permit with new TRBS mappings if any were added
+      if (hasNewMapping) {
+        await db
+          .update(permits)
+          .set({
+            selectedHazards: currentSelectedHazards,
+            hazardNotes: currentHazardNotes,
+            updatedAt: new Date()
+          })
+          .where(eq(permits.id, permit.id));
+
+        console.log(`Mapped AI suggestion to TRBS categories: ${mappedHazards.join(', ')}`);
+      }
+
+    } catch (error) {
+      console.error('Error mapping suggestion to TRBS:', error);
     }
   }
 
