@@ -174,6 +174,38 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: P
                       >
                         <Printer className="h-4 w-4 text-secondary-gray" />
                       </Button>
+                      {isAdmin && onDelete && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Genehmigung wirklich löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Diese Aktion kann nicht rückgängig gemacht werden. Die Genehmigung "{permit.permitId}" 
+                                und alle zugehörigen Daten (Anhänge, AI-Vorschläge, Benachrichtigungen) werden 
+                                dauerhaft aus der Datenbank entfernt.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => onDelete(permit.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Löschen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

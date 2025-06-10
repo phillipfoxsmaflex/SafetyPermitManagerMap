@@ -275,7 +275,13 @@ export default function Dashboard() {
             {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
           </h3>
         </div>
-        <PermitTable permits={recentPermits} isLoading={permitsLoading} onEdit={handleEditPermit} />
+        <PermitTable 
+          permits={recentPermits} 
+          isLoading={permitsLoading} 
+          onEdit={handleEditPermit} 
+          onDelete={handleDeletePermit}
+          isAdmin={isAdmin}
+        />
       </main>
 
       {/* Mobile Floating Action Button */}
