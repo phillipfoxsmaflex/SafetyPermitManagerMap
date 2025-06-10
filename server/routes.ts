@@ -766,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Suggestions and Webhook routes
   
-  // Start AI analysis by creating staging permit for direct database processing
+  // Start AI analysis by creating staging permit and triggering webhook
   app.post("/api/permits/:id/analyze", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
@@ -782,36 +782,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ 
           message: "AI analysis already in progress",
           status: "processing",
-          stagingId: existingStaging.id
+          stagingId: existingStaging.id,
+          batchId: existingStaging.batchId
         });
+      }
+
+      // Get active webhook configuration
+      const webhookConfig = await storage.getActiveWebhookConfig();
+      if (!webhookConfig) {
+        return res.status(400).json({ message: "No active webhook configuration found. Please configure n8n webhook in settings." });
       }
 
       console.log('Starting AI analysis for permit:', {
         permitId: permit.permitId,
         internalId: permit.id,
         type: permit.type,
-        location: permit.location
+        location: permit.location,
+        webhookUrl: webhookConfig.webhookUrl
       });
 
       // Create staging permit for AI processing
       const stagingPermit = await storage.createStagingPermit(permitId);
 
-      console.log('Staging permit created for AI analysis:', {
+      // Prepare comprehensive permit data for webhook
+      const webhookPayload = {
+        action: 'analyze_permit',
         stagingId: stagingPermit.id,
-        originalPermitId: permitId,
         batchId: stagingPermit.batchId,
-        aiProcessingStatus: stagingPermit.aiProcessingStatus
+        permitData: {
+          permitId: permit.permitId,
+          internalId: permit.id,
+          type: permit.type,
+          location: permit.location,
+          description: permit.description,
+          department: permit.department,
+          riskLevel: permit.riskLevel,
+          status: permit.status,
+          requestorName: permit.requestorName,
+          contactNumber: permit.contactNumber,
+          emergencyContact: permit.emergencyContact,
+          safetyOfficer: permit.safetyOfficer,
+          departmentHead: permit.departmentHead,
+          maintenanceApprover: permit.maintenanceApprover,
+          performerName: permit.performerName,
+          startDate: permit.startDate?.toISOString(),
+          endDate: permit.endDate?.toISOString(),
+          workStartedAt: permit.workStartedAt?.toISOString(),
+          workCompletedAt: permit.workCompletedAt?.toISOString(),
+          selectedHazards: permit.selectedHazards,
+          hazardNotes: permit.hazardNotes,
+          completedMeasures: permit.completedMeasures,
+          identifiedHazards: permit.identifiedHazards,
+          additionalComments: permit.additionalComments,
+          departmentHeadApproval: permit.departmentHeadApproval,
+          departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
+          maintenanceApproval: permit.maintenanceApproval,
+          maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
+          safetyOfficerApproval: permit.safetyOfficerApproval,
+          safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
+          analysisType: 'permit_improvement',
+          timestamp: new Date().toISOString(),
+          systemVersion: '1.0'
+        }
+      };
+
+      console.log('Sending webhook to n8n:', {
+        stagingId: stagingPermit.id,
+        batchId: stagingPermit.batchId,
+        webhookUrl: webhookConfig.webhookUrl,
+        payloadSize: JSON.stringify(webhookPayload).length
       });
 
+      // Send webhook to n8n
+      const webhookResponse = await fetch(webhookConfig.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+        signal: AbortSignal.timeout(120000) // 2 minute timeout
+      });
+
+      if (!webhookResponse.ok) {
+        console.error('Webhook request failed:', webhookResponse.status, webhookResponse.statusText);
+        throw new Error(`Webhook request failed: ${webhookResponse.status}`);
+      }
+
+      console.log('Webhook sent successfully to n8n');
+
       res.json({ 
-        message: "AI analysis started - staging permit created for external processing",
+        message: "AI analysis started",
         status: "processing",
         stagingId: stagingPermit.id,
-        batchId: stagingPermit.batchId
+        batchId: stagingPermit.batchId,
+        webhookTriggered: true
       });
     } catch (error) {
       console.error("Error starting AI analysis:", error);
-      res.status(500).json({ message: "Failed to start AI analysis" });
+      res.status(500).json({ message: "Failed to start AI analysis: " + error.message });
     }
   });
 

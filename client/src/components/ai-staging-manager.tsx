@@ -65,10 +65,30 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
     },
     onSuccess: (data: any) => {
       toast({
-        title: "KI-Analyse gestartet",
-        description: `Batch ID: ${data.batchId}. Die Analyse läuft im Hintergrund.`,
+        title: "AI-Analyse gestartet",
+        description: "Webhook wurde erfolgreich ausgelöst. Die Analyse läuft...",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/staging`] });
+      
+      // Start polling for updates
+      const pollInterval = setInterval(async () => {
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/staging`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/diff`] });
+        
+        // Check if analysis is completed
+        const stagingData = queryClient.getQueryData([`/api/permits/${permitId}/staging`]) as any;
+        if (stagingData && stagingData.aiProcessingStatus === 'completed') {
+          clearInterval(pollInterval);
+          toast({
+            title: "AI-Analyse abgeschlossen",
+            description: "Verbesserungsvorschläge sind bereit zur Überprüfung.",
+          });
+        }
+      }, 3000);
+      
+      // Stop polling after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+      }, 300000);
     },
     onError: (error) => {
       toast({
@@ -142,6 +162,8 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
     }
   };
 
+
+
   const formatFieldName = (field: string): string => {
     const fieldMap: Record<string, string> = {
       'type': 'Typ',
@@ -159,13 +181,6 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
       'overallRisk': 'Gesamtrisiko'
     };
     return fieldMap[field] || field;
-  };
-
-  const formatValue = (value: any): string => {
-    if (value === null || value === undefined) return '-';
-    if (Array.isArray(value)) return value.join(', ');
-    if (typeof value === 'object') return JSON.stringify(value, null, 2);
-    return String(value);
   };
 
   return (
