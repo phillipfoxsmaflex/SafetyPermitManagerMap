@@ -76,8 +76,6 @@ const editPermitSchema = z.object({
   complianceNotes: z.string().optional(),
   // Risk assessment fields
   overallRisk: z.string().optional(),
-  riskFactors: z.string().optional(),
-  complianceScore: z.number().optional(),
 });
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
@@ -303,8 +301,6 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       complianceNotes: currentPermit?.complianceNotes || "",
       // Risk assessment fields
       overallRisk: currentPermit?.overallRisk || "",
-      riskFactors: currentPermit?.riskFactors || "",
-      complianceScore: currentPermit?.complianceScore || undefined,
     },
   });
 
@@ -390,18 +386,6 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       form.setValue("overallRisk", currentPermit.overallRisk);
     }
   }, [currentPermit?.overallRisk]);
-
-  React.useEffect(() => {
-    if (currentPermit?.riskFactors !== undefined) {
-      form.setValue("riskFactors", currentPermit.riskFactors);
-    }
-  }, [currentPermit?.riskFactors]);
-
-  React.useEffect(() => {
-    if (currentPermit?.complianceScore !== undefined) {
-      form.setValue("complianceScore", currentPermit.complianceScore);
-    }
-  }, [currentPermit?.complianceScore]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
@@ -969,66 +953,25 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                     <div className="border-t pt-6 mt-6">
                       <h4 className="text-lg font-semibold text-industrial-gray mb-4">Risikobewertung</h4>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="overallRisk"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Gesamtrisiko</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Risikostufe auswählen" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="low">Niedrig</SelectItem>
-                                  <SelectItem value="medium">Mittel</SelectItem>
-                                  <SelectItem value="high">Hoch</SelectItem>
-                                  <SelectItem value="critical">Kritisch</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="complianceScore"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Compliance-Score (%)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  min="0" 
-                                  max="100" 
-                                  placeholder="0-100"
-                                  {...field}
-                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
                       <FormField
                         control={form.control}
-                        name="riskFactors"
+                        name="overallRisk"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Risikofaktoren</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Identifizierte Risikofaktoren (einer pro Zeile)..."
-                                rows={4}
-                                {...field}
-                              />
-                            </FormControl>
+                            <FormLabel>Gesamtrisiko</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Risikostufe auswählen" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="low">Niedrig</SelectItem>
+                                <SelectItem value="medium">Mittel</SelectItem>
+                                <SelectItem value="high">Hoch</SelectItem>
+                                <SelectItem value="critical">Kritisch</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
