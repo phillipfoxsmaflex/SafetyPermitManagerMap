@@ -237,12 +237,27 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
     );
   }
 
+  // Show empty state with AI analysis button if no suggestions
   if (!suggestions.length) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>AI-Vorschläge</CardTitle>
-          <CardDescription>Keine Vorschläge verfügbar</CardDescription>
+          <CardTitle className="flex items-center justify-between">
+            AI-Vorschläge (0)
+            <Button
+              onClick={() => startAnalysisMutation.mutate()}
+              disabled={startAnalysisMutation.isPending}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Brain className="h-4 w-4" />
+              {startAnalysisMutation.isPending ? 'Analysiert...' : 'AI-Analyse starten'}
+            </Button>
+          </CardTitle>
+          <CardDescription>
+            Keine Vorschläge verfügbar. Starten Sie eine AI-Analyse für automatische Verbesserungsvorschläge.
+          </CardDescription>
         </CardHeader>
       </Card>
     );
