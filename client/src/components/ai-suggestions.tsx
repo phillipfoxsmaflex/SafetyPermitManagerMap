@@ -13,6 +13,7 @@ import {
   CheckCircle, 
   XCircle,
   AlertTriangle,
+  Trash2,
   Lightbulb,
   Send,
   Loader2
@@ -156,10 +157,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     mutationFn: async () => {
       return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
-      setResultMessage(data.message || 'Alle Vorschläge wurden übernommen');
+      setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);
     },
     onError: () => {
@@ -173,10 +174,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     mutationFn: async () => {
       return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
-      setResultMessage(data.message || 'Alle Vorschläge wurden abgelehnt');
+      setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
       setResultDialogOpen(true);
     },
     onError: () => {
@@ -190,10 +191,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     mutationFn: async () => {
       return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
-      setResultMessage(data.message || 'Alle Vorschläge wurden gelöscht');
+      setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
       setResultDialogOpen(true);
     },
     onError: () => {
@@ -268,6 +269,55 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
             {isAnalyzing ? 'Analysiert...' : 'AI-Analyse starten'}
           </Button>
         </div>
+        
+        {suggestions.length > 0 && (
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <Button
+              onClick={() => applyAllMutation.mutate()}
+              disabled={applyAllMutation.isPending}
+              size="sm"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              {applyAllMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Alle übernehmen
+            </Button>
+            
+            <Button
+              onClick={() => rejectAllMutation.mutate()}
+              disabled={rejectAllMutation.isPending}
+              size="sm"
+              variant="outline"
+              className="text-orange-600 border-orange-600 hover:bg-orange-50"
+            >
+              {rejectAllMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" />
+              )}
+              Alle ablehnen
+            </Button>
+            
+            <Button
+              onClick={() => deleteAllMutation.mutate()}
+              disabled={deleteAllMutation.isPending}
+              size="sm"
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              {deleteAllMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Alle löschen
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -341,31 +391,21 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
                   <>
                     <Separator />
                     <div className="flex items-center gap-2">
-                      {suggestion.fieldName && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleApplySuggestion(suggestion.id)}
-                          disabled={applySuggestionMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Automatisch übernehmen
-                        </Button>
-                      )}
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => handleAcceptSuggestion(suggestion.id)}
-                        disabled={updateStatusMutation.isPending}
+                        onClick={() => handleApplySuggestion(suggestion.id)}
+                        disabled={applySuggestionMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
                       >
-                        <ThumbsUp className="h-4 w-4 mr-1" />
-                        Akzeptieren
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Übernehmen
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleRejectSuggestion(suggestion.id)}
                         disabled={updateStatusMutation.isPending}
+                        className="text-red-600 border-red-600 hover:bg-red-50"
                       >
                         <ThumbsDown className="h-4 w-4 mr-1" />
                         Ablehnen
