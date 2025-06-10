@@ -177,17 +177,17 @@ export function PermitPrintView({ permit, onClose }: PermitPrintViewProps) {
           </CardContent>
         </Card>
 
-        {/* Safety Assessment */}
+        {/* TRBS Safety Assessment */}
         {selectedHazards.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Gefährdungsbeurteilung
+                TRBS GEFÄHRDUNGSBEURTEILUNG
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {selectedHazards.map((hazardId: string, index: number) => (
                   <div key={index} className="border rounded p-3">
                     <div className="text-sm font-medium">Gefährdung #{index + 1}</div>
@@ -199,6 +199,20 @@ export function PermitPrintView({ permit, onClose }: PermitPrintViewProps) {
                     )}
                   </div>
                 ))}
+                
+                {/* Additional Hazard Notes */}
+                {permit.hazardNotes && Object.keys(hazardNotes).length > 0 && (
+                  <div className="mt-6 pt-4 border-t">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">ZUSÄTZLICHE NOTIZEN ZU GEFAHREN</h4>
+                    <div className="space-y-2">
+                      {Object.entries(hazardNotes).map(([hazardId, note]) => (
+                        <div key={hazardId} className="text-sm p-3 bg-gray-50 rounded">
+                          <strong>Gefährdung {hazardId}:</strong> {String(note)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -212,30 +226,39 @@ export function PermitPrintView({ permit, onClose }: PermitPrintViewProps) {
               Genehmigungsverfahren
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
               {permit.departmentHead && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Abteilungsleiter</label>
-                  <p className="text-sm font-medium">{permit.departmentHead}</p>
-                </div>
-              )}
-              {permit.safetyOfficer && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Sicherheitsbeauftragter</label>
-                  <p className="text-sm font-medium">{permit.safetyOfficer}</p>
+                <div className="border-b pb-3">
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Abteilungsleiter:</label>
+                  <p className="text-base font-medium">{permit.departmentHead}</p>
+                  <div className="mt-3 border-t pt-2">
+                    <span className="text-xs text-gray-500">Unterschrift: _________________________</span>
+                  </div>
                 </div>
               )}
               {permit.maintenanceApprover && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Instandhaltung/Engineering</label>
-                  <p className="text-sm font-medium">{permit.maintenanceApprover}</p>
+                <div className="border-b pb-3">
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Technik:</label>
+                  <p className="text-base font-medium">{permit.maintenanceApprover}</p>
+                  <div className="mt-3 border-t pt-2">
+                    <span className="text-xs text-gray-500">Unterschrift: _________________________</span>
+                  </div>
+                </div>
+              )}
+              {permit.safetyOfficer && (
+                <div className="border-b pb-3">
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Sicherheitsbeauftragter:</label>
+                  <p className="text-base font-medium">{permit.safetyOfficer}</p>
+                  <div className="mt-3 border-t pt-2">
+                    <span className="text-xs text-gray-500">Unterschrift: _________________________</span>
+                  </div>
                 </div>
               )}
             </div>
             
             {permit.additionalComments && (
-              <div>
+              <div className="mt-6 pt-4 border-t">
                 <label className="text-sm font-medium text-gray-600">Zusätzliche Kommentare</label>
                 <p className="text-sm mt-1">{permit.additionalComments}</p>
               </div>
@@ -293,6 +316,122 @@ export function PermitPrintView({ permit, onClose }: PermitPrintViewProps) {
             </CardContent>
           </Card>
         )}
+
+        {/* Safety Assessment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Sicherheitsbewertung
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {permit.immediateActions || permit.beforeWorkStarts || permit.complianceNotes ? (
+              <div className="space-y-3">
+                {permit.immediateActions && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Sofortmaßnahmen</label>
+                    <div className="p-3 bg-red-50 rounded">
+                      <p className="text-sm">{permit.immediateActions}</p>
+                    </div>
+                  </div>
+                )}
+                {permit.beforeWorkStarts && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Vor Arbeitsbeginn</label>
+                    <div className="p-3 bg-yellow-50 rounded">
+                      <p className="text-sm">{permit.beforeWorkStarts}</p>
+                    </div>
+                  </div>
+                )}
+                {permit.complianceNotes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Compliance-Hinweise</label>
+                    <div className="p-3 bg-blue-50 rounded">
+                      <p className="text-sm">{permit.complianceNotes}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 border-2 border-dashed border-gray-300 rounded">
+                <p className="text-sm text-gray-500 italic">Sicherheitsbewertung noch nicht durchgeführt</p>
+                <div className="mt-3 space-y-2">
+                  <div className="text-xs text-gray-500">Bewertung durch Sicherheitsbeauftragten: ________________</div>
+                  <div className="text-xs text-gray-500">Datum: ________________</div>
+                  <div className="text-xs text-gray-500">Unterschrift: ________________</div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Comments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Kommentare
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {permit.additionalComments ? (
+              <div className="p-3 bg-gray-50 rounded">
+                <p className="text-sm">{permit.additionalComments}</p>
+              </div>
+            ) : (
+              <div className="p-3 border-2 border-dashed border-gray-300 rounded">
+                <p className="text-sm text-gray-500 italic">Keine zusätzlichen Kommentare</p>
+                <div className="mt-3 space-y-1">
+                  <div className="text-xs text-gray-500">Zusätzliche Bemerkungen:</div>
+                  <div className="border-b border-gray-400 w-full h-4"></div>
+                  <div className="border-b border-gray-400 w-full h-4"></div>
+                  <div className="border-b border-gray-400 w-full h-4"></div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Risk Assessment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Risikobewertung
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-600">Risikostufe</label>
+                <p className="text-sm font-medium">{permit.riskLevel || 'Nicht bewertet'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Gesamtrisiko</label>
+                <p className="text-sm font-medium">{permit.overallRisk || 'Nicht bewertet'}</p>
+              </div>
+            </div>
+            
+            {permit.identifiedHazards && (
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-600">Identifizierte Gefahren</label>
+                <p className="text-sm mt-1 p-3 bg-gray-50 rounded">{permit.identifiedHazards}</p>
+              </div>
+            )}
+            
+            {(!permit.riskLevel || !permit.overallRisk) && (
+              <div className="mt-4 p-3 border-2 border-dashed border-gray-300 rounded">
+                <p className="text-sm text-gray-500 italic">Risikobewertung vervollständigen</p>
+                <div className="mt-3 space-y-2">
+                  <div className="text-xs text-gray-500">Durchgeführt von: ________________</div>
+                  <div className="text-xs text-gray-500">Datum: ________________</div>
+                  <div className="text-xs text-gray-500">Unterschrift: ________________</div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Attachments */}
         {attachments.length > 0 && (
