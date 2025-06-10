@@ -912,7 +912,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             suggestedValue: "{\"5-0\": \"Exposition gegenüber chemischen Dämpfen - kontinuierliche Überwachung erforderlich\", \"5-1\": \"Sauerstoffmangel durch Verdrängung - Atemschutz obligatorisch\", \"4-0\": \"Explosionsgefahr durch Gasansammlung - Ex-Schutz beachten\", \"7-1\": \"Absturzgefahr bei Behältereinstieg - Sicherungsmaßnahmen\"}",
             reasoning: "Strukturierte Dokumentation der Gefährdungsbeurteilung mit spezifischen Schutzmaßnahmen je Gefährdungskategorie"
           }
-        ]
+        ],
+        recommendations: {
+          immediate_actions: [
+            "Sofortige Atmosphärenprüfung vor Betreten des Behälters durchführen",
+            "Persönliche Schutzausrüstung (Atemschutz, Schutzanzug) anlegen",
+            "Notfallausrüstung und Erste-Hilfe-Material bereitstellen"
+          ],
+          before_work_starts: [
+            "Behälter ordnungsgemäß entleeren und reinigen",
+            "Belüftungssystem installieren und Funktionsprüfung durchführen",
+            "Kommunikationsverbindung nach außen etablieren",
+            "Rettungsmannschaft in Bereitschaft versetzen"
+          ],
+          compliance_requirements: [
+            "TRBS 2152-2: Vermeidung oder Schutz vor Gefährdungen in Behältern und engen Räumen",
+            "TRGS 900: Arbeitsplatzgrenzwerte - kontinuierliche Überwachung erforderlich",
+            "DGUV Regel 113-004: Behälter, Silos und enge Räume - Sicherheitskonzept beachten"
+          ]
+        }
       };
 
       // Forward to actual suggestions endpoint

@@ -19,7 +19,10 @@
     "completedMeasures": "Array field for protective measures",
     "selectedHazards": "Array field for TRBS hazard category IDs",
     "hazardNotes": "JSON string field for structured hazard documentation",
-    "additionalComments": "Text field for specific safety instructions"
+    "additionalComments": "Text field for specific safety instructions",
+    "immediateActions": "Text field for immediate safety actions (auto-populated from recommendations.immediate_actions)",
+    "beforeWorkStarts": "Text field for pre-work requirements (auto-populated from recommendations.before_work_starts)",
+    "complianceNotes": "Text field for regulatory compliance notes (auto-populated from recommendations.compliance_requirements or compliance_notes)"
   },
   "example_successful_response": {
     "permitId": "HT-2025-001",
