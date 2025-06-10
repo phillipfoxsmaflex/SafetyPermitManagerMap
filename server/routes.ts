@@ -1702,6 +1702,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Staging endpoints
+  app.post('/api/permits/:id/ai-analyze', requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      
+      // Create staging permit
+      const stagingPermit = await storage.createStagingPermit(permitId);
+      
+      // Get active webhook configuration
+      const webhookConfig = await storage.getActiveWebhookConfig();
+      if (!webhookConfig) {
+        return res.status(400).json({ message: "No active webhook configuration found" });
+      }
+      
+      // Send permit data to n8n for AI processing
+      const originalPermit = await storage.getPermit(permitId);
+      const webhookPayload = {
+        permitId: originalPermit?.id,
+        stagingId: stagingPermit.id,
+        permitData: originalPermit,
+        batchId: stagingPermit.batchId,
+        analysisType: "safety_enhancement"
+      };
+      
+      // Trigger n8n webhook (fire and forget)
+      fetch(webhookConfig.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload)
+      }).catch(error => console.error('Webhook error:', error));
+      
+      res.json({
+        message: "AI analysis started",
+        stagingId: stagingPermit.id,
+        batchId: stagingPermit.batchId
+      });
+    } catch (error) {
+      console.error("Error starting AI analysis:", error);
+      res.status(500).json({ message: "Failed to start AI analysis" });
+    }
+  });
+
+  app.get('/api/permits/:id/staging', requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const staging = await storage.getStagingPermit(permitId);
+      
+      if (!staging) {
+        return res.status(404).json({ message: "No staging permit found" });
+      }
+      
+      res.json(staging);
+    } catch (error) {
+      console.error("Error fetching staging permit:", error);
+      res.status(500).json({ message: "Failed to fetch staging permit" });
+    }
+  });
+
+  app.get('/api/permits/:id/diff', requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const diff = await storage.getPermitDiff(permitId);
+      res.json(diff);
+    } catch (error) {
+      console.error("Error fetching permit diff:", error);
+      res.status(500).json({ message: "Failed to fetch permit diff" });
+    }
+  });
+
+  app.post('/api/permits/:id/apply-staging', requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const updatedPermit = await storage.applyStagingChanges(permitId);
+      
+      if (!updatedPermit) {
+        return res.status(404).json({ message: "Failed to apply staging changes" });
+      }
+      
+      res.json({
+        message: "Staging changes applied successfully",
+        permit: updatedPermit
+      });
+    } catch (error) {
+      console.error("Error applying staging changes:", error);
+      res.status(500).json({ message: "Failed to apply staging changes" });
+    }
+  });
+
+  app.delete('/api/permits/:id/staging', requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const success = await storage.rejectStagingChanges(permitId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "No staging permit found" });
+      }
+      
+      res.json({ message: "Staging changes rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting staging changes:", error);
+      res.status(500).json({ message: "Failed to reject staging changes" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
