@@ -63,6 +63,16 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       setAnalysisStage('checking');
+      
+      // Check if webhook is configured before starting analysis
+      const response = await fetch('/api/webhook-configs');
+      const webhookConfigs = await response.json();
+      const activeWebhook = webhookConfigs.find((config: any) => config.isActive);
+      
+      if (!activeWebhook) {
+        throw new Error('Keine aktive Webhook-Konfiguration gefunden. Bitte konfigurieren Sie eine n8n Webhook-URL in den Einstellungen.');
+      }
+
       setAnalysisStage('analyzing');
       return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
@@ -70,16 +80,34 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setAnalysisDialogOpen(true);
       setIsAnalyzing(true);
     },
-    onSuccess: (response: any) => {
-      setIsAnalyzing(false);
-      setAnalysisDialogOpen(false);
-      setResultType('success');
-      setResultMessage(`AI-Analyse gestartet. Staging-Permit erstellt mit Batch-ID: ${response.batchId}. Das n8n-System wird die Verbesserungen direkt in die Datenbank schreiben.`);
-      setResultDialogOpen(true);
-      
-      // Refresh suggestions and staging data
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/staging`] });
+    onSuccess: () => {
+      // Poll for new suggestions with proper completion detection
+      const pollInterval = setInterval(async () => {
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+        
+        // Check if suggestions have been received
+        const currentSuggestions = queryClient.getQueryData([`/api/permits/${permitId}/suggestions`]) as any[];
+        if (currentSuggestions && currentSuggestions.length > 0) {
+          clearInterval(pollInterval);
+          setIsAnalyzing(false);
+          setAnalysisDialogOpen(false);
+          setResultType('success');
+          setResultMessage(`AI-Analyse abgeschlossen. ${currentSuggestions.length} Verbesserungsvorschläge erhalten.`);
+          setResultDialogOpen(true);
+        }
+      }, 3000);
+
+      // Stop polling after 3 minutes with timeout message
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isAnalyzing) {
+          setIsAnalyzing(false);
+          setAnalysisDialogOpen(false);
+          setResultType('error');
+          setResultMessage('AI-Analyse-Timeout. Bitte versuchen Sie es erneut.');
+          setResultDialogOpen(true);
+        }
+      }, 180000);
     },
     onError: (error: any) => {
       setIsAnalyzing(false);

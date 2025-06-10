@@ -766,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Suggestions and Webhook routes
   
-  // Start AI analysis by creating staging permit and triggering webhook
+  // Send permit to AI for analysis
   app.post("/api/permits/:id/analyze", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
@@ -776,207 +776,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      // Check if staging permit already exists
-      const existingStaging = await storage.getStagingPermit(permitId);
-      if (existingStaging && existingStaging.aiProcessingStatus === 'processing') {
-        // Check if processing has been running for more than 10 minutes (timeout)
-        if (existingStaging.aiProcessingStarted) {
-          const processingStartTime = new Date(existingStaging.aiProcessingStarted);
-          const now = new Date();
-          const minutesElapsed = (now.getTime() - processingStartTime.getTime()) / (1000 * 60);
-          
-          if (minutesElapsed > 10) {
-            // Mark as error due to timeout
-            await storage.updateStagingPermit(existingStaging.id, { 
-              aiProcessingStatus: 'error' 
-            });
-          } else {
-            return res.json({ 
-              message: "AI analysis already in progress",
-              status: "processing",
-              stagingId: existingStaging.id,
-              batchId: existingStaging.batchId
-            });
-          }
-        }
-      }
-
-      // Get active webhook configuration
       const webhookConfig = await storage.getActiveWebhookConfig();
       if (!webhookConfig) {
-        return res.status(400).json({ message: "No active webhook configuration found. Please configure n8n webhook in settings." });
+        return res.status(400).json({ message: "No active webhook configuration found" });
       }
 
-      console.log('Starting AI analysis for permit:', {
+      // Create comprehensive permit data for analysis
+      const permitAnalysisData = {
+        // Basic permit information
         permitId: permit.permitId,
         internalId: permit.id,
         type: permit.type,
         location: permit.location,
-        webhookUrl: webhookConfig.webhookUrl
-      });
-
-      // Create staging permit for AI processing
-      const stagingPermit = await storage.createStagingPermit(permitId);
-
-      // Prepare comprehensive permit data for webhook
-      const webhookPayload = {
-        action: 'analyze_permit',
-        stagingId: stagingPermit.id,
-        batchId: stagingPermit.batchId,
-        permitData: {
-          permitId: permit.permitId,
-          internalId: permit.id,
-          type: permit.type,
-          location: permit.location,
-          description: permit.description,
-          department: permit.department,
-          riskLevel: permit.riskLevel,
-          status: permit.status,
-          requestorName: permit.requestorName,
-          contactNumber: permit.contactNumber,
-          emergencyContact: permit.emergencyContact,
-          safetyOfficer: permit.safetyOfficer,
-          departmentHead: permit.departmentHead,
-          maintenanceApprover: permit.maintenanceApprover,
-          performerName: permit.performerName,
-          startDate: permit.startDate?.toISOString(),
-          endDate: permit.endDate?.toISOString(),
-          workStartedAt: permit.workStartedAt?.toISOString(),
-          workCompletedAt: permit.workCompletedAt?.toISOString(),
-          selectedHazards: permit.selectedHazards,
-          hazardNotes: permit.hazardNotes,
-          completedMeasures: permit.completedMeasures,
-          identifiedHazards: permit.identifiedHazards,
-          additionalComments: permit.additionalComments,
-          departmentHeadApproval: permit.departmentHeadApproval,
-          departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
-          maintenanceApproval: permit.maintenanceApproval,
-          maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
-          safetyOfficerApproval: permit.safetyOfficerApproval,
-          safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
-          analysisType: 'permit_improvement',
-          timestamp: new Date().toISOString(),
-          systemVersion: '1.0'
-        }
+        description: permit.description,
+        department: permit.department,
+        riskLevel: permit.riskLevel,
+        status: permit.status,
+        
+        // Personnel information
+        requestorName: permit.requestorName,
+        contactNumber: permit.contactNumber,
+        emergencyContact: permit.emergencyContact,
+        safetyOfficer: permit.safetyOfficer,
+        departmentHead: permit.departmentHead,
+        maintenanceApprover: permit.maintenanceApprover,
+        performerName: permit.performerName,
+        
+        // Dates and timing
+        startDate: permit.startDate?.toISOString(),
+        endDate: permit.endDate?.toISOString(),
+        workStartedAt: permit.workStartedAt?.toISOString(),
+        workCompletedAt: permit.workCompletedAt?.toISOString(),
+        
+        // Safety assessment
+        selectedHazards: permit.selectedHazards,
+        hazardNotes: permit.hazardNotes,
+        completedMeasures: permit.completedMeasures,
+        identifiedHazards: permit.identifiedHazards,
+        additionalComments: permit.additionalComments,
+        
+        // Approval status
+        departmentHeadApproval: permit.departmentHeadApproval,
+        departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
+        maintenanceApproval: permit.maintenanceApproval,
+        maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
+        safetyOfficerApproval: permit.safetyOfficerApproval,
+        safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
+        
+        // Analysis metadata
+        analysisType: 'permit_improvement',
+        timestamp: new Date().toISOString(),
+        systemVersion: '1.0'
       };
 
-      console.log('Sending webhook to n8n:', {
-        stagingId: stagingPermit.id,
-        batchId: stagingPermit.batchId,
+      // Prepare webhook payload for POST request
+      const webhookPayload = {
+        action: 'analyze_permit',
+        permitData: permitAnalysisData
+      };
+
+      console.log('Sending permit for AI analysis:', {
+        permitId: permit.permitId,
+        internalId: permit.id,
         webhookUrl: webhookConfig.webhookUrl,
-        payloadSize: JSON.stringify(webhookPayload).length
+        dataSize: JSON.stringify(webhookPayload).length
       });
 
-      // Send webhook to n8n
-      const webhookResponse = await fetch(webhookConfig.webhookUrl, {
+      console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
+
+      // Send POST request to webhook with data in body
+      const response = await fetch(webhookConfig.webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(webhookPayload),
-        signal: AbortSignal.timeout(120000) // 2 minute timeout
+        signal: AbortSignal.timeout(120000) // 2 minute timeout for AI analysis
       });
 
-      if (!webhookResponse.ok) {
-        const errorText = await webhookResponse.text();
-        console.error('Webhook request failed:', webhookResponse.status, webhookResponse.statusText);
-        console.error('Error response:', errorText);
-        
-        // Check if it's a webhook not registered error
-        if (webhookResponse.status === 404 && errorText.includes('not registered')) {
-          // Mark staging permit as failed with specific message
-          await storage.updateStagingPermit(stagingPermit.id, { 
-            aiProcessingStatus: 'error' 
-          });
-          
-          throw new Error(`n8n-Webhook ist nicht registriert. Führen Sie den Workflow in n8n aus, um den Webhook zu aktivieren.`);
-        }
-        
-        // Mark staging permit as failed
-        await storage.updateStagingPermit(stagingPermit.id, { 
-          aiProcessingStatus: 'error' 
-        });
-        
-        throw new Error(`Webhook request failed: ${webhookResponse.status} - ${errorText}`);
+      if (!response.ok) {
+        console.error('Webhook request failed:', response.status, response.statusText);
+        throw new Error(`Webhook request failed: ${response.status}`);
       }
 
-      console.log('Webhook sent successfully to n8n');
+      console.log('Permit data sent successfully to AI analysis webhook');
 
       res.json({ 
-        message: "AI analysis started",
-        status: "processing",
-        stagingId: stagingPermit.id,
-        batchId: stagingPermit.batchId,
-        webhookTriggered: true
+        message: "Permit sent for AI analysis successfully",
+        status: "processing" 
       });
     } catch (error) {
-      console.error("Error starting AI analysis:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      
-      // If there's a staging permit created, mark it as error
-      try {
-        const currentPermitId = parseInt(req.params.id);
-        const stagingPermit = await storage.getStagingPermit(currentPermitId);
-        if (stagingPermit) {
-          await storage.updateStagingPermit(stagingPermit.id, { 
-            aiProcessingStatus: 'error' 
-          });
-        }
-      } catch (updateError) {
-        console.error("Failed to update staging permit status:", updateError);
-      }
-      
-      res.status(500).json({ 
-        message: "Failed to start AI analysis: " + errorMessage,
-        error: "webhook_failed",
-        details: errorMessage.includes("404") ? "Webhook URL not found (404). Check n8n workflow configuration." : errorMessage
-      });
-    }
-  });
-
-  // Test AI analysis with mock improvements (for development/testing)
-  app.post("/api/permits/:id/ai-test", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const permit = await storage.getPermit(permitId);
-      
-      if (!permit) {
-        return res.status(404).json({ message: "Permit not found" });
-      }
-
-      // Create or get existing staging permit
-      let stagingPermit = await storage.getStagingPermit(permitId);
-      if (!stagingPermit) {
-        stagingPermit = await storage.createStagingPermit(permitId);
-      }
-
-      // Simulate AI improvements
-      const improvements = {
-        identifiedHazards: permit.identifiedHazards + " | KI-Ergänzung: Exposition gegenüber Ethanoldämpfen, Brandgefahr durch elektrostatische Aufladung",
-        additionalComments: permit.additionalComments + " | KI-Empfehlung: Zusätzliche Gasmesstechnik für kontinuierliche Überwachung, Ex-geschützte Werkzeuge verwenden",
-        selectedHazards: [...(permit.selectedHazards || []), "Inhalationsgefahr", "Brandgefahr durch statische Aufladung"],
-        completedMeasures: [...(permit.completedMeasures || []), "Gaswarnanlagen-Funktionstest", "PSA-Vollständigkeitsprüfung", "Ex-Schutz-Zertifikate prüfen"]
-      };
-
-      // Update staging permit with improvements
-      await storage.updateStagingPermit(stagingPermit.id, {
-        identifiedHazards: improvements.identifiedHazards,
-        additionalComments: improvements.additionalComments,
-        selectedHazards: improvements.selectedHazards,
-        completedMeasures: improvements.completedMeasures,
-        changedFields: ['identifiedHazards', 'additionalComments', 'selectedHazards', 'completedMeasures'],
-        aiProcessingStatus: 'completed',
-        aiProcessingCompleted: new Date()
-      });
-
-      res.json({ 
-        message: "Test AI analysis completed",
-        stagingId: stagingPermit.id,
-        improvements: Object.keys(improvements)
-      });
-    } catch (error) {
-      console.error("Error in test AI analysis:", error);
-      res.status(500).json({ message: "Failed to run test AI analysis" });
+      console.error("Error sending permit for analysis:", error);
+      res.status(500).json({ message: "Failed to send permit for analysis" });
     }
   });
 
@@ -1739,24 +1630,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get database configuration for admin settings
-  app.get('/api/admin/database-config', requireAuth, async (req, res) => {
-    try {
-      const config = {
-        host: process.env.PGHOST || 'localhost',
-        port: process.env.PGPORT || '5432',
-        database: process.env.PGDATABASE || 'permits',
-        user: process.env.PGUSER || 'postgres',
-        password: process.env.PGPASSWORD || '',
-        hasPassword: !!process.env.PGPASSWORD
-      };
-      res.json(config);
-    } catch (error) {
-      console.error('Error fetching database config:', error);
-      res.status(500).json({ error: 'Failed to fetch database configuration' });
-    }
-  });
-
   app.get("/api/admin/company-logo", async (req, res) => {
     try {
       const fs = await import('fs/promises');
@@ -1826,110 +1699,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing company logo:", error);
       res.status(500).json({ message: "Fehler beim Entfernen des Firmenlogos" });
-    }
-  });
-
-  // AI Staging endpoints
-  app.post('/api/permits/:id/ai-analyze', requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      
-      // Create staging permit
-      const stagingPermit = await storage.createStagingPermit(permitId);
-      
-      // Get active webhook configuration
-      const webhookConfig = await storage.getActiveWebhookConfig();
-      if (!webhookConfig) {
-        return res.status(400).json({ message: "No active webhook configuration found" });
-      }
-      
-      // Send permit data to n8n for AI processing
-      const originalPermit = await storage.getPermit(permitId);
-      const webhookPayload = {
-        permitId: originalPermit?.id,
-        stagingId: stagingPermit.id,
-        permitData: originalPermit,
-        batchId: stagingPermit.batchId,
-        analysisType: "safety_enhancement"
-      };
-      
-      // Trigger n8n webhook (fire and forget)
-      fetch(webhookConfig.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload)
-      }).catch(error => console.error('Webhook error:', error));
-      
-      res.json({
-        message: "AI analysis started",
-        stagingId: stagingPermit.id,
-        batchId: stagingPermit.batchId
-      });
-    } catch (error) {
-      console.error("Error starting AI analysis:", error);
-      res.status(500).json({ message: "Failed to start AI analysis" });
-    }
-  });
-
-  app.get('/api/permits/:id/staging', requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const staging = await storage.getStagingPermit(permitId);
-      
-      if (!staging) {
-        return res.status(404).json({ message: "No staging permit found" });
-      }
-      
-      res.json(staging);
-    } catch (error) {
-      console.error("Error fetching staging permit:", error);
-      res.status(500).json({ message: "Failed to fetch staging permit" });
-    }
-  });
-
-  app.get('/api/permits/:id/diff', requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const diff = await storage.getPermitDiff(permitId);
-      res.json(diff);
-    } catch (error) {
-      console.error("Error fetching permit diff:", error);
-      res.status(500).json({ message: "Failed to fetch permit diff" });
-    }
-  });
-
-  app.post('/api/permits/:id/apply-staging', requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const updatedPermit = await storage.applyStagingChanges(permitId);
-      
-      if (!updatedPermit) {
-        return res.status(404).json({ message: "Failed to apply staging changes" });
-      }
-      
-      res.json({
-        message: "Staging changes applied successfully",
-        permit: updatedPermit
-      });
-    } catch (error) {
-      console.error("Error applying staging changes:", error);
-      res.status(500).json({ message: "Failed to apply staging changes" });
-    }
-  });
-
-  app.delete('/api/permits/:id/staging', requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const success = await storage.rejectStagingChanges(permitId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "No staging permit found" });
-      }
-      
-      res.json({ message: "Staging changes rejected successfully" });
-    } catch (error) {
-      console.error("Error rejecting staging changes:", error);
-      res.status(500).json({ message: "Failed to reject staging changes" });
     }
   });
 
