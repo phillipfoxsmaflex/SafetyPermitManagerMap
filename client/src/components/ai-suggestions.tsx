@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Bot, 
   ThumbsUp, 
@@ -118,35 +119,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const applySuggestionMutation = useMutation({
-    mutationFn: (suggestionId: number) => {
-      console.log(`Client: Applying suggestion ${suggestionId}`);
-      
-      return fetch(`/api/suggestions/${suggestionId}/apply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-      .then(async (response) => {
-        console.log(`Client: Response status: ${response.status}`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Client: API error: ${response.status} - ${errorText}`);
-          throw new Error(`API Error: ${response.status} - ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("Client: Success response:", data);
-        return data;
-      })
-      .catch((error) => {
-        console.error("Client: Fetch error:", error);
-        console.error("Client: Error type:", typeof error);
-        console.error("Client: Error string:", String(error));
-        throw new Error(`Network Error: ${error?.message || 'Connection failed'}`);
-      });
+    mutationFn: async (suggestionId: number) => {
+      console.log(`Applying suggestion ${suggestionId} with React Query`);
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, 'POST');
+      return await response.json();
     },
     onSuccess: (data) => {
       console.log("Client: onSuccess called with:", data);
@@ -305,8 +281,22 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const handleApplySuggestion = (suggestionId: number) => {
-    console.log(`Using React Query for suggestion ${suggestionId}`);
-    applySuggestionMutation.mutate(suggestionId);
+    console.log(`Applying suggestion ${suggestionId} via form submission`);
+    
+    // Create a hidden form to submit the request via browser navigation
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/api/suggestions/${suggestionId}/apply`;
+    form.style.display = 'none';
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'redirect';
+    csrfInput.value = window.location.pathname;
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
   };
 
   const handleAcceptSuggestion = (suggestionId: number) => {

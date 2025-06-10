@@ -1167,6 +1167,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Successfully applied suggestion ${suggestionId}`);
+      
+      // Handle form submissions with redirect
+      if (req.body.redirect) {
+        return res.redirect(req.body.redirect + '?success=suggestion_applied');
+      }
+      
       res.json({ 
         message: "Suggestion applied successfully",
         success: true 
