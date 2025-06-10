@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Upload, Trash2, Image, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Upload, Trash2, Image, AlertCircle, CheckCircle2, ArrowLeft, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "wouter";
@@ -182,6 +182,71 @@ export default function AdminSettings() {
             </p>
           </div>
         </div>
+
+        <Separator />
+
+        {/* Database Connection Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Datenbankverbindung für n8n
+            </CardTitle>
+            <CardDescription>
+              Verwenden Sie diese Verbindungsdaten um n8n mit der Permit-Datenbank zu verbinden.
+              Diese Informationen benötigen Sie für die AI-Workflow-Konfiguration.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium">Host</Label>
+                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                  {process.env.PGHOST || 'localhost'}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Port</Label>
+                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                  {process.env.PGPORT || '5432'}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Datenbank</Label>
+                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                  {process.env.PGDATABASE || 'permits'}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Benutzer</Label>
+                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                  {process.env.PGUSER || 'postgres'}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">Passwort</Label>
+                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                  {process.env.PGPASSWORD ? '••••••••••••' : 'Nicht konfiguriert'}
+                </div>
+              </div>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">n8n Workflow-Integration</h4>
+              <p className="text-sm text-blue-700 mb-3">
+                1. Importieren Sie den bereitgestellten n8n-Workflow (n8n-ai-permit-workflow.json)
+              </p>
+              <p className="text-sm text-blue-700 mb-3">
+                2. Konfigurieren Sie die PostgreSQL-Verbindung in n8n mit den obigen Daten
+              </p>
+              <p className="text-sm text-blue-700 mb-3">
+                3. Fügen Sie Ihren OpenAI API-Schlüssel in den GPT-4 Node hinzu
+              </p>
+              <p className="text-sm text-blue-700">
+                4. Die KI schreibt verbesserte Genehmigungsdaten direkt in die permits_staging Tabelle
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Separator />
 
