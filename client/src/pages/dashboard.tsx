@@ -146,8 +146,8 @@ export default function Dashboard() {
       permit.requestorName,
       permit.department,
       permit.status,
-      new Date(permit.startDate).toLocaleDateString('de-DE'),
-      new Date(permit.endDate).toLocaleDateString('de-DE'),
+      permit.startDate ? new Date(permit.startDate).toLocaleDateString('de-DE') : 'Nicht angegeben',
+      permit.endDate ? new Date(permit.endDate).toLocaleDateString('de-DE') : 'Nicht angegeben',
       permit.riskLevel || 'Nicht angegeben',
       permit.description.replace(/,/g, ';') // Replace commas to avoid CSV issues
     ]);
