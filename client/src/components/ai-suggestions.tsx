@@ -208,20 +208,30 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applyAllMutation = useMutation({
     mutationFn: () => {
-      return fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      })
-      .then(async (response) => {
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API Error: ${response.status} - ${errorText}`);
-        }
-        return await response.json();
-      })
-      .catch((error) => {
-        throw new Error(`Network Error: ${error.message}`);
+      console.log(`Starting applyAll mutation for permit ${permitId}`);
+      
+      return new Promise((resolve, reject) => {
+        fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        })
+        .then(async (response) => {
+          console.log(`ApplyAll response status: ${response.status}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`ApplyAll API error: ${response.status} - ${errorText}`);
+            reject(new Error(`API Error: ${response.status} - ${errorText}`));
+            return;
+          }
+          const data = await response.json();
+          console.log(`ApplyAll success:`, data);
+          resolve(data);
+        })
+        .catch((error) => {
+          console.error(`ApplyAll fetch error:`, error);
+          reject(new Error(`Network Error: ${error.message}`));
+        });
       });
     },
     onSuccess: (data: any) => {
@@ -315,8 +325,52 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
   });
 
-  const handleApplySuggestion = (suggestionId: number) => {
-    applySuggestionMutation.mutate(suggestionId);
+  const handleApplySuggestion = async (suggestionId: number) => {
+    console.log(`Direct test: Applying suggestion ${suggestionId}`);
+    
+    try {
+      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      
+      console.log(`Direct test: Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Direct test: API error: ${response.status} - ${errorText}`);
+        toast({
+          title: "Fehler",
+          description: `API Fehler: ${response.status} - ${errorText}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const data = await response.json();
+      console.log("Direct test: Success response:", data);
+      
+      // Manually update queries
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
+      toast({
+        title: "Vorschlag übernommen",
+        description: data?.message || "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
+      });
+      
+    } catch (error) {
+      console.error("Direct test: Catch block error:", error);
+      console.error("Direct test: Error type:", typeof error);
+      console.error("Direct test: Error constructor:", error?.constructor?.name);
+      
+      toast({
+        title: "Fehler",
+        description: `Netzwerk Fehler: ${error?.message || String(error)}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAcceptSuggestion = (suggestionId: number) => {
