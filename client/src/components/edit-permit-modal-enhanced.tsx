@@ -822,9 +822,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Abteilungsleiter</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Name des Abteilungsleiters" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Abteilungsleiter auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(departmentHeads as any[]).map((user: any) => (
+                                  <SelectItem key={user.id} value={user.fullName}>
+                                    {user.fullName} - {user.department}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -836,9 +847,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Sicherheitsbeauftragter</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Name des Sicherheitsbeauftragten" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(safetyOfficers as any[]).map((user: any) => (
+                                  <SelectItem key={user.id} value={user.fullName}>
+                                    {user.fullName} - {user.department}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -850,9 +872,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Technik</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Name des Technik-Genehmigers" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Technik-Genehmiger auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(maintenanceApprovers as any[]).map((user: any) => (
+                                  <SelectItem key={user.id} value={user.fullName}>
+                                    {user.fullName} - {user.department}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
