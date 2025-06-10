@@ -123,9 +123,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
     onSuccess: () => {
-      // Only invalidate suggestions and general permits list, not specific permit query
+      // Only invalidate suggestions to refresh the list, don't touch permits cache
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
       setResultType('success');
       setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
@@ -160,7 +159,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);
@@ -178,7 +176,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
       setResultDialogOpen(true);
@@ -196,7 +193,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
       setResultDialogOpen(true);
