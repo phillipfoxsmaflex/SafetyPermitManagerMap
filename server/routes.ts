@@ -779,12 +779,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if staging permit already exists
       const existingStaging = await storage.getStagingPermit(permitId);
       if (existingStaging && existingStaging.aiProcessingStatus === 'processing') {
-        return res.json({ 
-          message: "AI analysis already in progress",
-          status: "processing",
-          stagingId: existingStaging.id,
-          batchId: existingStaging.batchId
-        });
+        // Check if processing has been running for more than 10 minutes (timeout)
+        if (existingStaging.aiProcessingStarted) {
+          const processingStartTime = new Date(existingStaging.aiProcessingStarted);
+          const now = new Date();
+          const minutesElapsed = (now.getTime() - processingStartTime.getTime()) / (1000 * 60);
+          
+          if (minutesElapsed > 10) {
+            // Mark as error due to timeout
+            await storage.updateStagingPermit(existingStaging.id, { 
+              aiProcessingStatus: 'error' 
+            });
+          } else {
+            return res.json({ 
+              message: "AI analysis already in progress",
+              status: "processing",
+              stagingId: existingStaging.id,
+              batchId: existingStaging.batchId
+            });
+          }
+        }
       }
 
       // Get active webhook configuration
@@ -865,6 +879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!webhookResponse.ok) {
         console.error('Webhook request failed:', webhookResponse.status, webhookResponse.statusText);
+        
+        // Mark staging permit as failed
+        await storage.updateStagingPermit(stagingPermit.id, { 
+          aiProcessingStatus: 'error' 
+        });
+        
         throw new Error(`Webhook request failed: ${webhookResponse.status}`);
       }
 

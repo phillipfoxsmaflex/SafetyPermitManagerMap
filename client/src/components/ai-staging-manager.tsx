@@ -198,12 +198,20 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!stagingPermit ? (
+        {!stagingPermit || stagingPermit.aiProcessingStatus === 'error' ? (
           <div className="text-center py-6">
             <Brain className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-600 mb-4">
               Lassen Sie die KI diese Genehmigung analysieren und Sicherheitsverbesserungen vorschlagen.
             </p>
+            {stagingPermit?.aiProcessingStatus === 'error' && (
+              <Alert variant="destructive" className="mb-4">
+                <XCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Die vorherige Analyse ist fehlgeschlagen. Sie können es erneut versuchen.
+                </AlertDescription>
+              </Alert>
+            )}
             <Button
               onClick={() => startAnalysisMutation.mutate()}
               disabled={startAnalysisMutation.isPending}
@@ -212,12 +220,12 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
               {startAnalysisMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Analyse wird gestartet...
+                  AI-Analyse gestartet...
                 </>
               ) : (
                 <>
                   <Zap className="h-4 w-4 mr-2" />
-                  KI-Analyse starten
+                  {stagingPermit?.aiProcessingStatus === 'error' ? 'KI-Analyse erneut starten' : 'KI-Analyse starten'}
                 </>
               )}
             </Button>
@@ -248,13 +256,31 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
 
             {/* Processing Status */}
             {stagingPermit.aiProcessingStatus === 'processing' && (
-              <Alert>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <AlertDescription>
-                  Die KI analysiert die Genehmigung und erstellt Verbesserungsvorschläge. 
-                  Dies kann einige Minuten dauern.
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-4">
+                <Alert>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <AlertDescription>
+                    Die KI analysiert die Genehmigung und erstellt Verbesserungsvorschläge. 
+                    Dies kann einige Minuten dauern.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => rejectStagingMutation.mutate()}
+                    disabled={rejectStagingMutation.isPending}
+                    size="sm"
+                  >
+                    {rejectStagingMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4 mr-2" />
+                    )}
+                    Analyse abbrechen
+                  </Button>
+                </div>
+              </div>
             )}
 
             {/* Completed Analysis */}
