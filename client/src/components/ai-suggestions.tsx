@@ -120,21 +120,24 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      try {
-        console.log("Applying suggestion:", suggestionId);
-        const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Apply success:", data);
-        return data;
-      } catch (error) {
-        console.error("Apply mutation error:", error);
-        throw error;
+      console.log("Applying suggestion:", suggestionId);
+      
+      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
+      
+      const data = await response.json();
+      console.log("Apply success:", data);
+      return data;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -153,21 +156,25 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
-      try {
-        console.log("Updating suggestion status:", suggestionId, status);
-        const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Status update success:", data);
-        return data;
-      } catch (error) {
-        console.error("Status update mutation error:", error);
-        throw error;
+      console.log("Updating suggestion status:", suggestionId, status);
+      
+      const response = await fetch(`/api/suggestions/${suggestionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
+      
+      const data = await response.json();
+      console.log("Status update success:", data);
+      return data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -185,21 +192,24 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      try {
-        console.log("Applying all suggestions for permit:", permitId);
-        const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Apply all success:", data);
-        return data;
-      } catch (error) {
-        console.error("Apply all mutation error:", error);
-        throw error;
+      console.log("Applying all suggestions for permit:", permitId);
+      
+      const response = await fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
+      
+      const data = await response.json();
+      console.log("Apply all success:", data);
+      return data;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -219,8 +229,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
       console.log("Rejecting all suggestions for permit:", permitId);
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
-      return await response.json();
+      
+      const response = await fetch(`/api/permits/${permitId}/suggestions/reject-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Reject all success:", data);
+      return data;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -239,8 +264,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
       console.log("Deleting all suggestions for permit:", permitId);
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
-      return await response.json();
+      
+      const response = await fetch(`/api/permits/${permitId}/suggestions`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Delete all success:", data);
+      return data;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
