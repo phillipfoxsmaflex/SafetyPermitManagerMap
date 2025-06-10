@@ -21,6 +21,7 @@ async function throwIfResNotOk(res: Response) {
     (error as any).response = { data: { message: errorMessage }, status: res.status };
     throw error;
   }
+  return res;
 }
 
 export async function apiRequest(
@@ -35,9 +36,29 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  // Check for errors first, but don't consume the response body yet
+  if (!res.ok) {
+    let errorMessage = res.statusText;
+    try {
+      const text = await res.text();
+      if (text) {
+        try {
+          const jsonError = JSON.parse(text);
+          errorMessage = jsonError.message || text;
+        } catch {
+          errorMessage = text;
+        }
+      }
+    } catch {
+      // If we can't read the response, use status text
+    }
+    
+    const error = new Error(errorMessage);
+    (error as any).response = { data: { message: errorMessage }, status: res.status };
+    throw error;
+  }
   
-  // Return parsed JSON response
+  // Return parsed JSON response for successful requests
   const contentType = res.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     return await res.json();

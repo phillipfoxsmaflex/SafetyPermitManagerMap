@@ -136,9 +136,14 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
       console.log('Applying suggestion:', suggestionId);
-      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-      console.log('Apply response:', response);
-      return response;
+      try {
+        const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+        console.log('Apply response:', response);
+        return response;
+      } catch (error) {
+        console.error('API Request failed:', error);
+        throw error;
+      }
     },
     onSuccess: (data: any) => {
       console.log('Apply success:', data);
@@ -150,9 +155,14 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultDialogOpen(true);
     },
     onError: (error: any) => {
-      console.error('Apply error:', error);
+      console.error('Apply error details:', {
+        error,
+        message: error?.message,
+        response: error?.response,
+        stack: error?.stack
+      });
       setResultType('error');
-      setResultMessage(error?.response?.data?.message || 'Der Vorschlag konnte nicht übernommen werden.');
+      setResultMessage(error?.message || error?.response?.data?.message || 'Der Vorschlag konnte nicht übernommen werden.');
       setResultDialogOpen(true);
     },
   });
