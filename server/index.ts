@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -68,5 +69,19 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Setup periodic cleanup for AI suggestions (every hour)
+    setInterval(async () => {
+      try {
+        const cleanedUp = await storage.cleanupOldSuggestions();
+        if (cleanedUp > 0) {
+          log(`Cleaned up ${cleanedUp} old AI suggestions`);
+        }
+      } catch (error) {
+        console.error("Error during AI suggestions cleanup:", error);
+      }
+    }, 60 * 60 * 1000); // 1 hour
+    
+    log("AI suggestions periodic cleanup enabled (every hour)");
   });
 })();

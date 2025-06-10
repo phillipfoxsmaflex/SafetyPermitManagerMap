@@ -523,12 +523,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get user from session before deleting it
         const session = await storage.getSessionBySessionId(sessionId);
         
-        // Clean up AI suggestions for this user's permits
+        // Clean up AI suggestions for this user
         if (session) {
-          const userPermits = await storage.getPermitsByRequestor(session.userId);
-          for (const permit of userPermits) {
-            await storage.deleteAllSuggestions(permit.id);
-          }
+          await storage.cleanupSuggestionsForUser(session.userId);
         }
         
         await storage.deleteSession(sessionId);
@@ -560,6 +557,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if session has expired
       if (session.expiresAt < new Date()) {
         console.log('Session expired');
+        
+        // Clean up AI suggestions for expired session
+        await storage.cleanupSuggestionsForUser(session.userId);
+        
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }

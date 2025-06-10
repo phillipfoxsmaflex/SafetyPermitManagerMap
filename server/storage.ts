@@ -81,6 +81,10 @@ export interface IStorage {
   getSessionBySessionId(sessionId: string): Promise<Session | undefined>;
   deleteSession(sessionId: string): Promise<boolean>;
   cleanupExpiredSessions(): Promise<void>;
+  
+  // AI Suggestions cleanup operations
+  cleanupOldSuggestions(): Promise<number>;
+  cleanupSuggestionsForUser(userId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -931,6 +935,41 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(sessions)
       .where(lt(sessions.expiresAt, new Date()));
+  }
+
+  // AI Suggestions cleanup operations
+  async cleanupOldSuggestions(): Promise<number> {
+    // Delete suggestions older than 24 hours
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const result = await db
+      .delete(aiSuggestions)
+      .where(lt(aiSuggestions.createdAt, oneDayAgo));
+    return result.rowCount || 0;
+  }
+
+  async cleanupSuggestionsForUser(userId: number): Promise<number> {
+    // Get all permits for this user
+    const userPermits = await db
+      .select({ id: permits.id })
+      .from(permits)
+      .where(eq(permits.requestorId, userId));
+    
+    if (userPermits.length === 0) {
+      return 0;
+    }
+
+    const permitIds = userPermits.map(p => p.id);
+    let totalDeleted = 0;
+
+    // Delete suggestions for each permit belonging to this user
+    for (const permitId of permitIds) {
+      const result = await db
+        .delete(aiSuggestions)
+        .where(eq(aiSuggestions.permitId, permitId));
+      totalDeleted += result.rowCount || 0;
+    }
+
+    return totalDeleted;
   }
 }
 
