@@ -897,89 +897,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      const mockAiResponse = {
-        permitId: permit.permitId,
-        analysisComplete: true,
-        description: permit.description,
-        department: permit.department,
-        riskLevel: permit.riskLevel,
-        status: permit.status,
-        
-        // Personnel information
-        requestorName: permit.requestorName,
-        contactNumber: permit.contactNumber,
-        emergencyContact: permit.emergencyContact,
-        safetyOfficer: permit.safetyOfficer,
-        departmentHead: permit.departmentHead,
-        maintenanceApprover: permit.maintenanceApprover,
-        performerName: permit.performerName,
-        
-        // Dates and timing
-        startDate: permit.startDate?.toISOString(),
-        endDate: permit.endDate?.toISOString(),
-        workStartedAt: permit.workStartedAt?.toISOString(),
-        workCompletedAt: permit.workCompletedAt?.toISOString(),
-        
-        // Safety assessment
-        selectedHazards: permit.selectedHazards,
-        hazardNotes: permit.hazardNotes,
-        completedMeasures: permit.completedMeasures,
-        identifiedHazards: permit.identifiedHazards,
-        additionalComments: permit.additionalComments,
-        
-        // Approval status
-        departmentHeadApproval: permit.departmentHeadApproval,
-        departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
-        maintenanceApproval: permit.maintenanceApproval,
-        maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
-        safetyOfficerApproval: permit.safetyOfficerApproval,
-        safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
-        
-        // Analysis metadata
-        analysisType: 'permit_improvement',
-        timestamp: new Date().toISOString(),
-        systemVersion: '1.0'
-      };
-
-      // Prepare webhook payload for POST request
-      const webhookPayload = {
-        action: 'analyze_permit',
-        permitData: permitAnalysisData
-      };
-
-      console.log('Sending permit for AI analysis:', {
-        permitId: permit.permitId,
-        internalId: permit.id,
-        webhookUrl: webhookConfig.webhookUrl,
-        dataSize: JSON.stringify(webhookPayload).length
-      });
-
-      console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
-
-      // Send POST request to webhook with data in body
-      const response = await fetch(webhookConfig.webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookPayload),
-        signal: AbortSignal.timeout(120000) // 2 minute timeout for AI analysis
-      });
-
-      if (!response.ok) {
-        console.error('Webhook request failed:', response.status, response.statusText);
-        throw new Error(`Webhook request failed: ${response.status}`);
-      }
-
-      console.log('Permit data sent successfully to AI analysis webhook');
-
       res.json({ 
-        message: "Permit sent for AI analysis successfully",
-        status: "processing" 
+        message: "Legacy webhook endpoint - use /analyze instead",
+        redirect: `/api/permits/${permit.id}/analyze`
       });
     } catch (error) {
-      console.error("Error sending permit for analysis:", error);
-      res.status(500).json({ message: "Failed to send permit for analysis" });
+      console.error("Error in legacy analysis endpoint:", error);
+      res.status(500).json({ message: "Use the main /analyze endpoint instead" });
     }
   });
 
