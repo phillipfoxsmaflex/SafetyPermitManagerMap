@@ -878,14 +878,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
         console.error('Webhook request failed:', webhookResponse.status, webhookResponse.statusText);
+        console.error('Error response:', errorText);
+        
+        // Check if it's a webhook not registered error
+        if (webhookResponse.status === 404 && errorText.includes('not registered')) {
+          // Mark staging permit as failed with specific message
+          await storage.updateStagingPermit(stagingPermit.id, { 
+            aiProcessingStatus: 'error' 
+          });
+          
+          throw new Error(`n8n-Webhook ist nicht registriert. Führen Sie den Workflow in n8n aus, um den Webhook zu aktivieren.`);
+        }
         
         // Mark staging permit as failed
         await storage.updateStagingPermit(stagingPermit.id, { 
           aiProcessingStatus: 'error' 
         });
         
-        throw new Error(`Webhook request failed: ${webhookResponse.status}`);
+        throw new Error(`Webhook request failed: ${webhookResponse.status} - ${errorText}`);
       }
 
       console.log('Webhook sent successfully to n8n');

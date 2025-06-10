@@ -230,12 +230,15 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
               <Alert variant="destructive" className="mb-4">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Die KI-Analyse ist fehlgeschlagen. Mögliche Ursachen:
-                  <br />• Webhook-URL ist nicht erreichbar (404-Fehler)
-                  <br />• n8n-Workflow ist nicht aktiv
-                  <br />• Netzwerkverbindung unterbrochen
+                  <strong>n8n-Webhook nicht verfügbar</strong>
+                  <br />Der Webhook "ai-permit-analysis" ist nicht registriert.
                   <br /><br />
-                  Prüfen Sie die Webhook-Konfiguration in den Admin-Einstellungen.
+                  <strong>Lösung:</strong>
+                  <br />1. Öffnen Sie Ihren n8n-Workflow
+                  <br />2. Klicken Sie auf "Execute workflow" 
+                  <br />3. Versuchen Sie die Analyse erneut
+                  <br /><br />
+                  <strong>Alternative:</strong> Nutzen Sie die Test-Analyse unten.
                 </AlertDescription>
               </Alert>
             )}
