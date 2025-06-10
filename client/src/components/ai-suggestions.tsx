@@ -123,7 +123,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
     onSuccess: () => {
-      // Invalidate suggestions and specific permit data to refresh form
+      // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
@@ -159,7 +159,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
     },
     onSuccess: (data: any) => {
+      // Invalidate both suggestions and permit data when applying all suggestions
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);

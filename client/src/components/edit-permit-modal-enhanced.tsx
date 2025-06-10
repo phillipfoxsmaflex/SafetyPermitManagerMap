@@ -301,20 +301,36 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       try {
         const notes = JSON.parse(currentPermit.hazardNotes);
         setHazardNotes(notes);
-        form.setValue("hazardNotes", currentPermit.hazardNotes);
       } catch (e) {
         setHazardNotes({});
       }
     }
+  }, [currentPermit?.hazardNotes]);
 
-    // Update form values when permit data changes (e.g., from AI suggestions)
-    if (currentPermit) {
-      form.setValue("identifiedHazards", currentPermit.identifiedHazards || "");
-      form.setValue("additionalComments", currentPermit.additionalComments || "");
-      form.setValue("selectedHazards", currentPermit.selectedHazards || []);
-      form.setValue("completedMeasures", currentPermit.completedMeasures || []);
+  // Update form values when specific permit data changes (e.g., from AI suggestions)
+  React.useEffect(() => {
+    if (currentPermit?.identifiedHazards !== undefined) {
+      form.setValue("identifiedHazards", currentPermit.identifiedHazards);
     }
-  }, [currentPermit, form]);
+  }, [currentPermit?.identifiedHazards]);
+
+  React.useEffect(() => {
+    if (currentPermit?.additionalComments !== undefined) {
+      form.setValue("additionalComments", currentPermit.additionalComments);
+    }
+  }, [currentPermit?.additionalComments]);
+
+  React.useEffect(() => {
+    if (currentPermit?.completedMeasures !== undefined) {
+      form.setValue("completedMeasures", currentPermit.completedMeasures);
+    }
+  }, [currentPermit?.completedMeasures]);
+
+  React.useEffect(() => {
+    if (currentPermit?.selectedHazards !== undefined) {
+      form.setValue("selectedHazards", currentPermit.selectedHazards);
+    }
+  }, [currentPermit?.selectedHazards]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
@@ -326,7 +342,8 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      // Only invalidate the specific permit query to avoid modal closure
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit?.id}`] });
       toast({
         title: "Genehmigung aktualisiert",
         description: "Die Arbeitserlaubnis wurde erfolgreich aktualisiert.",

@@ -16,11 +16,11 @@ export default function PermitDetails() {
   const permitId = params?.id;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const { data: permits = [], isLoading } = useQuery<Permit[]>({
-    queryKey: ["/api/permits"],
+  // Use specific permit query to avoid cache invalidation issues
+  const { data: permit, isLoading } = useQuery<Permit>({
+    queryKey: [`/api/permits/${permitId}`],
+    enabled: !!permitId,
   });
-
-  const permit = permits.find(p => p.id.toString() === permitId);
 
   const formatDateTime = (date: Date | string | null) => {
     if (!date) return 'Nicht angegeben';
