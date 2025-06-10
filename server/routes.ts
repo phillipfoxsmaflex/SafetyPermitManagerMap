@@ -1223,7 +1223,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk apply all suggestions for a permit
+  // Bulk apply all suggestions for a permit (GET for navigation)
+  app.get("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      console.log(`Applying all suggestions for permit ${permitId} via GET`);
+      
+      if (isNaN(permitId)) {
+        console.error("Invalid permit ID:", req.params.id);
+        const redirectUrl = req.query.redirect || '/';
+        return res.redirect(`${redirectUrl}?error=invalid_permit_id`);
+      }
+      
+      const appliedCount = await storage.applyAllSuggestions(permitId);
+      console.log(`Applied ${appliedCount} suggestions for permit ${permitId}`);
+      
+      const redirectUrl = req.query.redirect || '/';
+      res.redirect(`${redirectUrl}?success=all_suggestions_applied&count=${appliedCount}`);
+    } catch (error) {
+      console.error("Error applying all suggestions:", error);
+      const redirectUrl = req.query.redirect || '/';
+      res.redirect(`${redirectUrl}?error=apply_all_failed`);
+    }
+  });
+
+  // Bulk apply all suggestions for a permit (POST for API calls)
   app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);

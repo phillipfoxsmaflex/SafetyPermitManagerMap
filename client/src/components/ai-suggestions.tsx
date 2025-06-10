@@ -62,6 +62,15 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       // Clean up URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
+    } else if (success === 'all_suggestions_applied') {
+      const count = urlParams.get('count') || '0';
+      toast({
+        title: "Alle Vorschläge übernommen",
+        description: `${count} Vorschläge wurden erfolgreich übernommen.`,
+      });
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
     } else if (error) {
       let errorMessage = "Ein Fehler ist aufgetreten.";
       switch (error) {
@@ -73,6 +82,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           break;
         case 'application_failed':
           errorMessage = "Fehler beim Übernehmen des Vorschlags.";
+          break;
+        case 'invalid_permit_id':
+          errorMessage = "Ungültige Genehmigungs-ID.";
+          break;
+        case 'apply_all_failed':
+          errorMessage = "Fehler beim Übernehmen aller Vorschläge.";
           break;
       }
       toast({
@@ -221,9 +236,48 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
   });
 
+  const handleApplyAll = () => {
+    console.log(`Applying all suggestions for permit ${permitId} via iframe`);
+    
+    toast({
+      title: "Alle Vorschläge werden übernommen...",
+      description: "Bitte warten Sie einen Moment.",
+    });
+    
+    // Create hidden iframe to make the request without leaving the page
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `/api/permits/${permitId}/suggestions/apply-all?redirect=/success`;
+    
+    iframe.onload = () => {
+      // Request completed, refresh the suggestions
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
+      toast({
+        title: "Alle Vorschläge übernommen",
+        description: "Alle AI-Vorschläge wurden erfolgreich übernommen.",
+      });
+      
+      // Clean up
+      document.body.removeChild(iframe);
+    };
+    
+    iframe.onerror = () => {
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Übernehmen aller Vorschläge.",
+        variant: "destructive",
+      });
+      document.body.removeChild(iframe);
+    };
+    
+    document.body.appendChild(iframe);
+  };
+
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      console.log(`Starting applyAll with React Query for permit ${permitId}`);
+      // This is kept for backward compatibility but will be replaced with navigation
       const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, 'POST');
       return await response.json();
     },
@@ -319,19 +373,42 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const handleApplySuggestion = async (suggestionId: number) => {
-    console.log(`Applying suggestion ${suggestionId} via URL navigation`);
+    console.log(`Applying suggestion ${suggestionId} via iframe`);
     
     toast({
       title: "Vorschlag wird übernommen...",
       description: "Bitte warten Sie einen Moment.",
     });
     
-    // Use window navigation to bypass network restrictions
-    const currentUrl = new URL(window.location.href);
-    const applyUrl = `${currentUrl.origin}/api/suggestions/${suggestionId}/apply?redirect=${encodeURIComponent(currentUrl.pathname)}`;
+    // Create hidden iframe to make the request without leaving the page
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `/api/suggestions/${suggestionId}/apply?redirect=/success`;
     
-    // Navigate to the API endpoint which will process and redirect back
-    window.location.href = applyUrl;
+    iframe.onload = () => {
+      // Request completed, refresh the suggestions
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
+      toast({
+        title: "Vorschlag übernommen",
+        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
+      });
+      
+      // Clean up
+      document.body.removeChild(iframe);
+    };
+    
+    iframe.onerror = () => {
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Übernehmen des Vorschlags.",
+        variant: "destructive",
+      });
+      document.body.removeChild(iframe);
+    };
+    
+    document.body.appendChild(iframe);
   };
 
   const handleAcceptSuggestion = (suggestionId: number) => {
@@ -399,17 +476,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
         {suggestions.length > 0 && (
           <div className="mt-4 flex gap-2 flex-wrap">
             <Button
-              onClick={() => applyAllMutation.mutate()}
-              disabled={applyAllMutation.isPending}
+              onClick={handleApplyAll}
               size="sm"
               variant="outline"
               className="text-green-600 border-green-600 hover:bg-green-50"
             >
-              {applyAllMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
+              <CheckCircle className="h-4 w-4 mr-2" />
               Alle übernehmen
             </Button>
             
