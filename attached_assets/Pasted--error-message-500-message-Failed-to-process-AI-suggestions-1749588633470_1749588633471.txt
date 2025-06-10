@@ -1,0 +1,11 @@
+[
+  {
+    "error": {
+      "message": "500 - \"{\\\"message\\\":\\\"Failed to process AI suggestions\\\"}\"",
+      "name": "AxiosError",
+      "stack": "AxiosError: Request failed with status code 500\n    at settle (/usr/lib/node_modules/n8n/node_modules/axios/lib/core/settle.js:19:12)\n    at RedirectableRequest.handleResponse (/usr/lib/node_modules/n8n/node_modules/axios/lib/adapters/http.js:547:9)\n    at RedirectableRequest.emit (node:events:536:35)\n    at RedirectableRequest._processResponse (/usr/lib/node_modules/n8n/node_modules/follow-redirects/index.js:409:10)\n    at ClientRequest.RedirectableRequest._onNativeResponse (/usr/lib/node_modules/n8n/node_modules/follow-redirects/index.js:102:12)\n    at Object.onceWrapper (node:events:639:26)\n    at ClientRequest.emit (node:events:524:28)\n    at HTTPParser.parserOnIncomingClient [as onIncoming] (node:_http_client:702:27)\n    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)\n    at TLSSocket.socketOnData (node:_http_client:544:22)\n    at TLSSocket.emit (node:events:524:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at TLSSocket.Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)\n    at TLSWrap.callbackTrampoline (node:internal/async_hooks:130:17)\n    at Axios.request (/usr/lib/node_modules/n8n/node_modules/axios/lib/core/Axios.js:45:41)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at invokeAxios (/usr/lib/node_modules/n8n/node_modules/n8n-core/src/execution-engine/node-execution-context/utils/request-helper-functions.ts:206:10)\n    at proxyRequestToAxios (/usr/lib/node_modules/n8n/node_modules/n8n-core/src/execution-engine/node-execution-context/utils/request-helper-functions.ts:656:20)\n    at Object.request (/usr/lib/node_modules/n8n/node_modules/n8n-core/src/execution-engine/node-execution-context/utils/request-helper-functions.ts:1698:4)",
+      "code": "ERR_BAD_RESPONSE",
+      "status": 500
+    }
+  }
+]

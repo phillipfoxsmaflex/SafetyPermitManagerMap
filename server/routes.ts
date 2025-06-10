@@ -1017,63 +1017,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate batch ID for staging
       const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Create staging permit with all suggested changes applied
-      const stagingPermitData = { ...permit };
-      
-      // Apply all suggestions to staging data
-      for (const suggestion of suggestions) {
-        if (suggestion.fieldName && suggestion.suggestedValue !== undefined) {
-          (stagingPermitData as any)[suggestion.fieldName] = suggestion.suggestedValue;
+      try {
+        // Create staging permit with all suggested changes applied
+        const stagingPermitData = { ...permit };
+        
+        // Apply all suggestions to staging data with validation
+        for (const suggestion of suggestions) {
+          if (suggestion.fieldName && suggestion.suggestedValue !== undefined) {
+            try {
+              // Handle array fields properly
+              if (suggestion.fieldName === 'selectedHazards' || suggestion.fieldName === 'completedMeasures') {
+                if (Array.isArray(suggestion.suggestedValue)) {
+                  (stagingPermitData as any)[suggestion.fieldName] = suggestion.suggestedValue;
+                } else if (typeof suggestion.suggestedValue === 'string') {
+                  try {
+                    (stagingPermitData as any)[suggestion.fieldName] = JSON.parse(suggestion.suggestedValue);
+                  } catch {
+                    (stagingPermitData as any)[suggestion.fieldName] = [suggestion.suggestedValue];
+                  }
+                }
+              } else {
+                (stagingPermitData as any)[suggestion.fieldName] = suggestion.suggestedValue;
+              }
+            } catch (fieldError) {
+              console.error(`Error applying suggestion for field ${suggestion.fieldName}:`, fieldError);
+            }
+          }
         }
-      }
 
-      // Apply additional AI recommendations to staging
-      if (recommendations) {
-        if (recommendations.immediate_actions) {
-          stagingPermitData.immediateActions = JSON.stringify(recommendations.immediate_actions);
+        // Apply additional AI recommendations to staging with validation
+        if (recommendations) {
+          try {
+            if (recommendations.immediate_actions && Array.isArray(recommendations.immediate_actions)) {
+              stagingPermitData.immediateActions = JSON.stringify(recommendations.immediate_actions);
+            }
+            if (recommendations.before_work_starts && Array.isArray(recommendations.before_work_starts)) {
+              stagingPermitData.beforeWorkStarts = JSON.stringify(recommendations.before_work_starts);
+            }
+            if (recommendations.compliance_requirements || compliance_notes) {
+              stagingPermitData.complianceNotes = compliance_notes || 
+                (Array.isArray(recommendations.compliance_requirements) ? 
+                  JSON.stringify(recommendations.compliance_requirements) : 
+                  String(recommendations.compliance_requirements || ''));
+            }
+          } catch (recError) {
+            console.error('Error applying recommendations:', recError);
+          }
         }
-        if (recommendations.before_work_starts) {
-          stagingPermitData.beforeWorkStarts = JSON.stringify(recommendations.before_work_starts);
-        }
-        if (recommendations.compliance_requirements || compliance_notes) {
-          stagingPermitData.complianceNotes = compliance_notes || JSON.stringify(recommendations.compliance_requirements);
-        }
-      }
 
-      if (riskAssessment?.overallRisk) {
-        stagingPermitData.overallRisk = riskAssessment.overallRisk;
-      }
+        if (riskAssessment?.overallRisk) {
+          stagingPermitData.overallRisk = riskAssessment.overallRisk;
+        }
 
-      // Create staging permit
-      await storage.createStagingPermit({
-        sourcePermitId: permit.id,
-        suggestionBatchId: batchId,
-        permitId: stagingPermitData.permitId,
-        type: stagingPermitData.type,
-        location: stagingPermitData.location,
-        description: stagingPermitData.description,
-        requestorId: stagingPermitData.requestorId,
-        requestorName: stagingPermitData.requestorName,
-        department: stagingPermitData.department,
-        contactNumber: stagingPermitData.contactNumber,
-        emergencyContact: stagingPermitData.emergencyContact,
-        startDate: stagingPermitData.startDate?.toISOString(),
-        endDate: stagingPermitData.endDate?.toISOString(),
-        status: stagingPermitData.status,
-        riskLevel: stagingPermitData.riskLevel,
-        safetyOfficer: stagingPermitData.safetyOfficer,
-        departmentHead: stagingPermitData.departmentHead,
-        maintenanceApprover: stagingPermitData.maintenanceApprover,
-        identifiedHazards: stagingPermitData.identifiedHazards,
-        additionalComments: stagingPermitData.additionalComments,
-        selectedHazards: stagingPermitData.selectedHazards,
-        hazardNotes: stagingPermitData.hazardNotes,
-        completedMeasures: stagingPermitData.completedMeasures,
-        immediateActions: stagingPermitData.immediateActions,
-        beforeWorkStarts: stagingPermitData.beforeWorkStarts,
-        complianceNotes: stagingPermitData.complianceNotes,
-        overallRisk: stagingPermitData.overallRisk
-      });
+        // Safely format dates
+        const formatDate = (date: any) => {
+          if (!date) return null;
+          if (typeof date === 'string') return date;
+          if (date instanceof Date) return date.toISOString();
+          if (typeof date === 'object' && date.toISOString) return date.toISOString();
+          return null;
+        };
+
+        // Create staging permit with error handling
+        await storage.createStagingPermit({
+          sourcePermitId: permit.id,
+          suggestionBatchId: batchId,
+          permitId: stagingPermitData.permitId,
+          type: stagingPermitData.type,
+          location: stagingPermitData.location,
+          description: stagingPermitData.description,
+          requestorId: stagingPermitData.requestorId,
+          requestorName: stagingPermitData.requestorName,
+          department: stagingPermitData.department,
+          contactNumber: stagingPermitData.contactNumber,
+          emergencyContact: stagingPermitData.emergencyContact,
+          startDate: formatDate(stagingPermitData.startDate),
+          endDate: formatDate(stagingPermitData.endDate),
+          status: stagingPermitData.status,
+          riskLevel: stagingPermitData.riskLevel,
+          safetyOfficer: stagingPermitData.safetyOfficer,
+          departmentHead: stagingPermitData.departmentHead,
+          maintenanceApprover: stagingPermitData.maintenanceApprover,
+          identifiedHazards: stagingPermitData.identifiedHazards,
+          additionalComments: stagingPermitData.additionalComments,
+          selectedHazards: stagingPermitData.selectedHazards,
+          hazardNotes: stagingPermitData.hazardNotes,
+          completedMeasures: stagingPermitData.completedMeasures,
+          immediateActions: stagingPermitData.immediateActions,
+          beforeWorkStarts: stagingPermitData.beforeWorkStarts,
+          complianceNotes: stagingPermitData.complianceNotes,
+          overallRisk: stagingPermitData.overallRisk
+        });
+      } catch (stagingError) {
+        console.error('Error creating staging permit:', stagingError);
+        // Continue with regular suggestion creation even if staging fails
+      }
 
       // Create AI suggestions with batch ID
       const createdSuggestions = [];
