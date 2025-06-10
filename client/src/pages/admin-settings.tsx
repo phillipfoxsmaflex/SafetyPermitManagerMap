@@ -38,6 +38,11 @@ export default function AdminSettings() {
     queryKey: ["/api/admin/company-logo"],
   });
 
+  // Fetch database configuration
+  const { data: dbConfig, isLoading: dbLoading } = useQuery<DatabaseConfig>({
+    queryKey: ["/api/admin/database-config"],
+  });
+
   // Upload logo mutation
   const uploadLogoMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -206,38 +211,44 @@ export default function AdminSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Host</Label>
-                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {import.meta.env.VITE_PGHOST || 'localhost'}
+            {dbLoading ? (
+              <div className="text-center py-4">Lade Datenbankkonfiguration...</div>
+            ) : dbConfig ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Host</Label>
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                    {dbConfig.host}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Port</Label>
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                    {dbConfig.port}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Datenbank</Label>
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                    {dbConfig.database}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Benutzer</Label>
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                    {dbConfig.user}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium">Passwort</Label>
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
+                    {dbConfig.hasPassword ? '••••••••••••' : 'Nicht konfiguriert'}
+                  </div>
                 </div>
               </div>
-              <div>
-                <Label className="text-sm font-medium">Port</Label>
-                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {import.meta.env.VITE_PGPORT || '5432'}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Datenbank</Label>
-                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {import.meta.env.VITE_PGDATABASE || 'permits'}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Benutzer</Label>
-                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {import.meta.env.VITE_PGUSER || 'postgres'}
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium">Passwort</Label>
-                <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {import.meta.env.VITE_PGPASSWORD ? '••••••••••••' : 'Nicht konfiguriert'}
-                </div>
-              </div>
-            </div>
+            ) : (
+              <div className="text-center py-4 text-red-600">Fehler beim Laden der Datenbankkonfiguration</div>
+            )}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="text-sm font-medium text-blue-900 mb-2">n8n Workflow-Integration</h4>
               <p className="text-sm text-blue-700 mb-3">
