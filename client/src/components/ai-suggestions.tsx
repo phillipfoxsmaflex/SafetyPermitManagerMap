@@ -52,15 +52,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
-  // Debug logging
-  console.log('AI Suggestions Query Debug:', {
-    permitId,
-    suggestionsCount: allSuggestions.length,
-    isLoading,
-    error,
-    firstSuggestion: allSuggestions[0],
-    dataType: typeof allSuggestions[0]
-  });
+
 
   // Show all pending suggestions instead of just the latest one
   const suggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
