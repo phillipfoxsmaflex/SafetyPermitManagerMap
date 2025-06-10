@@ -352,7 +352,7 @@ export class DatabaseStorage implements IStorage {
 
       const { permitId, fieldName, suggestedValue } = suggestion;
 
-      if (fieldName && suggestedValue) {
+      if (fieldName && suggestedValue !== null && suggestedValue !== undefined) {
         // Get current permit data
         const [currentPermit] = await db
           .select()
@@ -362,59 +362,18 @@ export class DatabaseStorage implements IStorage {
 
         if (!currentPermit) return false;
 
-        // Prepare update data with proper type handling
-        const updateData: any = { updatedAt: new Date() };
-        
-        // Handle special fields that might need JSON parsing or array conversion
-        if (fieldName === 'selectedHazards') {
-          try {
-            if (Array.isArray(suggestedValue)) {
-              updateData[fieldName] = suggestedValue;
-            } else if (typeof suggestedValue === 'string') {
-              // Try to parse as JSON first, otherwise split by comma
-              try {
-                updateData[fieldName] = JSON.parse(suggestedValue);
-              } catch {
-                updateData[fieldName] = suggestedValue.split(',').map(s => s.trim()).filter(s => s);
-              }
-            } else {
-              updateData[fieldName] = [];
-            }
-          } catch {
-            updateData[fieldName] = [];
-          }
-        } else if (fieldName === 'hazardNotes') {
-          try {
-            if (typeof suggestedValue === 'object') {
-              updateData[fieldName] = suggestedValue;
-            } else if (typeof suggestedValue === 'string') {
-              updateData[fieldName] = JSON.parse(suggestedValue);
-            } else {
-              updateData[fieldName] = {};
-            }
-          } catch {
-            updateData[fieldName] = {};
-          }
-        } else if (fieldName === 'completedMeasures') {
-          try {
-            if (Array.isArray(suggestedValue)) {
-              updateData[fieldName] = suggestedValue;
-            } else if (typeof suggestedValue === 'string') {
-              // Try to parse as JSON first, otherwise split by comma
-              try {
-                updateData[fieldName] = JSON.parse(suggestedValue);
-              } catch {
-                updateData[fieldName] = suggestedValue.split(',').map(s => s.trim()).filter(s => s);
-              }
-            } else {
-              updateData[fieldName] = [];
-            }
-          } catch {
-            updateData[fieldName] = [];
-          }
-        } else {
-          updateData[fieldName] = suggestedValue;
+        // Validate and sanitize the suggested value based on field type
+        const sanitizedValue = this.sanitizeSuggestionValue(fieldName, suggestedValue);
+        if (sanitizedValue === null) {
+          console.warn(`Skipping invalid suggestion for field ${fieldName}:`, suggestedValue);
+          return true; // Skip but don't fail
         }
+
+        // Prepare update data
+        const updateData: any = { 
+          [fieldName]: sanitizedValue,
+          updatedAt: new Date() 
+        };
 
         // Apply the suggestion to the permit
         await db
@@ -438,7 +397,67 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error('Error applying suggestion:', error);
+      console.error('Suggestion ID:', id);
+      console.error('Field name:', suggestion?.fieldName);
+      console.error('Suggested value:', suggestion?.suggestedValue);
       return false;
+    }
+  }
+
+  private sanitizeSuggestionValue(fieldName: string, suggestedValue: any): any {
+    try {
+      switch (fieldName) {
+        case 'selectedHazards':
+        case 'completedMeasures':
+          if (Array.isArray(suggestedValue)) {
+            return suggestedValue;
+          } else if (typeof suggestedValue === 'string') {
+            try {
+              const parsed = JSON.parse(suggestedValue);
+              return Array.isArray(parsed) ? parsed : suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+            } catch {
+              return suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+            }
+          }
+          return [];
+
+        case 'hazardNotes':
+          if (typeof suggestedValue === 'object' && suggestedValue !== null) {
+            return JSON.stringify(suggestedValue);
+          } else if (typeof suggestedValue === 'string') {
+            try {
+              JSON.parse(suggestedValue);
+              return suggestedValue;
+            } catch {
+              return JSON.stringify({ general: suggestedValue });
+            }
+          }
+          return '{}';
+
+        case 'startDate':
+        case 'endDate':
+          if (suggestedValue && typeof suggestedValue === 'object' && 'toISOString' in suggestedValue) {
+            return suggestedValue;
+          } else if (typeof suggestedValue === 'string') {
+            const parsedDate = new Date(suggestedValue);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate;
+            }
+          }
+          return null; // Invalid date, skip this suggestion
+
+        case 'requestorId':
+        case 'uploadedBy':
+          const numValue = parseInt(String(suggestedValue));
+          return isNaN(numValue) ? null : numValue;
+
+        default:
+          // For text fields, ensure it's a string
+          return String(suggestedValue);
+      }
+    } catch (error) {
+      console.error(`Error sanitizing value for ${fieldName}:`, error);
+      return null;
     }
   }
 
@@ -535,7 +554,7 @@ export class DatabaseStorage implements IStorage {
           .update(permits)
           .set({
             selectedHazards: currentSelectedHazards,
-            hazardNotes: currentHazardNotes,
+            hazardNotes: JSON.stringify(currentHazardNotes),
             updatedAt: new Date()
           })
           .where(eq(permits.id, permit.id));
