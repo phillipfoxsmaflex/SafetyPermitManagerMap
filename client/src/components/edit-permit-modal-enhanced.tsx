@@ -82,7 +82,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
 
   // Fetch dropdown data
-  const { data: workLocations = [] } = useQuery({
+  const { data: workLocations = [] } = useQuery<any[]>({
     queryKey: ["/api/work-locations/active"],
   });
 
@@ -414,9 +414,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Arbeitsort</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Spezifischer Arbeitsort" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Arbeitsort auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(workLocations as any[]).map((location: any) => (
+                                  <SelectItem key={location.id} value={location.name}>
+                                    {location.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

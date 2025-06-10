@@ -398,8 +398,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error applying suggestion:', error);
       console.error('Suggestion ID:', id);
-      console.error('Field name:', suggestion?.fieldName);
-      console.error('Suggested value:', suggestion?.suggestedValue);
       return false;
     }
   }
