@@ -61,8 +61,7 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
   // Start AI analysis mutation
   const startAnalysisMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/permits/${permitId}/ai-analyze`, "POST");
-      return await response.json();
+      return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
     onSuccess: (data: any) => {
       toast({
