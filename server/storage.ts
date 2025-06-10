@@ -210,8 +210,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePermit(id: number): Promise<boolean> {
-    const result = await db.delete(permits).where(eq(permits.id, id));
-    return (result.rowCount || 0) > 0;
+    try {
+      // Delete all associated data in the correct order to avoid foreign key constraints
+      
+      // 1. Delete AI suggestions
+      await db.delete(aiSuggestions).where(eq(aiSuggestions.permitId, id));
+      
+      // 2. Delete permit attachments
+      await db.delete(permitAttachments).where(eq(permitAttachments.permitId, id));
+      
+      // 3. Delete notifications related to this permit
+      await db.delete(notifications).where(eq(notifications.relatedPermitId, id));
+      
+      // 4. Finally delete the permit itself
+      const result = await db.delete(permits).where(eq(permits.id, id));
+      
+      console.log(`Deleted permit ${id} and all associated data: suggestions, attachments, notifications`);
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error(`Error deleting permit ${id} and associated data:`, error);
+      throw error;
+    }
   }
 
   async getPermitStats(): Promise<{

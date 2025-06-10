@@ -328,19 +328,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete permit
+  // Delete permit and all associated data (admin only)
   app.delete("/api/permits/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Check if user is admin
+      const sessionId = req.cookies?.sessionId;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const session = await storage.getSessionBySessionId(sessionId);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid session" });
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Administrator access required" });
+      }
+      
+      console.log(`Admin ${user.username} requesting deletion of permit ${id}`);
+      
+      // Delete permit and all associated data
       const deleted = await storage.deletePermit(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Permit not found" });
       }
       
-      res.json({ message: "Permit deleted successfully" });
+      console.log(`Successfully deleted permit ${id} and all associated data`);
+      res.json({ message: "Genehmigung und alle zugehörigen Daten wurden erfolgreich gelöscht" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete permit" });
+      console.error("Error deleting permit:", error);
+      res.status(500).json({ message: "Fehler beim Löschen der Genehmigung" });
     }
   });
 
