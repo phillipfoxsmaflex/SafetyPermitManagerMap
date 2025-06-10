@@ -99,6 +99,28 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
     },
   });
 
+  // Test AI analysis mutation (fallback when webhook fails)
+  const testAnalysisMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/permits/${permitId}/ai-test`, "POST");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test-Analyse abgeschlossen",
+        description: "Beispiel-Verbesserungen wurden erstellt.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/staging`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/diff`] });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Test-Analyse konnte nicht durchgeführt werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Apply staging changes mutation
   const applyStagingMutation = useMutation({
     mutationFn: async () => {
@@ -217,23 +239,46 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
                 </AlertDescription>
               </Alert>
             )}
-            <Button
-              onClick={() => startAnalysisMutation.mutate()}
-              disabled={startAnalysisMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {startAnalysisMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  AI-Analyse gestartet...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  {stagingPermit?.aiProcessingStatus === 'error' ? 'KI-Analyse erneut starten' : 'KI-Analyse starten'}
-                </>
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => startAnalysisMutation.mutate()}
+                disabled={startAnalysisMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {startAnalysisMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    AI-Analyse gestartet...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    {stagingPermit?.aiProcessingStatus === 'error' ? 'KI-Analyse erneut starten' : 'KI-Analyse starten'}
+                  </>
+                )}
+              </Button>
+              
+              {stagingPermit?.aiProcessingStatus === 'error' && (
+                <Button
+                  onClick={() => testAnalysisMutation.mutate()}
+                  disabled={testAnalysisMutation.isPending}
+                  variant="outline"
+                  className="border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  {testAnalysisMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Test läuft...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Test-Analyse (ohne Webhook)
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
