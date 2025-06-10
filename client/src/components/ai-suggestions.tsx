@@ -48,58 +48,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [analysisStage, setAnalysisStage] = useState('checking');
 
-  // Handle URL query parameters for feedback messages
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    const error = urlParams.get('error');
 
-    if (success === 'suggestion_applied') {
-      toast({
-        title: "Vorschlag übernommen",
-        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
-      });
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    } else if (success === 'all_suggestions_applied') {
-      const count = urlParams.get('count') || '0';
-      toast({
-        title: "Alle Vorschläge übernommen",
-        description: `${count} Vorschläge wurden erfolgreich übernommen.`,
-      });
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    } else if (error) {
-      let errorMessage = "Ein Fehler ist aufgetreten.";
-      switch (error) {
-        case 'invalid_suggestion_id':
-          errorMessage = "Ungültige Vorschlag-ID.";
-          break;
-        case 'suggestion_not_found':
-          errorMessage = "Vorschlag konnte nicht gefunden werden.";
-          break;
-        case 'application_failed':
-          errorMessage = "Fehler beim Übernehmen des Vorschlags.";
-          break;
-        case 'invalid_permit_id':
-          errorMessage = "Ungültige Genehmigungs-ID.";
-          break;
-        case 'apply_all_failed':
-          errorMessage = "Fehler beim Übernehmen aller Vorschläge.";
-          break;
-      }
-      toast({
-        title: "Fehler",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [toast]);
 
   const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
     queryKey: [`/api/permits/${permitId}/suggestions`],
