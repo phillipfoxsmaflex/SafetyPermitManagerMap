@@ -1145,16 +1145,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/suggestions/:id/apply", requireAuth, async (req, res) => {
     try {
       const suggestionId = parseInt(req.params.id);
+      console.log(`Applying suggestion ${suggestionId}`);
+      
+      if (isNaN(suggestionId)) {
+        console.error("Invalid suggestion ID:", req.params.id);
+        return res.status(400).json({ message: "Invalid suggestion ID" });
+      }
+      
       const success = await storage.applySuggestion(suggestionId);
+      console.log(`Apply suggestion result:`, success);
       
       if (!success) {
+        console.error(`Failed to apply suggestion ${suggestionId}`);
         return res.status(404).json({ message: "Suggestion not found or could not be applied" });
       }
 
-      res.json({ message: "Suggestion applied successfully" });
+      console.log(`Successfully applied suggestion ${suggestionId}`);
+      res.json({ 
+        message: "Suggestion applied successfully",
+        success: true 
+      });
     } catch (error) {
       console.error("Error applying suggestion:", error);
-      res.status(500).json({ message: "Failed to apply suggestion" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error("Error details:", {
+        message: errorMessage,
+        stack: errorStack,
+        suggestionId: req.params.id
+      });
+      res.status(500).json({ 
+        message: "Failed to apply suggestion",
+        error: errorMessage || "Unknown error"
+      });
     }
   });
 
@@ -1162,15 +1185,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
+      console.log(`Applying all suggestions for permit ${permitId}`);
+      
+      if (isNaN(permitId)) {
+        console.error("Invalid permit ID:", req.params.id);
+        return res.status(400).json({ message: "Invalid permit ID" });
+      }
+      
       const appliedCount = await storage.applyAllSuggestions(permitId);
+      console.log(`Applied ${appliedCount} suggestions for permit ${permitId}`);
       
       res.json({ 
         message: `${appliedCount} Vorschläge wurden erfolgreich übernommen`,
-        appliedCount 
+        appliedCount,
+        success: true
       });
     } catch (error) {
       console.error("Error applying all suggestions:", error);
-      res.status(500).json({ message: "Failed to apply suggestions" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error("Error details:", {
+        message: errorMessage,
+        stack: errorStack,
+        permitId: req.params.id
+      });
+      res.status(500).json({ 
+        message: "Failed to apply suggestions",
+        error: errorMessage || "Unknown error"
+      });
     }
   });
 
