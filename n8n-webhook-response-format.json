@@ -19,27 +19,43 @@
     "analysisComplete": true,
     "suggestions": [
       {
-        "type": "safety_improvement",
+        "type": "hazard_identification",
         "fieldName": "identifiedHazards",
-        "originalValue": "Absturzgefahr, rutschige Oberflächen, Witterungseinflüsse",
-        "suggestedValue": "Absturzgefahr aus 15m Höhe, Rutschgefahr auf feuchten Dachflächen, Witterungseinflüsse (Wind, Regen), unzureichende Arbeitszeit",
-        "reasoning": "Die Gefährdungsidentifikation sollte spezifischer sein und die kritische Absturzhöhe von 15m explizit erwähnen.",
+        "originalValue": "Absturzgefahr, rutschige Oberflächen",
+        "suggestedValue": "Absturzgefahr aus 15m Höhe, Rutschgefahr auf feuchten Dachflächen, Witterungseinflüsse (Wind, Regen), unzureichende Beleuchtung, herabfallende Gegenstände",
+        "reasoning": "Vollständige Gefahrenidentifikation für Höhenarbeiten basierend auf TRBS 2121 und DGUV Regel 112-198",
         "priority": "high"
       },
       {
-        "type": "procedure_optimization",
+        "type": "protective_measures",
+        "fieldName": "completedMeasures",
+        "originalValue": ["fall_protection", "weather_check"],
+        "suggestedValue": ["fall_protection", "weather_check", "safety_harness", "backup_anchor", "rescue_equipment", "work_area_secured", "emergency_plan"],
+        "reasoning": "Standardschutzmaßnahmen für Höhenarbeiten nach TRBS 2121 - vollständige PSA und Rettungsausrüstung erforderlich",
+        "priority": "high"
+      },
+      {
+        "type": "trbs_hazard_mapping", 
+        "fieldName": "selectedHazards",
+        "originalValue": ["7-0"],
+        "suggestedValue": ["7-0", "7-1", "1-0", "1-1"],
+        "reasoning": "Zuordnung zu TRBS-Gefährdungskategorien: Mechanische Gefährdungen (7-0, 7-1) und physische Belastungen (1-0, 1-1)",
+        "priority": "high"
+      },
+      {
+        "type": "safety_notes_enhancement",
         "fieldName": "additionalComments",
-        "originalValue": "Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten.",
-        "suggestedValue": "Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten. Mindestens 2 Stunden für sichere Durchführung einplanen.",
-        "reasoning": "Die geplante Arbeitszeit von 34 Minuten ist für Höhenarbeiten unrealistisch und gefährlich.",
-        "priority": "high"
+        "originalValue": "Auffanggurt erforderlich",
+        "suggestedValue": "Vollständige PSA für Höhenarbeiten (Auffanggurt, Helm, Sicherheitsschuhe). Arbeiten nur bei windstillen, trockenen Bedingungen. Rettungsmannschaft in Bereitschaft. Arbeitszeit realistisch auf mindestens 2 Stunden planen.",
+        "reasoning": "Umfassende Sicherheitsanweisungen für Höhenarbeiten zur Minimierung des Absturzrisikos",
+        "priority": "medium"
       },
       {
-        "type": "compliance_improvement",
-        "fieldName": "riskLevel",
-        "originalValue": "high",
-        "suggestedValue": "high",
-        "reasoning": "Risikoeinstufung ist korrekt, aber zusätzliche Sicherheitsmaßnahmen nach TRBS 2121 erforderlich.",
+        "type": "hazard_notes_structure",
+        "fieldName": "hazardNotes", 
+        "originalValue": "{}",
+        "suggestedValue": "{\"7-0\": \"Absturzgefahr - Sicherungsausrüstung zwingend erforderlich\", \"7-1\": \"Herabfallende Gegenstände - Arbeitsbereich absperren\", \"1-0\": \"Schwere körperliche Arbeit - Pausen einhalten\", \"1-1\": \"Einseitige Körperhaltung - ergonomische Hilfsmittel\"}",
+        "reasoning": "Strukturierte Dokumentation der Gefährdungsbeurteilung mit spezifischen Schutzmaßnahmen je TRBS-Kategorie",
         "priority": "medium"
       }
     ],

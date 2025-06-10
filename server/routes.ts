@@ -873,36 +873,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         suggestions: [
           {
-            type: "safety_improvement",
+            type: "hazard_identification",
             priority: "high",
-            fieldName: "riskLevel",
-            originalValue: null,
-            suggestedValue: "medium",
-            reasoning: "Basierend auf der Arbeitsbeschreibung und dem Standort Tank 1 sollte das Risiko als 'medium' eingestuft werden. Dies erfordert zusätzliche Sicherheitsmaßnahmen und Überwachung."
-          },
-          {
-            type: "personnel_requirement",
-            priority: "high", 
-            fieldName: "safetyOfficer",
-            originalValue: "",
-            suggestedValue: "Dr. Klaus Weber",
-            reasoning: "Für Arbeiten an Tank 1 ist ein qualifizierter Sicherheitsbeauftragter erforderlich. Dr. Weber ist für chemische Anlagen zertifiziert und verfügbar."
-          },
-          {
-            type: "safety_improvement",
-            priority: "medium",
-            fieldName: "completedMeasures", 
-            originalValue: [],
-            suggestedValue: ["atmospheric_monitoring", "ventilation", "ppe", "emergency_procedures"],
-            reasoning: "Für Arbeiten an Tankbehältern werden standardmäßig Atmosphärenüberwachung, Belüftung, PSA und Notfallverfahren empfohlen."
-          },
-          {
-            type: "documentation_improvement",
-            priority: "medium",
             fieldName: "identifiedHazards",
             originalValue: "",
-            suggestedValue: "Chemische Dämpfe, Sauerstoffmangel, Explosionsgefahr, Sturz in Behälter",
-            reasoning: "Vollständige Identifikation aller typischen Gefahren bei Tankarbeiten für bessere Risikobewertung und Vorbereitung."
+            suggestedValue: "Chemische Dämpfe, Sauerstoffmangel, Explosionsgefahr, Sturz in Behälter, heiße Oberflächen, toxische Substanzen",
+            reasoning: "Vollständige Gefahrenidentifikation für Tankarbeiten basierend auf TRBS 2152-2 und DGUV Regel 113-004"
+          },
+          {
+            type: "protective_measures",
+            priority: "high", 
+            fieldName: "completedMeasures",
+            originalValue: [],
+            suggestedValue: ["atmospheric_monitoring", "ventilation", "ppe_chemical", "emergency_procedures", "confined_space_entry", "gas_detector"],
+            reasoning: "Standardschutzmaßnahmen für Arbeiten in Behältern nach TRBS 2152 - Atmosphärenüberwachung, Belüftung und PSA sind zwingend erforderlich"
+          },
+          {
+            type: "trbs_hazard_mapping",
+            priority: "high",
+            fieldName: "selectedHazards",
+            originalValue: [],
+            suggestedValue: ["5-0", "5-1", "4-0", "7-1"],
+            reasoning: "Zuordnung zu TRBS-Gefährdungskategorien: Gefährdungen durch Gefahrstoffe (5-0, 5-1), Brand-/Explosionsgefährdungen (4-0), und besondere physikalische Einwirkungen (7-1)"
+          },
+          {
+            type: "safety_notes_enhancement",
+            priority: "medium",
+            fieldName: "additionalComments",
+            originalValue: "",
+            suggestedValue: "Kontinuierliche Atmosphärenüberwachung während der gesamten Arbeitszeit. Rettungsmannschaft in Bereitschaft. Kommunikationsverbindung nach außen sicherstellen. Arbeitsbereich vor Betreten freimessen.",
+            reasoning: "Spezifische Sicherheitsanweisungen für Behälterarbeiten zur Gewährleistung der Personensicherheit"
+          },
+          {
+            type: "hazard_notes_structure",
+            priority: "medium",
+            fieldName: "hazardNotes",
+            originalValue: "{}",
+            suggestedValue: "{\"5-0\": \"Exposition gegenüber chemischen Dämpfen - kontinuierliche Überwachung erforderlich\", \"5-1\": \"Sauerstoffmangel durch Verdrängung - Atemschutz obligatorisch\", \"4-0\": \"Explosionsgefahr durch Gasansammlung - Ex-Schutz beachten\", \"7-1\": \"Absturzgefahr bei Behältereinstieg - Sicherungsmaßnahmen\"}",
+            reasoning: "Strukturierte Dokumentation der Gefährdungsbeurteilung mit spezifischen Schutzmaßnahmen je Gefährdungskategorie"
           }
         ]
       };
