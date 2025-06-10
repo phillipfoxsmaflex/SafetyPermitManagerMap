@@ -766,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Suggestions and Webhook routes
   
-  // Send permit to AI for analysis
+  // Start AI analysis by creating staging permit for direct database processing
   app.post("/api/permits/:id/analyze", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
@@ -776,98 +776,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      const webhookConfig = await storage.getActiveWebhookConfig();
-      if (!webhookConfig) {
-        return res.status(400).json({ message: "No active webhook configuration found" });
+      // Check if staging permit already exists
+      const existingStaging = await storage.getStagingPermit(permitId);
+      if (existingStaging && existingStaging.aiProcessingStatus === 'processing') {
+        return res.json({ 
+          message: "AI analysis already in progress",
+          status: "processing",
+          stagingId: existingStaging.id
+        });
       }
 
-      // Create comprehensive permit data for analysis
-      const permitAnalysisData = {
-        // Basic permit information
+      console.log('Starting AI analysis for permit:', {
         permitId: permit.permitId,
         internalId: permit.id,
         type: permit.type,
-        location: permit.location,
-        description: permit.description,
-        department: permit.department,
-        riskLevel: permit.riskLevel,
-        status: permit.status,
-        
-        // Personnel information
-        requestorName: permit.requestorName,
-        contactNumber: permit.contactNumber,
-        emergencyContact: permit.emergencyContact,
-        safetyOfficer: permit.safetyOfficer,
-        departmentHead: permit.departmentHead,
-        maintenanceApprover: permit.maintenanceApprover,
-        performerName: permit.performerName,
-        
-        // Dates and timing
-        startDate: permit.startDate?.toISOString(),
-        endDate: permit.endDate?.toISOString(),
-        workStartedAt: permit.workStartedAt?.toISOString(),
-        workCompletedAt: permit.workCompletedAt?.toISOString(),
-        
-        // Safety assessment
-        selectedHazards: permit.selectedHazards,
-        hazardNotes: permit.hazardNotes,
-        completedMeasures: permit.completedMeasures,
-        identifiedHazards: permit.identifiedHazards,
-        additionalComments: permit.additionalComments,
-        
-        // Approval status
-        departmentHeadApproval: permit.departmentHeadApproval,
-        departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
-        maintenanceApproval: permit.maintenanceApproval,
-        maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
-        safetyOfficerApproval: permit.safetyOfficerApproval,
-        safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
-        
-        // Analysis metadata
-        analysisType: 'permit_improvement',
-        timestamp: new Date().toISOString(),
-        systemVersion: '1.0'
-      };
-
-      // Prepare webhook payload for POST request
-      const webhookPayload = {
-        action: 'analyze_permit',
-        permitData: permitAnalysisData
-      };
-
-      console.log('Sending permit for AI analysis:', {
-        permitId: permit.permitId,
-        internalId: permit.id,
-        webhookUrl: webhookConfig.webhookUrl,
-        dataSize: JSON.stringify(webhookPayload).length
+        location: permit.location
       });
 
-      console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
+      // Create staging permit for AI processing
+      const stagingPermit = await storage.createStagingPermit(permitId);
 
-      // Send POST request to webhook with data in body
-      const response = await fetch(webhookConfig.webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookPayload),
-        signal: AbortSignal.timeout(120000) // 2 minute timeout for AI analysis
+      console.log('Staging permit created for AI analysis:', {
+        stagingId: stagingPermit.id,
+        originalPermitId: permitId,
+        batchId: stagingPermit.batchId,
+        aiProcessingStatus: stagingPermit.aiProcessingStatus
       });
-
-      if (!response.ok) {
-        console.error('Webhook request failed:', response.status, response.statusText);
-        throw new Error(`Webhook request failed: ${response.status}`);
-      }
-
-      console.log('Permit data sent successfully to AI analysis webhook');
 
       res.json({ 
-        message: "Permit sent for AI analysis successfully",
-        status: "processing" 
+        message: "AI analysis started - staging permit created for external processing",
+        status: "processing",
+        stagingId: stagingPermit.id,
+        batchId: stagingPermit.batchId
       });
     } catch (error) {
-      console.error("Error sending permit for analysis:", error);
-      res.status(500).json({ message: "Failed to send permit for analysis" });
+      console.error("Error starting AI analysis:", error);
+      res.status(500).json({ message: "Failed to start AI analysis" });
     }
   });
 
