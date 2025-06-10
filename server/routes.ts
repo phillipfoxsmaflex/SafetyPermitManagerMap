@@ -1630,6 +1630,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get database configuration for admin settings
+  app.get('/api/admin/database-config', requireAuth, async (req, res) => {
+    try {
+      const config = {
+        host: process.env.PGHOST || 'localhost',
+        port: process.env.PGPORT || '5432',
+        database: process.env.PGDATABASE || 'permits',
+        user: process.env.PGUSER || 'postgres',
+        hasPassword: !!process.env.PGPASSWORD
+      };
+      res.json(config);
+    } catch (error) {
+      console.error('Error fetching database config:', error);
+      res.status(500).json({ error: 'Failed to fetch database configuration' });
+    }
+  });
+
   app.get("/api/admin/company-logo", async (req, res) => {
     try {
       const fs = await import('fs/promises');

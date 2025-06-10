@@ -18,6 +18,14 @@ interface CompanyLogoConfig {
   updatedBy?: string;
 }
 
+interface DatabaseConfig {
+  host: string;
+  port: string;
+  database: string;
+  user: string;
+  hasPassword: boolean;
+}
+
 export default function AdminSettings() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -202,31 +210,31 @@ export default function AdminSettings() {
               <div>
                 <Label className="text-sm font-medium">Host</Label>
                 <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {process.env.PGHOST || 'localhost'}
+                  {import.meta.env.VITE_PGHOST || 'localhost'}
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Port</Label>
                 <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {process.env.PGPORT || '5432'}
+                  {import.meta.env.VITE_PGPORT || '5432'}
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Datenbank</Label>
                 <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {process.env.PGDATABASE || 'permits'}
+                  {import.meta.env.VITE_PGDATABASE || 'permits'}
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Benutzer</Label>
                 <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {process.env.PGUSER || 'postgres'}
+                  {import.meta.env.VITE_PGUSER || 'postgres'}
                 </div>
               </div>
               <div className="md:col-span-2">
                 <Label className="text-sm font-medium">Passwort</Label>
                 <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                  {process.env.PGPASSWORD ? '••••••••••••' : 'Nicht konfiguriert'}
+                  {import.meta.env.VITE_PGPASSWORD ? '••••••••••••' : 'Nicht konfiguriert'}
                 </div>
               </div>
             </div>
