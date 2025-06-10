@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
@@ -8,9 +8,22 @@ import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { PermitStats } from "@/lib/types";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -18,6 +31,9 @@ export default function Dashboard() {
   const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  const isAdmin = user?.role === 'admin';
 
   const { data: stats, isLoading: statsLoading } = useQuery<PermitStats>({
     queryKey: ["/api/permits/stats"],
@@ -25,6 +41,34 @@ export default function Dashboard() {
 
   const { data: permits = [], isLoading: permitsLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
+  });
+
+  const deletePermitMutation = useMutation({
+    mutationFn: async (permitId: number) => {
+      const response = await fetch(`/api/permits/${permitId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete permit');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
+      toast({
+        title: "Genehmigung gelöscht",
+        description: "Die Genehmigung und alle zugehörigen Daten wurden erfolgreich gelöscht.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fehler beim Löschen",
+        description: error.message || "Die Genehmigung konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    },
   });
 
   const filteredPermits = useMemo(() => {
@@ -45,6 +89,10 @@ export default function Dashboard() {
   const handleEditPermit = (permit: Permit) => {
     setSelectedPermit(permit);
     setEditModalOpen(true);
+  };
+
+  const handleDeletePermit = (permitId: number) => {
+    deletePermitMutation.mutate(permitId);
   };
 
   const handleExportReport = () => {

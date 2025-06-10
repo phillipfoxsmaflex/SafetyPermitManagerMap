@@ -1,6 +1,17 @@
 import { useState } from "react";
-import { Eye, Edit, Printer } from "lucide-react";
+import { Eye, Edit, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -18,9 +29,11 @@ interface PermitTableProps {
   permits: Permit[];
   isLoading?: boolean;
   onEdit?: (permit: Permit) => void;
+  onDelete?: (permitId: number) => void;
+  isAdmin?: boolean;
 }
 
-export function PermitTable({ permits, isLoading, onEdit }: PermitTableProps) {
+export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: PermitTableProps) {
   const [, setLocation] = useLocation();
   const [printPermit, setPrintPermit] = useState<Permit | null>(null);
 
