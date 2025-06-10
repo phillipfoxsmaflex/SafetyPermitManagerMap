@@ -829,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(webhookPayload),
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: AbortSignal.timeout(120000) // 2 minute timeout for AI analysis
       });
 
       if (!response.ok) {

@@ -1,0 +1,103 @@
+{
+  "description": "Expected response format for POST request to /api/webhooks/suggestions",
+  "endpoint": "https://your-domain.com/api/webhooks/suggestions",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "required_response_format": {
+    "permitId": "string (required) - Must match the permitId from the original request",
+    "analysisComplete": "boolean (required) - Set to true when analysis is finished",
+    "suggestions": "array (optional) - Array of suggestion objects",
+    "riskAssessment": "object (optional) - Risk assessment data for logging",
+    "recommendations": "object (optional) - Structured recommendations for logging",
+    "compliance_notes": "object (optional) - Compliance information for logging",
+    "error": "string (optional) - Error message if analysis failed"
+  },
+  "example_successful_response": {
+    "permitId": "HT-2025-001",
+    "analysisComplete": true,
+    "suggestions": [
+      {
+        "type": "safety_improvement",
+        "fieldName": "identifiedHazards",
+        "originalValue": "Absturzgefahr, rutschige Oberflächen, Witterungseinflüsse",
+        "suggestedValue": "Absturzgefahr aus 15m Höhe, Rutschgefahr auf feuchten Dachflächen, Witterungseinflüsse (Wind, Regen), unzureichende Arbeitszeit",
+        "reasoning": "Die Gefährdungsidentifikation sollte spezifischer sein und die kritische Absturzhöhe von 15m explizit erwähnen.",
+        "priority": "high"
+      },
+      {
+        "type": "procedure_optimization",
+        "fieldName": "additionalComments",
+        "originalValue": "Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten.",
+        "suggestedValue": "Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten. Mindestens 2 Stunden für sichere Durchführung einplanen.",
+        "reasoning": "Die geplante Arbeitszeit von 34 Minuten ist für Höhenarbeiten unrealistisch und gefährlich.",
+        "priority": "high"
+      },
+      {
+        "type": "compliance_improvement",
+        "fieldName": "riskLevel",
+        "originalValue": "high",
+        "suggestedValue": "high",
+        "reasoning": "Risikoeinstufung ist korrekt, aber zusätzliche Sicherheitsmaßnahmen nach TRBS 2121 erforderlich.",
+        "priority": "medium"
+      }
+    ],
+    "riskAssessment": {
+      "overallRisk": "high",
+      "riskFactors": [
+        "Absturzgefahr aus 15m Höhe - lebensgefährlich",
+        "Rutschgefahr auf Dachflächen",
+        "Witterungseinflüsse bei Außenarbeiten",
+        "Unzureichende Arbeitszeit (nur 34 Minuten geplant)"
+      ],
+      "complianceScore": 65
+    },
+    "recommendations": {
+      "immediate_actions": [
+        "Arbeitszeit auf mindestens 2 Stunden verlängern",
+        "Wettervorhersage vor Arbeitsbeginn prüfen",
+        "Zweite Person als Sicherungsposten einteilen"
+      ],
+      "before_work_starts": [
+        "Vollständige PSA für Höhenarbeiten bereitstellen",
+        "Dachfläche auf Rutschgefahr prüfen",
+        "Notfallplan für Höhenrettung aktivieren"
+      ],
+      "monitoring_requirements": [
+        "Kontinuierliche Wetterüberwachung",
+        "Regelmäßige Überprüfung der Sicherungsausrüstung"
+      ]
+    },
+    "compliance_notes": {
+      "trbs_conformity": "Teilweise konform - Verbesserungen erforderlich",
+      "missing_requirements": [
+        "TRBS 2121: Gefährdungsbeurteilung für Höhenarbeiten unvollständig",
+        "DGUV Regel 112-198: Zeitplanung unrealistisch"
+      ]
+    }
+  },
+  "example_error_response": {
+    "permitId": "HT-2025-001",
+    "analysisComplete": false,
+    "error": "AI analysis service temporarily unavailable",
+    "suggestions": []
+  },
+  "notes": {
+    "suggestion_object_fields": {
+      "type": "string - Type of suggestion (safety_improvement, procedure_optimization, compliance_improvement, etc.)",
+      "fieldName": "string (optional) - Which permit field this suggestion applies to",
+      "originalValue": "string (optional) - Current value of the field",
+      "suggestedValue": "string (required) - Improved/suggested value",
+      "reasoning": "string (required) - Explanation why this improvement is needed",
+      "priority": "string (required) - Priority level: low, medium, high, critical"
+    },
+    "important_notes": [
+      "The permitId in the response MUST exactly match the permitId from the incoming request",
+      "If no suggestions are generated, send an empty suggestions array []",
+      "Additional fields like riskAssessment and recommendations are optional but useful for logging",
+      "Always set analysisComplete to true for successful responses",
+      "Use meaningful, specific German text for reasoning and suggested values"
+    ]
+  }
+}
