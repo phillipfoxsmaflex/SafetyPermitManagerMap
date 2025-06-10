@@ -120,10 +120,30 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-      return await response.json();
+      console.log(`Client: Applying suggestion ${suggestionId}`);
+      
+      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      console.log(`Client: Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Client: API error: ${response.status} - ${errorText}`);
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Client: Success response:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("Client: onSuccess called with:", data);
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       toast({
@@ -132,7 +152,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       });
     },
     onError: (error: any) => {
-      console.error("Apply error:", error);
+      console.error("Client: onError called with:", error);
       const errorMessage = error?.message || "Der Vorschlag konnte nicht übernommen werden.";
       toast({
         title: "Fehler",
