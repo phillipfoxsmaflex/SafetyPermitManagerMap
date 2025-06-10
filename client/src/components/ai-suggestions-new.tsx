@@ -69,10 +69,11 @@ function DiffView({ original, suggested, fieldName }: { original?: string; sugge
   );
 }
 
-// Simple fetch wrapper with proper error handling
+// Robust fetch wrapper with proper error handling
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   try {
     const response = await fetch(url, {
+      method: 'GET',
       ...options,
       credentials: 'include',
       headers: {
@@ -84,25 +85,31 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     if (!response.ok) {
       let errorText = '';
       try {
-        errorText = await response.text();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorText = errorData.message || errorData.error || 'Unknown error';
+        } else {
+          errorText = await response.text();
+        }
       } catch (e) {
-        errorText = 'Unable to read error response';
+        errorText = `HTTP ${response.status} ${response.statusText}`;
       }
-      const error = new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
-      error.name = 'HTTPError';
-      throw error;
+      throw new Error(errorText);
     }
 
-    const data = await response.json();
-    return data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      return await response.text();
+    }
   } catch (error) {
-    if (error instanceof Error && error.name === 'HTTPError') {
+    console.error('Fetch error:', error);
+    if (error instanceof Error) {
       throw error;
     }
-    // Network or other errors
-    const networkError = new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    networkError.name = 'NetworkError';
-    throw networkError;
+    throw new Error('Network request failed');
   }
 }
 
