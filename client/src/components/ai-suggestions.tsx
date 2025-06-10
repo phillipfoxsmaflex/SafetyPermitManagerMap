@@ -121,9 +121,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const applySuggestionMutation = useMutation({
     mutationFn: (suggestionId: number) => {
       console.log(`Client: Applying suggestion ${suggestionId}`);
-      const baseUrl = window.location.origin;
       
-      return fetch(`${baseUrl}/api/suggestions/${suggestionId}/apply`, {
+      return fetch(`/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -214,8 +213,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       console.log(`Starting applyAll mutation for permit ${permitId}`);
       
       return new Promise((resolve, reject) => {
-        const baseUrl = window.location.origin;
-        fetch(`${baseUrl}/api/permits/${permitId}/suggestions/apply-all`, {
+        fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -336,32 +334,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const handleApplySuggestion = async (suggestionId: number) => {
     console.log(`Direct test: Applying suggestion ${suggestionId}`);
     
-    // First test basic connectivity
     try {
-      console.log("Testing basic connectivity...");
-      const baseUrl = window.location.origin;
-      console.log("Base URL:", baseUrl);
-      const testResponse = await fetch(`${baseUrl}/api/permits/${permitId}/suggestions`, {
-        method: "GET",
-        credentials: "include",
-      });
-      console.log(`Connectivity test status: ${testResponse.status}`);
-    } catch (connectError) {
-      console.error("Basic connectivity failed:", connectError);
-      console.error("Connect error type:", typeof connectError);
-      console.error("Connect error string:", String(connectError));
-      toast({
-        title: "Verbindungsfehler", 
-        description: "Server nicht erreichbar. Bitte Seite neu laden.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      console.log("Proceeding with apply request...");
-      const baseUrl = window.location.origin;
-      const response = await fetch(`${baseUrl}/api/suggestions/${suggestionId}/apply`, {
+      console.log("Applying suggestion directly...");
+      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

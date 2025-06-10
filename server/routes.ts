@@ -10,32 +10,38 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Authentication middleware
+  // Authentication middleware (unified)
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
       const sessionId = req.cookies?.sessionId;
+      console.log('Auth middleware - sessionId:', sessionId);
       
       if (!sessionId) {
+        console.log('Auth middleware - No session ID found');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const session = await storage.getSessionBySessionId(sessionId);
       if (!session) {
+        console.log('Auth middleware - No valid session found in database');
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       // Check if session has expired
       if (session.expiresAt < new Date()) {
+        console.log('Auth middleware - Session expired');
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(session.userId);
       if (!user) {
+        console.log('Auth middleware - User not found in database');
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
+      console.log('Auth middleware - successful for user:', user.username);
       req.user = user;
       next();
     } catch (error) {
