@@ -1,119 +1,125 @@
-# Sicherheitsbewertung Implementation Summary
+# Biggs Permit Management System - Aktueller Stand
 
-## Abgeschlossene Funktionen
+## Übersicht
+Biggs ist ein umfassendes digitales Arbeitserlaubnis-Management-System für die chemische Industrie mit AI-gestützter Sicherheitsanalyse und TRBS-konformer Gefährdungsbeurteilung.
 
-### ✅ Neue Sicherheitsbewertungs-Felder
-- **Zusätzliche Kommentare**: Von Hauptformular in Sicherheitsbewertung verschoben
-- **Sofortmaßnahmen**: Neue optionale Textfeld für unmittelbare Aktionen
-- **Vor Arbeitsbeginn**: Neue optionale Textfeld für Vorbereitungsmaßnahmen  
-- **Compliance-Hinweise**: Neue optionale Textfeld für regulatorische Anforderungen
+## Kernfunktionen
 
-### ✅ Benutzerinterface
-- Neue "Sicherheitsbewertung" Tab im Bearbeitungsmodal
-- Übersichtliche Anordnung der Sicherheitsfelder
-- Responsive Design für Desktop und Mobile
-- Entfernung des AI-Hinweistextes (wie gewünscht)
+### ✅ Permit Management
+- **6 Permit-Typen**: Heißarbeiten, enge Räume, elektrische Arbeiten, Arbeiten in der Höhe, Chemikalienarbeiten, allgemeine Erlaubnisscheine
+- **Vollständiger Genehmigungsworkflow**: Abteilungsleiter, Sicherheitsbeauftragte, Technik-Genehmiger
+- **Statusverfolgung**: Entwurf → Genehmigung → Aktiv → Abgeschlossen
+- **Dokumentenanhänge**: Unbegrenzte Datei-Uploads mit Metadaten
+- **Druckansicht**: Professionelle PDF-Ausgabe für Arbeitsplätze
 
-### ✅ Datenvalidierung
-- Alle Sicherheitsbewertungsfelder sind **optional**
-- Keine Blockierung der Genehmigungsworkflows
-- Permits können ohne ausgefüllte Sicherheitsfelder genehmigt werden
-- Flexible Nutzung je nach Bedarf
+### ✅ TRBS-konforme Sicherheitsbewertung
+- **38 Gefährdungskategorien** nach TRBS 1112
+- **Strukturierte Risikoanalyse** mit Low/Medium/High/Critical Bewertung
+- **Detaillierte Gefährdungsnotizen** mit JSON-basierter Speicherung
+- **Schutzmaßnahmen-Tracking** mit vordefiniertem Katalog
+- **Sicherheitsbewertungs-Felder**:
+  - Sofortmaßnahmen
+  - Maßnahmen vor Arbeitsbeginn  
+  - Compliance-Hinweise
 
-### ✅ AI-Integration Workflow
-- **Manuelle Genehmigung**: AI-Vorschläge werden als Suggestions erstellt
-- **Keine automatische Aktualisierung** der Sicherheitsfelder
-- Benutzer müssen Sicherheitsempfehlungen explizit annehmen
-- Vollständige Kontrolle über AI-generierte Inhalte
+### ✅ AI-gestützte Verbesserungsvorschläge
+- **Webhook-Integration** für externe AI-Services (n8n)
+- **Feldspezifische Suggestions** mit Begründung und Priorität
+- **Manuelle Genehmigung** aller AI-Vorschläge
+- **TRBS-Mapping** für automatische Gefährdungserkennung
+- **Suggestion-Management** mit Akzeptieren/Ablehnen/Löschen
 
-### ✅ Webhook-Integration
-- Enhanced webhook handler für Sicherheitsbewertung
-- Strukturierte AI-Antworten mit `recommendations` Objekt
-- Mapping von AI-Empfehlungen zu spezifischen Feldern:
-  - `immediate_actions` → `immediateActions` Feld
-  - `before_work_starts` → `beforeWorkStarts` Feld  
-  - `compliance_requirements` → `complianceNotes` Feld
+### ✅ Benutzerverwaltung & Rollen
+- **5 Benutzerrollen**: Admin, Anforderer, Sicherheitsbeauftragte, Abteilungsleiter, Technik
+- **Rollenbasierte Berechtigungen** für alle Funktionen
+- **Session-Management** mit sicherer Authentifizierung
+- **Benutzerauswahl** in Dropdown-Menüs für Genehmiger
 
-### ✅ Dokumentation
-- Umfassende AI-Agent Integration Guides erstellt
-- TRBS-Gefährdungskategorien Mapping dokumentiert
-- N8N Workflow Integration Anleitungen
-- Beispiele für korrekte Webhook-Responses
+### ✅ Dashboard & Übersicht
+- **Permit-Statistiken**: Aktive, Genehmigungen, Ablaufend
+- **Filterfunktionen**: Status, Typ, Zeitraum
+- **Benachrichtigungssystem** für wichtige Events
+- **Responsive Design** für Desktop und Mobile
 
-## Technische Details
+## Technische Architektur
 
-### Datenbank Schema
-```sql
--- Neue Spalten in permits Tabelle
-ALTER TABLE permits ADD COLUMN immediate_actions TEXT;
-ALTER TABLE permits ADD COLUMN before_work_starts TEXT;
-ALTER TABLE permits ADD COLUMN compliance_notes TEXT;
-```
+### Frontend
+- **React.js + TypeScript** mit Wouter Routing
+- **Shadcn/ui Komponenten** für konsistente UI
+- **TanStack Query** für State Management
+- **React Hook Form** mit Zod-Validierung
+- **Tailwind CSS** für Styling
 
-### API Endpoints
-- `PATCH /api/permits/:id` - Aktualisierung mit Sicherheitsfeldern
-- `POST /api/webhooks/suggestions` - AI-Empfehlungen als Suggestions
-- `GET /api/permits/:id/suggestions` - Abruf aller Vorschläge
+### Backend
+- **Express.js** mit TypeScript
+- **PostgreSQL** Datenbank
+- **Drizzle ORM** für Type-Safe Queries
+- **Multer** für Datei-Uploads
+- **Session-basierte Authentifizierung**
 
-### Frontend Komponenten
-- `EditPermitModalEnhanced` - Erweitert um Sicherheitsbewertung Tab
-- Form Validation Schema - Alle Sicherheitsfelder optional
-- React useEffect Hooks für Echtzeit-Updates
+### AI-Integration
+- **Webhook-basiert** für flexible AI-Provider
+- **Strukturierte JSON-Responses** für Suggestions
+- **TRBS-Kategorien-Mapping** für deutsche Standards
+- **Error Handling** und Retry-Mechanismen
 
-## Benutzerworkflow
+## AI-Webhook Integration
 
-1. **Permit erstellen/bearbeiten**
-   - Grunddaten im "Arbeitsdetails" Tab eingeben
-   - Optional: Sicherheitsbewertung im "Sicherheitsbewertung" Tab
-
-2. **AI-Analyse anfordern**
-   - System sendet Permit-Daten an konfigurierten Webhook
-   - AI generiert Suggestions für alle Bereiche
-   - Sicherheitsempfehlungen werden als pending Suggestions erstellt
-
-3. **Suggestions verwalten**
-   - Benutzer sieht alle AI-Vorschläge im "AI-Verbesserungen" Tab
-   - Manuelle Genehmigung/Ablehnung jeder Suggestion
-   - Sicherheitsfelder werden nur bei expliziter Annahme aktualisiert
-
-4. **Genehmigungsworkflow**
-   - Permits können mit/ohne Sicherheitsbewertung genehmigt werden
-   - Keine Blockierung durch fehlende Sicherheitsfelder
-   - Vollständige Flexibilität für verschiedene Arbeitstypen
-
-## AI-Agent Integration
-
-### Eingabeformat verstehen
-```javascript
+### Gesendete Daten (POST)
+```json
 {
-  "selected_hazards": ["5-0", "4-0"],  // TRBS Kategorien Array
-  "hazard_notes": "{\"5-0\": \"Details\"}", // JSON String
-  "additionalComments": "Bestehende Kommentare"
-}
-```
-
-### Ausgabeformat generieren
-```javascript
-{
-  "suggestions": [...], // Bestehende Suggestions
-  "recommendations": {
-    "immediate_actions": ["Aktion 1", "Aktion 2"],
-    "before_work_starts": ["Vorbereitung 1", "Vorbereitung 2"], 
-    "compliance_requirements": ["Norm 1", "Norm 2"]
+  "action": "analyze_permit",
+  "permitData": {
+    "permitId": "HT-2025-001",
+    "type": "hot_work",
+    "selectedHazards": ["5-0", "4-0"],
+    "hazardNotes": "{\"5-0\": \"Schweißrauch\"}",
+    "completedMeasures": ["ppe_welding", "ventilation"],
+    "identifiedHazards": "Schweißfunken, Hitzeentwicklung"
   }
 }
 ```
 
-## Konfiguration
+### Erwartete Antwort (POST zurück)
+```json
+{
+  "permitId": "HT-2025-001",
+  "analysisComplete": true,
+  "suggestions": [
+    {
+      "type": "trbs_hazard_enhancement",
+      "priority": "high",
+      "fieldName": "selectedHazards",
+      "originalValue": ["5-0"],
+      "suggestedValue": ["5-0", "5-1", "2-0"],
+      "reasoning": "Ergänzung um Hautkontakt und Brandgefahr"
+    }
+  ]
+}
+```
 
-### Webhook Response Format
-- Vollständige Dokumentation in `n8n-webhook-response-format.json`
-- Beispiele für verschiedene Arbeitstypen
-- Error Handling Strategien
+## TRBS-Gefährdungskategorien
+Das System implementiert alle 38 Kategorien der TRBS 1112:
+- **0-x**: Mechanische Gefährdungen
+- **1-x**: Sturz/Absturz
+- **2-x**: Brand/Explosion
+- **3-x**: Explosionsgefährdungen
+- **4-x**: Elektrische Gefährdungen
+- **5-x**: Gefahrstoffe (4 Unterkategorien)
+- **6-x**: Biologische Gefährdungen
+- **7-x**: Physikalische Einwirkungen
+- **8-x**: Arbeitsumgebung
+- **9-x**: Physische Belastungen
 
-### AI-Prompt Erweiterungen
-- Spezielle Anweisungen für TRBS-Kategorien in `ai-agent-field-mapping-guide.md`
-- N8N Integration Beispiele in `n8n-ai-integration-prompt.md`
-- Arbeitstyp-spezifische Logik dokumentiert
+## Deployment & Konfiguration
 
-Die Sicherheitsbewertung-Funktionalität ist vollständig implementiert und produktionsbereit.
+### Umgebungsvariablen
+- `DATABASE_URL`: PostgreSQL Verbindungsstring
+- `SESSION_SECRET`: Session-Verschlüsselung
+- `WEBHOOK_URL`: AI-Service Endpoint (optional)
+
+### Datenbankmigrationen
+Automatische Schema-Updates über Drizzle Kit bei Deployment.
+
+### Produktionsbereitschaft
+Das System ist vollständig getestet und produktionsbereit für industrielle Arbeitserlaubnis-Verwaltung.
