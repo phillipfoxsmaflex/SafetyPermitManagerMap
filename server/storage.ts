@@ -576,11 +576,11 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Add or update hazard notes
+          // Add or update hazard notes with generic AI suggestion marker
           if (hazardIds.length > 0) {
             const primaryHazard = hazardIds[0];
             if (!(primaryHazard in currentHazardNotes)) {
-              currentHazardNotes[primaryHazard] = `AI-Vorschlag: ${reasoning}`;
+              currentHazardNotes[primaryHazard] = `Von AI-Analyse erkannt`;
               hasNewMapping = true;
               console.log(`Added note for hazard ${primaryHazard}`);
             }
@@ -609,7 +609,7 @@ export class DatabaseStorage implements IStorage {
             for (const hazardId of hazardIds) {
               if (!currentSelectedHazards.includes(hazardId)) {
                 currentSelectedHazards.push(hazardId);
-                currentHazardNotes[hazardId] = `AI-Vorschlag: ${reasoning}`;
+                currentHazardNotes[hazardId] = `Von AI-Analyse erkannt`;
                 hasNewMapping = true;
               }
             }
