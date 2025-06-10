@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, XCircle, Clock, AlertTriangle, CheckIcon, XIcon, Trash2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckCircle, XCircle, Clock, AlertTriangle, CheckIcon, XIcon, Trash2, Brain, ChevronDown, ChevronRight, Diff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AiSuggestion {
@@ -25,6 +26,47 @@ interface AiSuggestion {
 
 interface AiSuggestionsProps {
   permitId: number;
+}
+
+// Diff component to show original vs suggested values
+function DiffView({ original, suggested, fieldName }: { original?: string; suggested: string; fieldName?: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!original) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Diff className="h-4 w-4 text-green-600" />
+          <span className="text-sm font-medium text-green-800">Neuer Wert {fieldName ? `für ${fieldName}` : ''}</span>
+        </div>
+        <div className="text-sm text-green-700">{suggested}</div>
+      </div>
+    );
+  }
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="p-0 h-auto">
+          <div className="flex items-center gap-2">
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <Diff className="h-4 w-4" />
+            <span className="text-sm">Änderungen anzeigen {fieldName ? `(${fieldName})` : ''}</span>
+          </div>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 mt-2">
+        <div className="bg-red-50 border border-red-200 rounded p-3">
+          <div className="text-xs font-medium text-red-800 mb-1">Aktuell:</div>
+          <div className="text-sm text-red-700">{original}</div>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded p-3">
+          <div className="text-xs font-medium text-green-800 mb-1">Vorschlag:</div>
+          <div className="text-sm text-green-700">{suggested}</div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
 
 // Simple fetch wrapper with proper error handling
@@ -56,6 +98,23 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
   const { data: suggestions = [], isLoading, refetch } = useQuery({
     queryKey: [`/api/permits/${permitId}/suggestions`],
     queryFn: () => fetchWithAuth(`/api/permits/${permitId}/suggestions`),
+  });
+
+  // Start AI analysis
+  const startAnalysisMutation = useMutation({
+    mutationFn: () => 
+      fetchWithAuth(`/api/permits/${permitId}/analyze`, { method: 'POST' }),
+    onSuccess: () => {
+      refetch();
+      setResultType('success');
+      setResultMessage('AI-Analyse gestartet. Vorschläge werden generiert...');
+      setResultDialogOpen(true);
+    },
+    onError: (error: Error) => {
+      setResultType('error');
+      setResultMessage(`Fehler beim Starten der Analyse: ${error.message}`);
+      setResultDialogOpen(true);
+    },
   });
 
   // Apply single suggestion
@@ -197,34 +256,49 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             AI-Vorschläge ({suggestions.length})
-            {pendingSuggestions.length > 0 && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => applyAllMutation.mutate()}
-                  disabled={applyAllMutation.isPending}
-                  size="sm"
-                  variant="default"
-                >
-                  Alle übernehmen
-                </Button>
-                <Button
-                  onClick={() => rejectAllMutation.mutate()}
-                  disabled={rejectAllMutation.isPending}
-                  size="sm"
-                  variant="outline"
-                >
-                  Alle ablehnen
-                </Button>
-                <Button
-                  onClick={() => deleteAllMutation.mutate()}
-                  disabled={deleteAllMutation.isPending}
-                  size="sm"
-                  variant="destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              {/* AI Analysis Button */}
+              <Button
+                onClick={() => startAnalysisMutation.mutate()}
+                disabled={startAnalysisMutation.isPending}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Brain className="h-4 w-4" />
+                {startAnalysisMutation.isPending ? 'Analysiert...' : 'AI-Analyse starten'}
+              </Button>
+              
+              {/* Bulk Actions */}
+              {pendingSuggestions.length > 0 && (
+                <>
+                  <Button
+                    onClick={() => applyAllMutation.mutate()}
+                    disabled={applyAllMutation.isPending}
+                    size="sm"
+                    variant="default"
+                  >
+                    Alle übernehmen
+                  </Button>
+                  <Button
+                    onClick={() => rejectAllMutation.mutate()}
+                    disabled={rejectAllMutation.isPending}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Alle ablehnen
+                  </Button>
+                  <Button
+                    onClick={() => deleteAllMutation.mutate()}
+                    disabled={deleteAllMutation.isPending}
+                    size="sm"
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </CardTitle>
           <CardDescription>
             KI-generierte Verbesserungsvorschläge für diesen Erlaubnisschein
@@ -270,22 +344,17 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
                 </div>
               )}
 
-              <div>
-                <span className="font-medium">Vorschlag: </span>
-                <span className="text-sm">{suggestion.suggestedValue}</span>
-              </div>
+              {/* Diff View */}
+              <DiffView 
+                original={suggestion.originalValue} 
+                suggested={suggestion.suggestedValue}
+                fieldName={suggestion.fieldName}
+              />
 
               <div>
                 <span className="font-medium">Begründung: </span>
                 <span className="text-sm text-muted-foreground">{suggestion.reasoning}</span>
               </div>
-
-              {suggestion.originalValue && (
-                <div>
-                  <span className="font-medium">Aktueller Wert: </span>
-                  <span className="text-sm text-muted-foreground">{suggestion.originalValue}</span>
-                </div>
-              )}
 
               <div className="text-xs text-muted-foreground">
                 Erstellt: {new Date(suggestion.createdAt).toLocaleString('de-DE')}
