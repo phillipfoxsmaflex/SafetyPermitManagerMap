@@ -900,7 +900,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error starting AI analysis:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ message: "Failed to start AI analysis: " + errorMessage });
+      
+      // If there's a staging permit created, mark it as error
+      try {
+        const currentPermitId = parseInt(req.params.id);
+        const stagingPermit = await storage.getStagingPermit(currentPermitId);
+        if (stagingPermit) {
+          await storage.updateStagingPermit(stagingPermit.id, { 
+            aiProcessingStatus: 'error' 
+          });
+        }
+      } catch (updateError) {
+        console.error("Failed to update staging permit status:", updateError);
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to start AI analysis: " + errorMessage,
+        error: "webhook_failed",
+        details: errorMessage.includes("404") ? "Webhook URL not found (404). Check n8n workflow configuration." : errorMessage
+      });
+    }
+  });
+
+  // Test AI analysis with mock improvements (for development/testing)
+  app.post("/api/permits/:id/ai-test", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const permit = await storage.getPermit(permitId);
+      
+      if (!permit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+
+      // Create or get existing staging permit
+      let stagingPermit = await storage.getStagingPermit(permitId);
+      if (!stagingPermit) {
+        stagingPermit = await storage.createStagingPermit(permitId);
+      }
+
+      // Simulate AI improvements
+      const improvements = {
+        identifiedHazards: permit.identifiedHazards + " | KI-Ergänzung: Exposition gegenüber Ethanoldämpfen, Brandgefahr durch elektrostatische Aufladung",
+        additionalComments: permit.additionalComments + " | KI-Empfehlung: Zusätzliche Gasmesstechnik für kontinuierliche Überwachung, Ex-geschützte Werkzeuge verwenden",
+        selectedHazards: [...(permit.selectedHazards || []), "Inhalationsgefahr", "Brandgefahr durch statische Aufladung"],
+        completedMeasures: [...(permit.completedMeasures || []), "Gaswarnanlagen-Funktionstest", "PSA-Vollständigkeitsprüfung", "Ex-Schutz-Zertifikate prüfen"]
+      };
+
+      // Update staging permit with improvements
+      await storage.updateStagingPermit(stagingPermit.id, {
+        identifiedHazards: improvements.identifiedHazards,
+        additionalComments: improvements.additionalComments,
+        selectedHazards: improvements.selectedHazards,
+        completedMeasures: improvements.completedMeasures,
+        changedFields: ['identifiedHazards', 'additionalComments', 'selectedHazards', 'completedMeasures'],
+        aiProcessingStatus: 'completed',
+        aiProcessingCompleted: new Date()
+      });
+
+      res.json({ 
+        message: "Test AI analysis completed",
+        stagingId: stagingPermit.id,
+        improvements: Object.keys(improvements)
+      });
+    } catch (error) {
+      console.error("Error in test AI analysis:", error);
+      res.status(500).json({ message: "Failed to run test AI analysis" });
     }
   });
 

@@ -208,7 +208,12 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
               <Alert variant="destructive" className="mb-4">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Die vorherige Analyse ist fehlgeschlagen. Sie können es erneut versuchen.
+                  Die KI-Analyse ist fehlgeschlagen. Mögliche Ursachen:
+                  <br />• Webhook-URL ist nicht erreichbar (404-Fehler)
+                  <br />• n8n-Workflow ist nicht aktiv
+                  <br />• Netzwerkverbindung unterbrochen
+                  <br /><br />
+                  Prüfen Sie die Webhook-Konfiguration in den Admin-Einstellungen.
                 </AlertDescription>
               </Alert>
             )}
