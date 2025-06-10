@@ -99,7 +99,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   });
 
   // Query for specific permit to get real-time updates
-  const { data: latestPermit } = useQuery({
+  const { data: latestPermit } = useQuery<any>({
     queryKey: [`/api/permits/${permit?.id}`],
     enabled: !!permit?.id && open,
     refetchInterval: 2000, // Refresh every 2 seconds when modal is open
@@ -262,7 +262,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   );
 
   // Use latest permit data if available, otherwise fallback to prop
-  const currentPermit = latestPermit || permit;
+  const currentPermit = latestPermit || permit || {};
 
   const form = useForm<EditPermitFormData>({
     resolver: zodResolver(editPermitSchema),
