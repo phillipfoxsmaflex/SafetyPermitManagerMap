@@ -1017,28 +1017,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Process and apply safety assessment fields directly to permit
-      const permitUpdates: any = {};
-      let safetyFieldsUpdated = false;
-
+      // Create safety assessment suggestions instead of auto-updating
       if (recommendations) {
-        console.log('Processing safety recommendations for permit', permitId);
+        console.log('Creating safety assessment suggestions for permit', permitId);
         
-        // Map AI recommendations to safety assessment fields
+        // Create suggestions for safety assessment fields
         if (recommendations.immediate_actions) {
           const immediateActionsText = Array.isArray(recommendations.immediate_actions) 
             ? recommendations.immediate_actions.join('\n• ')
             : recommendations.immediate_actions;
-          permitUpdates.immediateActions = '• ' + immediateActionsText;
-          safetyFieldsUpdated = true;
+          
+          const suggestion = await storage.createAiSuggestion({
+            permitId: permit.id,
+            suggestionType: 'safety_assessment',
+            fieldName: 'immediateActions',
+            originalValue: permit.immediateActions || '',
+            suggestedValue: '• ' + immediateActionsText,
+            reasoning: 'AI-generierte Sofortmaßnahmen basierend auf Risikoanalyse',
+            priority: 'high',
+            status: 'pending'
+          });
+          createdSuggestions.push(suggestion);
         }
 
         if (recommendations.before_work_starts) {
           const beforeWorkText = Array.isArray(recommendations.before_work_starts)
             ? recommendations.before_work_starts.join('\n• ')
             : recommendations.before_work_starts;
-          permitUpdates.beforeWorkStarts = '• ' + beforeWorkText;
-          safetyFieldsUpdated = true;
+          
+          const suggestion = await storage.createAiSuggestion({
+            permitId: permit.id,
+            suggestionType: 'safety_assessment',
+            fieldName: 'beforeWorkStarts',
+            originalValue: permit.beforeWorkStarts || '',
+            suggestedValue: '• ' + beforeWorkText,
+            reasoning: 'AI-generierte Vorbereitungsmaßnahmen basierend auf Arbeitsanalyse',
+            priority: 'high',
+            status: 'pending'
+          });
+          createdSuggestions.push(suggestion);
         }
 
         if (recommendations.compliance_requirements || compliance_notes) {
@@ -1046,31 +1063,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const complianceFormatted = Array.isArray(complianceText)
             ? complianceText.join('\n• ')
             : complianceText;
-          permitUpdates.complianceNotes = typeof complianceFormatted === 'string' ? complianceFormatted : '• ' + complianceFormatted;
-          safetyFieldsUpdated = true;
+          
+          const suggestion = await storage.createAiSuggestion({
+            permitId: permit.id,
+            suggestionType: 'safety_assessment',
+            fieldName: 'complianceNotes',
+            originalValue: permit.complianceNotes || '',
+            suggestedValue: typeof complianceFormatted === 'string' ? complianceFormatted : '• ' + complianceFormatted,
+            reasoning: 'AI-generierte Compliance-Hinweise basierend auf regulatorischen Anforderungen',
+            priority: 'medium',
+            status: 'pending'
+          });
+          createdSuggestions.push(suggestion);
         }
 
-        console.log('Safety assessment fields to update:', {
-          immediateActions: !!permitUpdates.immediateActions,
-          beforeWorkStarts: !!permitUpdates.beforeWorkStarts,
-          complianceNotes: !!permitUpdates.complianceNotes
+        console.log('Created safety assessment suggestions:', {
+          immediateActions: !!recommendations.immediate_actions,
+          beforeWorkStarts: !!recommendations.before_work_starts,
+          complianceNotes: !!(recommendations.compliance_requirements || compliance_notes)
         });
-      }
-
-      // Apply safety assessment updates to permit
-      if (safetyFieldsUpdated) {
-        try {
-          await storage.updatePermit(permit.id, permitUpdates);
-          console.log(`Updated safety assessment fields for permit ${permitId}`);
-        } catch (updateError) {
-          console.error('Error updating safety assessment fields:', updateError);
-        }
       }
 
       res.json({ 
         message: "AI suggestions received successfully",
-        suggestionsCount: createdSuggestions.length,
-        safetyFieldsUpdated 
+        suggestionsCount: createdSuggestions.length
       });
     } catch (error) {
       console.error("Error receiving AI suggestions:", error);

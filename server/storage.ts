@@ -449,6 +449,13 @@ export class DatabaseStorage implements IStorage {
           const numValue = parseInt(String(suggestedValue));
           return isNaN(numValue) ? null : numValue;
 
+        case 'immediateActions':
+        case 'beforeWorkStarts':
+        case 'complianceNotes':
+        case 'additionalComments':
+          // Safety assessment fields - ensure text format
+          return String(suggestedValue);
+
         default:
           // For text fields, ensure it's a string
           return String(suggestedValue);

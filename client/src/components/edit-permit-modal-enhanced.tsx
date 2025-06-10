@@ -861,7 +861,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                   <CardHeader>
                     <CardTitle className="text-industrial-gray">Sicherheitsbewertung und Kommentare</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Zusätzliche Sicherheitsinformationen und AI-generierte Empfehlungen
+                      Zusätzliche Sicherheitsinformationen
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -939,14 +939,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                       )}
                     />
 
-                    <Alert className="border-blue-200 bg-blue-50">
-                      <Info className="h-4 w-4 text-safety-blue" />
-                      <AlertDescription className="text-industrial-gray">
-                        <strong>Hinweis:</strong> Diese Felder werden automatisch durch AI-Analysen ausgefüllt, 
-                        können aber manuell angepasst werden. Die Informationen unterstützen bei der 
-                        Sicherheitsbewertung und Compliance-Prüfung.
-                      </AlertDescription>
-                    </Alert>
+
                   </CardContent>
                 </Card>
               </TabsContent>
