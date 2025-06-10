@@ -121,8 +121,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const applySuggestionMutation = useMutation({
     mutationFn: (suggestionId: number) => {
       console.log(`Client: Applying suggestion ${suggestionId}`);
+      const baseUrl = window.location.origin;
       
-      return fetch(`/api/suggestions/${suggestionId}/apply`, {
+      return fetch(`${baseUrl}/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +145,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       })
       .catch((error) => {
         console.error("Client: Fetch error:", error);
-        throw new Error(`Network Error: ${error.message}`);
+        console.error("Client: Error type:", typeof error);
+        console.error("Client: Error string:", String(error));
+        throw new Error(`Network Error: ${error?.message || 'Connection failed'}`);
       });
     },
     onSuccess: (data) => {
@@ -211,7 +214,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       console.log(`Starting applyAll mutation for permit ${permitId}`);
       
       return new Promise((resolve, reject) => {
-        fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
+        const baseUrl = window.location.origin;
+        fetch(`${baseUrl}/api/permits/${permitId}/suggestions/apply-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -335,16 +339,20 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     // First test basic connectivity
     try {
       console.log("Testing basic connectivity...");
-      const testResponse = await fetch(`/api/permits/${permitId}/suggestions`, {
+      const baseUrl = window.location.origin;
+      console.log("Base URL:", baseUrl);
+      const testResponse = await fetch(`${baseUrl}/api/permits/${permitId}/suggestions`, {
         method: "GET",
         credentials: "include",
       });
       console.log(`Connectivity test status: ${testResponse.status}`);
     } catch (connectError) {
       console.error("Basic connectivity failed:", connectError);
+      console.error("Connect error type:", typeof connectError);
+      console.error("Connect error string:", String(connectError));
       toast({
-        title: "Verbindungsfehler",
-        description: "Keine Verbindung zum Server möglich.",
+        title: "Verbindungsfehler", 
+        description: "Server nicht erreichbar. Bitte Seite neu laden.",
         variant: "destructive",
       });
       return;
@@ -352,7 +360,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     
     try {
       console.log("Proceeding with apply request...");
-      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
+      const baseUrl = window.location.origin;
+      const response = await fetch(`${baseUrl}/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
