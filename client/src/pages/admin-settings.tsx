@@ -23,6 +23,7 @@ interface DatabaseConfig {
   port: string;
   database: string;
   user: string;
+  password: string;
   hasPassword: boolean;
 }
 
@@ -241,8 +242,8 @@ export default function AdminSettings() {
                 </div>
                 <div className="md:col-span-2">
                   <Label className="text-sm font-medium">Passwort</Label>
-                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm">
-                    {dbConfig.hasPassword ? '••••••••••••' : 'Nicht konfiguriert'}
+                  <div className="mt-1 p-3 bg-gray-50 border rounded-md font-mono text-sm break-all">
+                    {dbConfig.password || 'Nicht konfiguriert'}
                   </div>
                 </div>
               </div>

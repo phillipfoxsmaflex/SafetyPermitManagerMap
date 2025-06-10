@@ -1638,6 +1638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         port: process.env.PGPORT || '5432',
         database: process.env.PGDATABASE || 'permits',
         user: process.env.PGUSER || 'postgres',
+        password: process.env.PGPASSWORD || '',
         hasPassword: !!process.env.PGPASSWORD
       };
       res.json(config);
