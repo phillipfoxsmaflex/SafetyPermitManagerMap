@@ -433,10 +433,14 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   });
 
   const onSubmit = (data: EditPermitFormData) => {
+    console.log("Saving as draft:", data);
+    console.log("Form errors:", form.formState.errors);
     updateMutation.mutate(data);
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
+    console.log("Submitting for approval:", data);
+    console.log("Form errors:", form.formState.errors);
     updateMutation.mutate({ ...data, status: "pending" });
   };
 
@@ -822,7 +826,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Abteilungsleiter</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Abteilungsleiter auswählen..." />
@@ -847,7 +851,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Sicherheitsbeauftragter</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
@@ -872,7 +876,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Technik</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Technik-Genehmiger auswählen..." />
