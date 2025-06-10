@@ -120,12 +120,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      console.log("Applying suggestion:", suggestionId);
-      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-      return await response.json();
+      try {
+        console.log("Applying suggestion:", suggestionId);
+        const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Apply success:", data);
+        return data;
+      } catch (error) {
+        console.error("Apply mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data: any) => {
-      // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
@@ -133,7 +144,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultDialogOpen(true);
     },
     onError: (error: any) => {
-      console.log("Apply error:", error);
+      console.error("Apply error:", error);
       setResultType('error');
       setResultMessage(`Der Vorschlag konnte nicht übernommen werden: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
@@ -142,9 +153,21 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
-      console.log("Updating suggestion status:", suggestionId, status);
-      const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
-      return await response.json();
+      try {
+        console.log("Updating suggestion status:", suggestionId, status);
+        const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Status update success:", data);
+        return data;
+      } catch (error) {
+        console.error("Status update mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -153,7 +176,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultDialogOpen(true);
     },
     onError: (error: any) => {
-      console.log("Status update error:", error);
+      console.error("Status update error:", error);
       setResultType('error');
       setResultMessage(`Fehler beim Aktualisieren des Vorschlags: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
@@ -162,12 +185,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      console.log("Applying all suggestions for permit:", permitId);
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
-      return await response.json();
+      try {
+        console.log("Applying all suggestions for permit:", permitId);
+        const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Apply all success:", data);
+        return data;
+      } catch (error) {
+        console.error("Apply all mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data: any) => {
-      // Invalidate both suggestions and permit data when applying all suggestions
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
@@ -175,7 +209,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultDialogOpen(true);
     },
     onError: (error: any) => {
-      console.log("Apply all error:", error);
+      console.error("Apply all error:", error);
       setResultType('error');
       setResultMessage(`Fehler beim Übernehmen aller Vorschläge: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
