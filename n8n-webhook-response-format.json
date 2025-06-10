@@ -1,5 +1,5 @@
 {
-  "description": "Expected response format for POST request to /api/webhooks/suggestions",
+  "description": "Enhanced AI webhook response format for field-specific permit improvements",
   "endpoint": "https://your-domain.com/api/webhooks/suggestions",
   "method": "POST",
   "headers": {
@@ -8,11 +8,18 @@
   "required_response_format": {
     "permitId": "string (required) - Must match the permitId from the original request",
     "analysisComplete": "boolean (required) - Set to true when analysis is finished",
-    "suggestions": "array (optional) - Array of suggestion objects",
+    "suggestions": "array (optional) - Array of field-specific suggestion objects",
     "riskAssessment": "object (optional) - Risk assessment data for logging",
     "recommendations": "object (optional) - Structured recommendations for logging",
-    "compliance_notes": "object (optional) - Compliance information for logging",
+    "compliance_notes": "string (optional) - Compliance information for logging",
     "error": "string (optional) - Error message if analysis failed"
+  },
+  "target_permit_fields": {
+    "identifiedHazards": "Text field for complete hazard identification",
+    "completedMeasures": "Array field for protective measures",
+    "selectedHazards": "Array field for TRBS hazard category IDs",
+    "hazardNotes": "JSON string field for structured hazard documentation",
+    "additionalComments": "Text field for specific safety instructions"
   },
   "example_successful_response": {
     "permitId": "HT-2025-001",
@@ -63,35 +70,36 @@
       "overallRisk": "high",
       "riskFactors": [
         "Absturzgefahr aus 15m Höhe - lebensgefährlich",
-        "Rutschgefahr auf Dachflächen",
+        "Rutschgefahr auf Dachflächen bei Feuchtigkeit", 
         "Witterungseinflüsse bei Außenarbeiten",
-        "Unzureichende Arbeitszeit (nur 34 Minuten geplant)"
+        "Unzureichende Gefahrenidentifikation",
+        "Fehlende spezifische Schutzmaßnahmen definiert"
       ],
-      "complianceScore": 65
+      "complianceScore": 65,
+      "recommendations": [
+        "Vollständige Gefährdungsbeurteilung nach TRBS 2121 durchführen",
+        "Spezifische Schutzmaßnahmen für jede Gefährdungskategorie definieren",
+        "Realistische Arbeitszeit für sichere Durchführung einplanen"
+      ]
     },
     "recommendations": {
       "immediate_actions": [
-        "Arbeitszeit auf mindestens 2 Stunden verlängern",
-        "Wettervorhersage vor Arbeitsbeginn prüfen",
-        "Zweite Person als Sicherungsposten einteilen"
+        "Vollständige Gefahrenidentifikation durchführen",
+        "Spezifische Schutzmaßnahmen für Höhenarbeiten definieren", 
+        "TRBS-Gefährdungskategorien korrekt zuordnen"
       ],
       "before_work_starts": [
         "Vollständige PSA für Höhenarbeiten bereitstellen",
-        "Dachfläche auf Rutschgefahr prüfen",
-        "Notfallplan für Höhenrettung aktivieren"
+        "Wettervorhersage prüfen und sichere Bedingungen abwarten",
+        "Rettungsausrüstung und Notfallplan aktivieren"
       ],
       "monitoring_requirements": [
-        "Kontinuierliche Wetterüberwachung",
-        "Regelmäßige Überprüfung der Sicherungsausrüstung"
+        "Kontinuierliche Wetterüberwachung während der Arbeiten",
+        "Regelmäßige Überprüfung der Sicherungsausrüstung",
+        "Strukturierte Dokumentation aller Gefährdungen"
       ]
     },
-    "compliance_notes": {
-      "trbs_conformity": "Teilweise konform - Verbesserungen erforderlich",
-      "missing_requirements": [
-        "TRBS 2121: Gefährdungsbeurteilung für Höhenarbeiten unvollständig",
-        "DGUV Regel 112-198: Zeitplanung unrealistisch"
-      ]
-    }
+    "compliance_notes": "Permit erfordert umfassende Verbesserungen nach TRBS 2121. Alle identifizierten Gefährdungen müssen durch entsprechende Schutzmaßnahmen abgedeckt und in den korrekten Datenbankfeldern dokumentiert werden."
   },
   "example_error_response": {
     "permitId": "HT-2025-001",
@@ -100,20 +108,35 @@
     "suggestions": []
   },
   "notes": {
+    "enhanced_suggestion_types": {
+      "hazard_identification": "For improving identifiedHazards field - complete hazard analysis",
+      "protective_measures": "For improving completedMeasures field - required safety measures",
+      "trbs_hazard_mapping": "For improving selectedHazards field - TRBS category assignments",
+      "hazard_notes_structure": "For improving hazardNotes field - structured safety documentation",
+      "safety_instructions": "For improving additionalComments field - specific safety instructions"
+    },
     "suggestion_object_fields": {
-      "type": "string - Type of suggestion (safety_improvement, procedure_optimization, compliance_improvement, etc.)",
-      "fieldName": "string (optional) - Which permit field this suggestion applies to",
-      "originalValue": "string (optional) - Current value of the field",
-      "suggestedValue": "string (required) - Improved/suggested value",
-      "reasoning": "string (required) - Explanation why this improvement is needed",
+      "type": "string - Specific suggestion type targeting permit database fields",
+      "fieldName": "string (required) - Exact database field name this suggestion targets",
+      "originalValue": "string/array (optional) - Current value of the targeted field", 
+      "suggestedValue": "string/array (required) - Improved value for the targeted field",
+      "reasoning": "string (required) - TRBS/DGUV-based explanation for the improvement",
       "priority": "string (required) - Priority level: low, medium, high, critical"
     },
+    "field_specific_guidelines": {
+      "identifiedHazards": "Provide comprehensive, specific hazard identification text",
+      "completedMeasures": "Return array of specific protective measure codes/names",
+      "selectedHazards": "Return array of TRBS category IDs (e.g. ['2-1', '4-0', '7-1'])",
+      "hazardNotes": "Return JSON string with hazard ID keys and safety note values",
+      "additionalComments": "Provide detailed, actionable safety instructions text"
+    },
     "important_notes": [
+      "Each suggestion MUST target a specific permit database field via fieldName",
       "The permitId in the response MUST exactly match the permitId from the incoming request",
-      "If no suggestions are generated, send an empty suggestions array []",
-      "Additional fields like riskAssessment and recommendations are optional but useful for logging",
-      "Always set analysisComplete to true for successful responses",
-      "Use meaningful, specific German text for reasoning and suggested values"
+      "Use authentic TRBS categories and DGUV regulations in reasoning",
+      "Suggestions are applied directly to database fields when accepted",
+      "Focus on German industrial safety standards and requirements",
+      "Always provide realistic, implementable safety improvements"
     ]
   }
 }
