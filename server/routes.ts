@@ -539,7 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", async (req, res) => {
     try {
-      const sessionId = req.cookies?.sessionId;
+      // Check for both possible session cookie names
+      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
       console.log('Auth check - sessionId:', sessionId);
       
       if (!sessionId) {
@@ -547,7 +548,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const session = await storage.getSessionBySessionId(sessionId);
+      // If using connect.sid format, extract the actual session ID
+      let actualSessionId = sessionId;
+      if (sessionId.startsWith('s:')) {
+        // Extract session ID from signed cookie format: s:sessionId.signature
+        actualSessionId = sessionId.split('.')[0].substring(2);
+      }
+      
+      const session = await storage.getSessionBySessionId(actualSessionId);
       if (!session) {
         console.log('No valid session found in database');
         return res.status(401).json({ message: "Not authenticated" });
@@ -556,14 +564,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if session has expired
       if (session.expiresAt < new Date()) {
         console.log('Session expired');
-        await storage.deleteSession(sessionId);
+        await storage.deleteSession(actualSessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(session.userId);
       if (!user) {
         console.log('User not found in database');
-        await storage.deleteSession(sessionId);
+        await storage.deleteSession(actualSessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
