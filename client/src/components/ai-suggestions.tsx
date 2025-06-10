@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,44 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultMessage, setResultMessage] = useState('');
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [analysisStage, setAnalysisStage] = useState('checking');
+
+  // Handle URL query parameters for feedback messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+
+    if (success === 'suggestion_applied') {
+      toast({
+        title: "Vorschlag übernommen",
+        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
+      });
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } else if (error) {
+      let errorMessage = "Ein Fehler ist aufgetreten.";
+      switch (error) {
+        case 'invalid_suggestion_id':
+          errorMessage = "Ungültige Vorschlag-ID.";
+          break;
+        case 'suggestion_not_found':
+          errorMessage = "Vorschlag konnte nicht gefunden werden.";
+          break;
+        case 'application_failed':
+          errorMessage = "Fehler beim Übernehmen des Vorschlags.";
+          break;
+      }
+      toast({
+        title: "Fehler",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [toast]);
 
   const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
     queryKey: [`/api/permits/${permitId}/suggestions`],
@@ -280,23 +318,20 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
   });
 
-  const handleApplySuggestion = (suggestionId: number) => {
-    console.log(`Applying suggestion ${suggestionId} via form submission`);
+  const handleApplySuggestion = async (suggestionId: number) => {
+    console.log(`Applying suggestion ${suggestionId} via URL navigation`);
     
-    // Create a hidden form to submit the request via browser navigation
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/api/suggestions/${suggestionId}/apply`;
-    form.style.display = 'none';
+    toast({
+      title: "Vorschlag wird übernommen...",
+      description: "Bitte warten Sie einen Moment.",
+    });
     
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'redirect';
-    csrfInput.value = window.location.pathname;
-    form.appendChild(csrfInput);
+    // Use window navigation to bypass network restrictions
+    const currentUrl = new URL(window.location.href);
+    const applyUrl = `${currentUrl.origin}/api/suggestions/${suggestionId}/apply?redirect=${encodeURIComponent(currentUrl.pathname)}`;
     
-    document.body.appendChild(form);
-    form.submit();
+    // Navigate to the API endpoint which will process and redirect back
+    window.location.href = applyUrl;
   };
 
   const handleAcceptSuggestion = (suggestionId: number) => {

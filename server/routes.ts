@@ -1148,6 +1148,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Apply a suggestion
+  app.get("/api/suggestions/:id/apply", requireAuth, async (req, res) => {
+    try {
+      const suggestionId = parseInt(req.params.id);
+      console.log(`Applying suggestion ${suggestionId} via GET`);
+      
+      if (isNaN(suggestionId)) {
+        console.error("Invalid suggestion ID:", req.params.id);
+        const redirectUrl = req.query.redirect || '/';
+        return res.redirect(`${redirectUrl}?error=invalid_suggestion_id`);
+      }
+      
+      const success = await storage.applySuggestion(suggestionId);
+      console.log(`Apply suggestion result:`, success);
+      
+      if (!success) {
+        console.error(`Failed to apply suggestion ${suggestionId}`);
+        const redirectUrl = req.query.redirect || '/';
+        return res.redirect(`${redirectUrl}?error=suggestion_not_found`);
+      }
+
+      console.log(`Successfully applied suggestion ${suggestionId}`);
+      const redirectUrl = req.query.redirect || '/';
+      res.redirect(`${redirectUrl}?success=suggestion_applied`);
+    } catch (error) {
+      console.error("Error applying suggestion:", error);
+      const redirectUrl = req.query.redirect || '/';
+      res.redirect(`${redirectUrl}?error=application_failed`);
+    }
+  });
+
   app.post("/api/suggestions/:id/apply", requireAuth, async (req, res) => {
     try {
       const suggestionId = parseInt(req.params.id);
