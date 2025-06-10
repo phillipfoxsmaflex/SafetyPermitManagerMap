@@ -936,7 +936,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         name="immediateActions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sofortmaßnahmen</FormLabel>
+                            <FormLabel>Allgemeine Maßnahmen</FormLabel>
                             <FormControl>
                               <Textarea
                                 placeholder="Maßnahmen, die sofort umgesetzt werden müssen..."
