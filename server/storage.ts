@@ -45,6 +45,9 @@ export interface IStorage {
   createAiSuggestion(suggestion: InsertAiSuggestion): Promise<AiSuggestion>;
   updateSuggestionStatus(id: number, status: string): Promise<AiSuggestion | undefined>;
   applySuggestion(id: number): Promise<boolean>;
+  applyAllSuggestions(permitId: number): Promise<number>;
+  rejectAllSuggestions(permitId: number): Promise<number>;
+  deleteAllSuggestions(permitId: number): Promise<number>;
   
   // Webhook configuration operations
   getAllWebhookConfigs(): Promise<WebhookConfig[]>;
@@ -339,34 +342,113 @@ export class DatabaseStorage implements IStorage {
 
   async applySuggestion(id: number): Promise<boolean> {
     try {
-      const suggestion = await db
+      const [suggestion] = await db
         .select()
         .from(aiSuggestions)
         .where(eq(aiSuggestions.id, id))
         .limit(1);
 
-      if (!suggestion.length) return false;
+      if (!suggestion) return false;
 
-      const { permitId, fieldName, suggestedValue } = suggestion[0];
+      const { permitId, fieldName, suggestedValue } = suggestion;
 
-      if (fieldName) {
+      if (fieldName && suggestedValue) {
+        // Get current permit data
+        const [currentPermit] = await db
+          .select()
+          .from(permits)
+          .where(eq(permits.id, permitId))
+          .limit(1);
+
+        if (!currentPermit) return false;
+
+        // Prepare update data with proper type handling
+        const updateData: any = { updatedAt: new Date() };
+        
+        // Handle special fields that might need JSON parsing
+        if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes' || fieldName === 'completedMeasures') {
+          try {
+            updateData[fieldName] = Array.isArray(suggestedValue) ? suggestedValue : JSON.parse(suggestedValue);
+          } catch {
+            updateData[fieldName] = suggestedValue;
+          }
+        } else {
+          updateData[fieldName] = suggestedValue;
+        }
+
         // Apply the suggestion to the permit
-        const updateData: any = {};
-        updateData[fieldName] = suggestedValue;
-        updateData.updatedAt = new Date();
-
         await db
           .update(permits)
           .set(updateData)
           .where(eq(permits.id, permitId));
       }
 
-      // Mark suggestion as accepted
-      await this.updateSuggestionStatus(id, 'accepted');
+      // Mark suggestion as accepted and applied
+      await db
+        .update(aiSuggestions)
+        .set({ 
+          status: 'accepted',
+          appliedAt: new Date()
+        })
+        .where(eq(aiSuggestions.id, id));
+
       return true;
     } catch (error) {
       console.error('Error applying suggestion:', error);
       return false;
+    }
+  }
+
+  async applyAllSuggestions(permitId: number): Promise<number> {
+    try {
+      const pendingSuggestions = await db
+        .select()
+        .from(aiSuggestions)
+        .where(and(
+          eq(aiSuggestions.permitId, permitId),
+          eq(aiSuggestions.status, 'pending')
+        ));
+
+      let appliedCount = 0;
+      for (const suggestion of pendingSuggestions) {
+        const success = await this.applySuggestion(suggestion.id);
+        if (success) appliedCount++;
+      }
+
+      return appliedCount;
+    } catch (error) {
+      console.error('Error applying all suggestions:', error);
+      return 0;
+    }
+  }
+
+  async rejectAllSuggestions(permitId: number): Promise<number> {
+    try {
+      const result = await db
+        .update(aiSuggestions)
+        .set({ status: 'rejected' })
+        .where(and(
+          eq(aiSuggestions.permitId, permitId),
+          eq(aiSuggestions.status, 'pending')
+        ));
+
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error('Error rejecting all suggestions:', error);
+      return 0;
+    }
+  }
+
+  async deleteAllSuggestions(permitId: number): Promise<number> {
+    try {
+      const result = await db
+        .delete(aiSuggestions)
+        .where(eq(aiSuggestions.permitId, permitId));
+
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error('Error deleting all suggestions:', error);
+      return 0;
     }
   }
 

@@ -140,7 +140,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
       setResultDialogOpen(true);
@@ -148,6 +148,57 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     onError: () => {
       setResultType('error');
       setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
+      setResultDialogOpen(true);
+    },
+  });
+
+  const applyAllMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      setResultType('success');
+      setResultMessage(data.message || 'Alle Vorschläge wurden übernommen');
+      setResultDialogOpen(true);
+    },
+    onError: () => {
+      setResultType('error');
+      setResultMessage('Fehler beim Übernehmen aller Vorschläge.');
+      setResultDialogOpen(true);
+    },
+  });
+
+  const rejectAllMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      setResultType('success');
+      setResultMessage(data.message || 'Alle Vorschläge wurden abgelehnt');
+      setResultDialogOpen(true);
+    },
+    onError: () => {
+      setResultType('error');
+      setResultMessage('Fehler beim Ablehnen aller Vorschläge.');
+      setResultDialogOpen(true);
+    },
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      setResultType('success');
+      setResultMessage(data.message || 'Alle Vorschläge wurden gelöscht');
+      setResultDialogOpen(true);
+    },
+    onError: () => {
+      setResultType('error');
+      setResultMessage('Fehler beim Löschen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
