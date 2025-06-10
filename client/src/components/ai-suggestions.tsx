@@ -65,6 +65,16 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     suggestion.status === 'pending' && suggestion.permitId === permitId
   );
 
+  // Get current batch ID from suggestions
+  const latestBatchId = suggestions.length > 0 && suggestions[0].suggestionBatchId 
+    ? suggestions[0].suggestionBatchId 
+    : null;
+
+  // Update current batch ID when suggestions change
+  if (latestBatchId && latestBatchId !== currentBatchId) {
+    setCurrentBatchId(latestBatchId);
+  }
+
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       setAnalysisStage('checking');
@@ -280,6 +290,18 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
         
         {suggestions.length > 0 && (
           <div className="mt-4 flex gap-2 flex-wrap">
+            {currentBatchId && (
+              <Button
+                onClick={() => setDiffViewOpen(true)}
+                size="sm"
+                variant="outline"
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Änderungen anzeigen
+              </Button>
+            )}
+            
             <Button
               onClick={() => applyAllMutation.mutate()}
               disabled={applyAllMutation.isPending}
@@ -504,6 +526,16 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Diff View Dialog */}
+      {currentBatchId && (
+        <PermitDiffView
+          permitId={permitId}
+          batchId={currentBatchId}
+          open={diffViewOpen}
+          onOpenChange={setDiffViewOpen}
+        />
+      )}
     </Card>
   );
 }

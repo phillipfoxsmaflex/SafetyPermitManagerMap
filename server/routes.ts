@@ -1014,11 +1014,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Processing ${suggestions.length} AI suggestions for permit ${permitId}`);
 
-      // Create AI suggestions with enhanced data
+      // Generate batch ID for staging
+      const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Create staging permit with all suggested changes applied
+      const stagingPermitData = { ...permit };
+      
+      // Apply all suggestions to staging data
+      for (const suggestion of suggestions) {
+        if (suggestion.fieldName && suggestion.suggestedValue !== undefined) {
+          (stagingPermitData as any)[suggestion.fieldName] = suggestion.suggestedValue;
+        }
+      }
+
+      // Apply additional AI recommendations to staging
+      if (recommendations) {
+        if (recommendations.immediate_actions) {
+          stagingPermitData.immediateActions = JSON.stringify(recommendations.immediate_actions);
+        }
+        if (recommendations.before_work_starts) {
+          stagingPermitData.beforeWorkStarts = JSON.stringify(recommendations.before_work_starts);
+        }
+        if (recommendations.compliance_requirements || compliance_notes) {
+          stagingPermitData.complianceNotes = compliance_notes || JSON.stringify(recommendations.compliance_requirements);
+        }
+      }
+
+      if (riskAssessment?.overallRisk) {
+        stagingPermitData.overallRisk = riskAssessment.overallRisk;
+      }
+
+      // Create staging permit
+      await storage.createStagingPermit({
+        sourcePermitId: permit.id,
+        suggestionBatchId: batchId,
+        permitId: stagingPermitData.permitId,
+        type: stagingPermitData.type,
+        location: stagingPermitData.location,
+        description: stagingPermitData.description,
+        requestorId: stagingPermitData.requestorId,
+        requestorName: stagingPermitData.requestorName,
+        department: stagingPermitData.department,
+        contactNumber: stagingPermitData.contactNumber,
+        emergencyContact: stagingPermitData.emergencyContact,
+        startDate: stagingPermitData.startDate?.toISOString(),
+        endDate: stagingPermitData.endDate?.toISOString(),
+        status: stagingPermitData.status,
+        riskLevel: stagingPermitData.riskLevel,
+        safetyOfficer: stagingPermitData.safetyOfficer,
+        departmentHead: stagingPermitData.departmentHead,
+        maintenanceApprover: stagingPermitData.maintenanceApprover,
+        identifiedHazards: stagingPermitData.identifiedHazards,
+        additionalComments: stagingPermitData.additionalComments,
+        selectedHazards: stagingPermitData.selectedHazards,
+        hazardNotes: stagingPermitData.hazardNotes,
+        completedMeasures: stagingPermitData.completedMeasures,
+        immediateActions: stagingPermitData.immediateActions,
+        beforeWorkStarts: stagingPermitData.beforeWorkStarts,
+        complianceNotes: stagingPermitData.complianceNotes,
+        overallRisk: stagingPermitData.overallRisk
+      });
+
+      // Create AI suggestions with batch ID
       const createdSuggestions = [];
       for (const suggestion of suggestions) {
         const aiSuggestion = await storage.createAiSuggestion({
           permitId: permit.id,
+          suggestionBatchId: batchId,
           suggestionType: suggestion.type || 'improvement',
           fieldName: suggestion.fieldName || null,
           originalValue: suggestion.originalValue || null,
@@ -1106,9 +1168,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      console.log('AI Analysis with Staging created:', {
+        permit: permitId,
+        batchId: batchId,
+        suggestions: createdSuggestions.length,
+        riskLevel: riskAssessment?.overallRisk
+      });
+
       res.json({ 
-        message: "AI suggestions received successfully",
-        suggestionsCount: createdSuggestions.length
+        message: "AI suggestions and staging permit created successfully",
+        suggestionsCount: createdSuggestions.length,
+        batchId: batchId
       });
     } catch (error) {
       console.error("Error receiving AI suggestions:", error);
