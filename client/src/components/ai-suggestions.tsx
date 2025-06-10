@@ -47,13 +47,22 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [analysisStage, setAnalysisStage] = useState('checking');
 
-  const { data: allSuggestions = [], isLoading } = useQuery<AiSuggestion[]>({
+  const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
     queryKey: ["/api/permits", permitId, "suggestions"],
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
-  // Only show the latest pending suggestion for one-time chat behavior
-  const pendingSuggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
-  const suggestions = pendingSuggestions.length > 0 ? [pendingSuggestions[pendingSuggestions.length - 1]] : [];
+  // Debug logging
+  console.log('AI Suggestions Query Debug:', {
+    permitId,
+    suggestionsCount: allSuggestions.length,
+    isLoading,
+    error,
+    suggestions: allSuggestions
+  });
+
+  // Show all pending suggestions instead of just the latest one
+  const suggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -76,17 +85,33 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setIsAnalyzing(true);
     },
     onSuccess: () => {
-      // Poll for new suggestions
-      const pollInterval = setInterval(() => {
+      // Poll for new suggestions with proper completion detection
+      const pollInterval = setInterval(async () => {
         queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
-      }, 5000);
+        
+        // Check if suggestions have been received
+        const currentSuggestions = queryClient.getQueryData(["/api/permits", permitId, "suggestions"]) as any[];
+        if (currentSuggestions && currentSuggestions.length > 0) {
+          clearInterval(pollInterval);
+          setIsAnalyzing(false);
+          setAnalysisDialogOpen(false);
+          setResultType('success');
+          setResultMessage(`AI-Analyse abgeschlossen. ${currentSuggestions.length} Verbesserungsvorschläge erhalten.`);
+          setResultDialogOpen(true);
+        }
+      }, 3000);
 
-      // Stop polling after 2 minutes
+      // Stop polling after 3 minutes with timeout message
       setTimeout(() => {
         clearInterval(pollInterval);
-        setIsAnalyzing(false);
-        setAnalysisDialogOpen(false);
-      }, 120000);
+        if (isAnalyzing) {
+          setIsAnalyzing(false);
+          setAnalysisDialogOpen(false);
+          setResultType('error');
+          setResultMessage('AI-Analyse-Timeout. Bitte versuchen Sie es erneut.');
+          setResultDialogOpen(true);
+        }
+      }, 180000);
     },
     onError: (error: any) => {
       setIsAnalyzing(false);

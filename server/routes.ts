@@ -1010,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get suggestions for a permit
-  app.get("/api/permits/:id/suggestions", async (req, res) => {
+  app.get("/api/permits/:id/suggestions", requireAuth, async (req, res) => {
     try {
       const permitId = parseInt(req.params.id);
       const suggestions = await storage.getPermitSuggestions(permitId);
