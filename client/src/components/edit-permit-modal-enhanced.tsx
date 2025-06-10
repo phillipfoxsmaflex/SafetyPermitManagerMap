@@ -74,6 +74,10 @@ const editPermitSchema = z.object({
   immediateActions: z.string().optional(),
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
+  // Risk assessment fields
+  overallRisk: z.string().optional(),
+  riskFactors: z.string().optional(),
+  complianceScore: z.number().optional(),
 });
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
@@ -297,6 +301,10 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       immediateActions: currentPermit?.immediateActions || "",
       beforeWorkStarts: currentPermit?.beforeWorkStarts || "",
       complianceNotes: currentPermit?.complianceNotes || "",
+      // Risk assessment fields
+      overallRisk: currentPermit?.overallRisk || "",
+      riskFactors: currentPermit?.riskFactors || "",
+      complianceScore: currentPermit?.complianceScore || undefined,
     },
   });
 
@@ -376,6 +384,24 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       form.setValue("complianceNotes", currentPermit.complianceNotes);
     }
   }, [currentPermit?.complianceNotes]);
+
+  React.useEffect(() => {
+    if (currentPermit?.overallRisk !== undefined) {
+      form.setValue("overallRisk", currentPermit.overallRisk);
+    }
+  }, [currentPermit?.overallRisk]);
+
+  React.useEffect(() => {
+    if (currentPermit?.riskFactors !== undefined) {
+      form.setValue("riskFactors", currentPermit.riskFactors);
+    }
+  }, [currentPermit?.riskFactors]);
+
+  React.useEffect(() => {
+    if (currentPermit?.complianceScore !== undefined) {
+      form.setValue("complianceScore", currentPermit.complianceScore);
+    }
+  }, [currentPermit?.complianceScore]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {

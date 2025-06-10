@@ -340,7 +340,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
               <div key={suggestion.id} className="border rounded-lg p-4 space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Badge 
                       variant="outline" 
                       className={getPriorityColor(suggestion.priority)}
@@ -351,6 +351,11 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
                     <Badge variant="secondary">
                       {getTypeLabel(suggestion.suggestionType)}
                     </Badge>
+                    {suggestion.fieldName && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        Feld: {suggestion.fieldName}
+                      </Badge>
+                    )}
                     {suggestion.status === 'accepted' && (
                       <Badge variant="default" className="bg-green-100 text-green-800">
                         <CheckCircle className="h-3 w-3 mr-1" />
