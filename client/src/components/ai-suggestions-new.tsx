@@ -69,8 +69,10 @@ function DiffView({ original, suggested, fieldName }: { original?: string; sugge
   );
 }
 
-// Robust fetch wrapper with proper error handling
+// Debugged fetch wrapper with comprehensive error handling
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  console.log('fetchWithAuth called:', url, options);
+  
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -82,34 +84,59 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
       },
     });
 
+    console.log('Response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      let errorText = '';
+      let errorMessage = '';
       try {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
-          errorText = errorData.message || errorData.error || 'Unknown error';
+          errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
         } else {
-          errorText = await response.text();
+          errorMessage = await response.text() || `HTTP ${response.status} ${response.statusText}`;
         }
-      } catch (e) {
-        errorText = `HTTP ${response.status} ${response.statusText}`;
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        errorMessage = `HTTP ${response.status} ${response.statusText}`;
       }
-      throw new Error(errorText);
+      
+      console.error('Request failed:', errorMessage);
+      const error = new Error(errorMessage);
+      error.name = 'HTTPError';
+      throw error;
     }
 
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    } else {
-      return await response.text();
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Success response:', data);
+        return data;
+      } else {
+        const text = await response.text();
+        console.log('Success response (text):', text);
+        return text;
+      }
+    } catch (parseError) {
+      console.error('Error parsing success response:', parseError);
+      throw new Error('Failed to parse response');
     }
-  } catch (error) {
-    console.error('Fetch error:', error);
+  } catch (error: unknown) {
+    const errorDetails = {
+      name: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      url,
+      options
+    };
+    console.error('Network/fetch error details:', errorDetails);
+    
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Network request failed');
+    
+    throw new Error(`Network request failed: ${String(error)}`);
   }
 }
 

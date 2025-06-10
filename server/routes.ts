@@ -498,9 +498,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt
       });
       
-      // Set session cookie
+      // Set session cookie (remove httpOnly for API access)
       res.cookie('sessionId', sessionId, { 
-        httpOnly: true, 
+        httpOnly: false, // Allow JavaScript access for API calls
         secure: false, // In production, set to true with HTTPS
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
