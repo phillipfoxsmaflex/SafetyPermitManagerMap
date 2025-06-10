@@ -123,8 +123,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
     onSuccess: () => {
-      // Only invalidate suggestions to refresh the list, don't touch permits cache
+      // Invalidate suggestions and specific permit data to refresh form
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
       setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);

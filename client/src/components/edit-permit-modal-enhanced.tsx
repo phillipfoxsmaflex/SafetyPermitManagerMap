@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -96,6 +96,13 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
   const { data: maintenanceApprovers = [] } = useQuery({
     queryKey: ["/api/users/maintenance-approvers"],
+  });
+
+  // Query for specific permit to get real-time updates
+  const { data: latestPermit } = useQuery({
+    queryKey: [`/api/permits/${permit?.id}`],
+    enabled: !!permit?.id && open,
+    refetchInterval: 2000, // Refresh every 2 seconds when modal is open
   });
 
   // TRBS hazard categories data
@@ -254,48 +261,60 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
     )
   );
 
+  // Use latest permit data if available, otherwise fallback to prop
+  const currentPermit = latestPermit || permit;
+
   const form = useForm<EditPermitFormData>({
     resolver: zodResolver(editPermitSchema),
     defaultValues: {
-      type: permit?.type || "",
-      location: permit?.location || "",
-      description: permit?.description || "",
-      requestorName: permit?.requestorName || "",
-      department: permit?.department || "",
-      contactNumber: permit?.contactNumber || "",
-      emergencyContact: permit?.emergencyContact || "",
-      startDate: permit?.startDate ? new Date(permit.startDate).toISOString().slice(0, 16) : "",
-      endDate: permit?.endDate ? new Date(permit.endDate).toISOString().slice(0, 16) : "",
-      riskLevel: permit?.riskLevel || "",
-      safetyOfficer: permit?.safetyOfficer || "",
-      departmentHead: permit?.departmentHead || "",
-      maintenanceApprover: permit?.maintenanceApprover || "",
-      identifiedHazards: permit?.identifiedHazards || "",
-      additionalComments: permit?.additionalComments || "",
-      selectedHazards: permit?.selectedHazards || [],
-      hazardNotes: permit?.hazardNotes || "{}",
-      completedMeasures: permit?.completedMeasures || [],
-      performerName: permit?.performerName || "",
-      performerSignature: permit?.performerSignature || "",
-      workStartedAt: permit?.workStartedAt ? new Date(permit.workStartedAt).toISOString().slice(0, 16) : "",
-      workCompletedAt: permit?.workCompletedAt ? new Date(permit.workCompletedAt).toISOString().slice(0, 16) : "",
+      type: currentPermit?.type || "",
+      location: currentPermit?.location || "",
+      description: currentPermit?.description || "",
+      requestorName: currentPermit?.requestorName || "",
+      department: currentPermit?.department || "",
+      contactNumber: currentPermit?.contactNumber || "",
+      emergencyContact: currentPermit?.emergencyContact || "",
+      startDate: currentPermit?.startDate ? new Date(currentPermit.startDate).toISOString().slice(0, 16) : "",
+      endDate: currentPermit?.endDate ? new Date(currentPermit.endDate).toISOString().slice(0, 16) : "",
+      riskLevel: currentPermit?.riskLevel || "",
+      safetyOfficer: currentPermit?.safetyOfficer || "",
+      departmentHead: currentPermit?.departmentHead || "",
+      maintenanceApprover: currentPermit?.maintenanceApprover || "",
+      identifiedHazards: currentPermit?.identifiedHazards || "",
+      additionalComments: currentPermit?.additionalComments || "",
+      selectedHazards: currentPermit?.selectedHazards || [],
+      hazardNotes: currentPermit?.hazardNotes || "{}",
+      completedMeasures: currentPermit?.completedMeasures || [],
+      performerName: currentPermit?.performerName || "",
+      performerSignature: currentPermit?.performerSignature || "",
+      workStartedAt: currentPermit?.workStartedAt ? new Date(currentPermit.workStartedAt).toISOString().slice(0, 16) : "",
+      workCompletedAt: currentPermit?.workCompletedAt ? new Date(currentPermit.workCompletedAt).toISOString().slice(0, 16) : "",
     },
   });
 
   // Watch for real-time updates
   const watchedSelectedHazards = form.watch("selectedHazards");
 
-  // Initialize hazard notes from permit data
-  useState(() => {
-    if (permit?.hazardNotes) {
+  // Initialize hazard notes from permit data and update when permit changes
+  React.useEffect(() => {
+    if (currentPermit?.hazardNotes) {
       try {
-        const notes = JSON.parse(permit.hazardNotes);
+        const notes = JSON.parse(currentPermit.hazardNotes);
         setHazardNotes(notes);
+        form.setValue("hazardNotes", currentPermit.hazardNotes);
       } catch (e) {
         setHazardNotes({});
       }
     }
-  });
+
+    // Update form values when permit data changes (e.g., from AI suggestions)
+    if (currentPermit) {
+      form.setValue("identifiedHazards", currentPermit.identifiedHazards || "");
+      form.setValue("additionalComments", currentPermit.additionalComments || "");
+      form.setValue("selectedHazards", currentPermit.selectedHazards || []);
+      form.setValue("completedMeasures", currentPermit.completedMeasures || []);
+    }
+  }, [currentPermit, form]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
