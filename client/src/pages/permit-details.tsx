@@ -8,7 +8,7 @@ import { ArrowLeft, Edit, Printer, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
-import { AiSuggestions } from "@/components/ai-suggestions";
+import { AiSuggestionsNew } from "@/components/ai-suggestions-new";
 import { Permit } from "@shared/schema";
 
 export default function PermitDetails() {
@@ -251,7 +251,7 @@ export default function PermitDetails() {
                     const category = categories.find(c => c.id === categoryId);
                     const hazard = category?.hazards[hazardIndex];
                     
-                    if (!hazard) return null;
+                    if (!hazard) return <div key={hazardId}></div>;
                     return (
                       <div key={hazardId} className="text-sm mb-2">
                         <span className="font-medium text-blue-700">{hazard}:</span>
@@ -358,8 +358,7 @@ export default function PermitDetails() {
           </CardContent>
         </Card>
 
-        {/* AI Suggestions - only show in edit mode */}
-        {isEditModalOpen && <AiSuggestions permitId={permit.id} />}
+        {/* AI Suggestions integrated into edit modal */}
       </div>
 
       <EditPermitModalEnhanced
