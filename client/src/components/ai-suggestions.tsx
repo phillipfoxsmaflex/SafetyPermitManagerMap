@@ -122,14 +122,14 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     mutationFn: async (suggestionId: number) => {
       console.log("Applying suggestion:", suggestionId);
       const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-      return response;
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
-      setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
+      setResultMessage(data?.message || 'Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
     },
     onError: (error: any) => {
@@ -143,7 +143,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
       console.log("Updating suggestion status:", suggestionId, status);
-      return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+      return await response.json();
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -162,7 +163,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const applyAllMutation = useMutation({
     mutationFn: async () => {
       console.log("Applying all suggestions for permit:", permitId);
-      return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       // Invalidate both suggestions and permit data when applying all suggestions
@@ -183,7 +185,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
       console.log("Rejecting all suggestions for permit:", permitId);
-      return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -202,7 +205,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
       console.log("Deleting all suggestions for permit:", permitId);
-      return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
