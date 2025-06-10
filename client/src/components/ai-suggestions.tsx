@@ -120,7 +120,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      console.log("Applying suggestion:", suggestionId);
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      return response;
     },
     onSuccess: () => {
       // Only invalidate suggestions and specific permit data, not the main permits list
@@ -130,15 +132,17 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.log("Apply error:", error);
       setResultType('error');
-      setResultMessage('Der Vorschlag konnte nicht übernommen werden.');
+      setResultMessage(`Der Vorschlag konnte nicht übernommen werden: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
     },
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
+      console.log("Updating suggestion status:", suggestionId, status);
       return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
     },
     onSuccess: (data, variables) => {
@@ -147,15 +151,17 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.log("Status update error:", error);
       setResultType('error');
-      setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
+      setResultMessage(`Fehler beim Aktualisieren des Vorschlags: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
     },
   });
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
+      console.log("Applying all suggestions for permit:", permitId);
       return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
     },
     onSuccess: (data: any) => {
@@ -166,15 +172,17 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.log("Apply all error:", error);
       setResultType('error');
-      setResultMessage('Fehler beim Übernehmen aller Vorschläge.');
+      setResultMessage(`Fehler beim Übernehmen aller Vorschläge: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
     },
   });
 
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
+      console.log("Rejecting all suggestions for permit:", permitId);
       return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
     },
     onSuccess: (data: any) => {
@@ -183,15 +191,17 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.log("Reject all error:", error);
       setResultType('error');
-      setResultMessage('Fehler beim Ablehnen aller Vorschläge.');
+      setResultMessage(`Fehler beim Ablehnen aller Vorschläge: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
     },
   });
 
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
+      console.log("Deleting all suggestions for permit:", permitId);
       return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
     },
     onSuccess: (data: any) => {
@@ -200,9 +210,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.log("Delete all error:", error);
       setResultType('error');
-      setResultMessage('Fehler beim Löschen aller Vorschläge.');
+      setResultMessage(`Fehler beim Löschen aller Vorschläge: ${error.message || 'Unbekannter Fehler'}`);
       setResultDialogOpen(true);
     },
   });

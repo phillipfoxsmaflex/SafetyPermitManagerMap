@@ -14,28 +14,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
       const sessionId = req.cookies?.sessionId;
+      console.log("Auth check - sessionId:", sessionId);
       
       if (!sessionId) {
+        console.log("No session ID found");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const session = await storage.getSessionBySessionId(sessionId);
       if (!session) {
+        console.log("Session not found in database");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       // Check if session has expired
       if (session.expiresAt < new Date()) {
+        console.log("Session expired");
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(session.userId);
       if (!user) {
+        console.log("User not found");
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
+      console.log("Auth check successful for user:", user.username);
       req.user = user;
       next();
     } catch (error) {
