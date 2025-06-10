@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle, XCircle, Clock, AlertTriangle, CheckIcon, XIcon, Trash2, Brain, ChevronDown, ChevronRight, Diff } from "lucide-react";
+import { CheckCircle, XCircle, Clock, AlertTriangle, CheckIcon, XIcon, Trash2, Brain, ChevronDown, ChevronRight, Diff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AiSuggestion {
@@ -93,6 +93,7 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [resultMessage, setResultMessage] = useState('');
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
 
   // Fetch suggestions
   const { data: suggestions = [], isLoading, refetch } = useQuery({
@@ -100,17 +101,25 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
     queryFn: () => fetchWithAuth(`/api/permits/${permitId}/suggestions`),
   });
 
-  // Start AI analysis
+  // Start AI analysis with loading modal
   const startAnalysisMutation = useMutation({
     mutationFn: () => 
       fetchWithAuth(`/api/permits/${permitId}/analyze`, { method: 'POST' }),
+    onMutate: () => {
+      setAnalysisDialogOpen(true);
+    },
     onSuccess: () => {
-      refetch();
-      setResultType('success');
-      setResultMessage('AI-Analyse gestartet. Vorschläge werden generiert...');
-      setResultDialogOpen(true);
+      // Refetch suggestions after a delay to allow processing
+      setTimeout(() => {
+        refetch();
+        setAnalysisDialogOpen(false);
+        setResultType('success');
+        setResultMessage('AI-Analyse abgeschlossen. Neue Vorschläge verfügbar.');
+        setResultDialogOpen(true);
+      }, 3000);
     },
     onError: (error: Error) => {
+      setAnalysisDialogOpen(false);
       setResultType('error');
       setResultMessage(`Fehler beim Starten der Analyse: ${error.message}`);
       setResultDialogOpen(true);
@@ -119,9 +128,14 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
 
   // Apply single suggestion
   const applySuggestionMutation = useMutation({
-    mutationFn: (suggestionId: number) => 
-      fetchWithAuth(`/api/suggestions/${suggestionId}/apply`, { method: 'POST' }),
-    onSuccess: () => {
+    mutationFn: async (suggestionId: number) => {
+      console.log('Applying suggestion:', suggestionId);
+      const result = await fetchWithAuth(`/api/suggestions/${suggestionId}/apply`, { method: 'POST' });
+      console.log('Apply suggestion result:', result);
+      return result;
+    },
+    onSuccess: (data, suggestionId) => {
+      console.log('Apply suggestion success:', data, suggestionId);
       refetch();
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
@@ -129,6 +143,7 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
       setResultDialogOpen(true);
     },
     onError: (error: Error) => {
+      console.error('Apply suggestion error:', error);
       setResultType('error');
       setResultMessage(`Fehler beim Übernehmen: ${error.message}`);
       setResultDialogOpen(true);
@@ -137,18 +152,24 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
 
   // Update suggestion status
   const updateStatusMutation = useMutation({
-    mutationFn: ({ suggestionId, status }: { suggestionId: number; status: string }) =>
-      fetchWithAuth(`/api/suggestions/${suggestionId}/status`, {
+    mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
+      console.log('Updating suggestion status:', suggestionId, status);
+      const result = await fetchWithAuth(`/api/suggestions/${suggestionId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
-      }),
-    onSuccess: (_, variables) => {
+      });
+      console.log('Update status result:', result);
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      console.log('Update status success:', data, variables);
       refetch();
       setResultType('success');
       setResultMessage(variables.status === 'accepted' ? 'Vorschlag akzeptiert' : 'Vorschlag abgelehnt');
       setResultDialogOpen(true);
     },
     onError: (error: Error) => {
+      console.error('Update status error:', error);
       setResultType('error');
       setResultMessage(`Fehler beim Aktualisieren: ${error.message}`);
       setResultDialogOpen(true);
@@ -382,6 +403,26 @@ export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
         </CardContent>
       </Card>
 
+      {/* Analysis Loading Dialog */}
+      <Dialog open={analysisDialogOpen} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              AI-Analyse läuft
+            </DialogTitle>
+            <DialogDescription>
+              Die KI analysiert den Erlaubnisschein und generiert Verbesserungsvorschläge. 
+              Dies kann einige Sekunden dauern...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Result Dialog */}
       <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
         <DialogContent>
           <DialogHeader>
