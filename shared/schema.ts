@@ -66,6 +66,11 @@ export const permits = pgTable("permits", {
   beforeWorkStarts: text("before_work_starts"), // JSON array of actions before work begins
   complianceNotes: text("compliance_notes"), // Compliance and regulatory notes
   
+  // Risk assessment fields
+  overallRisk: text("overall_risk"), // low, medium, high, critical
+  riskFactors: text("risk_factors"), // JSON array of identified risk factors
+  complianceScore: integer("compliance_score"), // Percentage score 0-100
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -155,6 +160,9 @@ export const insertPermitSchema = createInsertSchema(permits).omit({
   immediateActions: z.string().optional(),
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
+  overallRisk: z.string().optional(),
+  riskFactors: z.string().optional(),
+  complianceScore: z.number().optional(),
 });
 
 // Schema for draft permits with optional fields
@@ -182,6 +190,12 @@ export const insertDraftPermitSchema = createInsertSchema(permits).omit({
   selectedHazards: z.array(z.string()).optional(),
   hazardNotes: z.string().optional(),
   completedMeasures: z.array(z.string()).optional(),
+  immediateActions: z.string().optional(),
+  beforeWorkStarts: z.string().optional(),
+  complianceNotes: z.string().optional(),
+  overallRisk: z.string().optional(),
+  riskFactors: z.string().optional(),
+  complianceScore: z.number().optional(),
   status: z.string().default("draft"),
 }).partial();
 

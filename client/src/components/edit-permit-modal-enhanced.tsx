@@ -939,6 +939,75 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                       )}
                     />
 
+                    {/* Risk Assessment Section */}
+                    <div className="border-t pt-6 mt-6">
+                      <h4 className="text-lg font-semibold text-industrial-gray mb-4">Risikobewertung</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="overallRisk"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Gesamtrisiko</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Risikostufe auswählen" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="low">Niedrig</SelectItem>
+                                  <SelectItem value="medium">Mittel</SelectItem>
+                                  <SelectItem value="high">Hoch</SelectItem>
+                                  <SelectItem value="critical">Kritisch</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="complianceScore"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Compliance-Score (%)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100" 
+                                  placeholder="0-100"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="riskFactors"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Risikofaktoren</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Identifizierte Risikofaktoren (einer pro Zeile)..."
+                                rows={4}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                   </CardContent>
                 </Card>
