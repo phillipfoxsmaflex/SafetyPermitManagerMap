@@ -35,9 +35,10 @@ export async function printPermitUnified(permit: Permit, attachments: any[] = []
     return { category: category?.category || '', hazard: hazard || '' };
   };
 
-  const formatDateTime = (dateTime: string | null) => {
+  const formatDateTime = (dateTime: string | Date | null) => {
     if (!dateTime) return 'Nicht angegeben';
-    return new Date(dateTime).toLocaleDateString('de-DE', { 
+    const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
+    return date.toLocaleDateString('de-DE', { 
       year: 'numeric', 
       month: '2-digit', 
       day: '2-digit',
@@ -62,10 +63,10 @@ export async function printPermitUnified(permit: Permit, attachments: any[] = []
     return '📎';
   };
 
-  const calculateWorkDuration = (start: string | null, end: string | null) => {
+  const calculateWorkDuration = (start: string | Date | null, end: string | Date | null) => {
     if (!start || !end) return 'Nicht berechnet';
-    const startTime = new Date(start).getTime();
-    const endTime = new Date(end).getTime();
+    const startTime = typeof start === 'string' ? new Date(start).getTime() : start.getTime();
+    const endTime = typeof end === 'string' ? new Date(end).getTime() : end.getTime();
     const diffMs = endTime - startTime;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
