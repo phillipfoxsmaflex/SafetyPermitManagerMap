@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Upload, Trash2, Image, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, Trash2, Image, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "wouter";
 
 interface CompanyLogoConfig {
   logoUrl: string | null;
@@ -167,11 +168,19 @@ export default function AdminSettings() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Administrator-Einstellungen</h1>
-          <p className="text-gray-600 mt-2">
-            Verwalten Sie die System-Konfiguration und Firmeneinstellungen
-          </p>
+        <div className="flex items-center gap-4">
+          <Link href="/settings">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Zurück zu Einstellungen
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Administrator-Einstellungen</h1>
+            <p className="text-gray-600 mt-2">
+              Verwalten Sie die System-Konfiguration und Firmeneinstellungen
+            </p>
+          </div>
         </div>
 
         <Separator />

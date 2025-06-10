@@ -32,7 +32,8 @@ import {
   XCircle,
   Trash2,
   Edit,
-  MapPin
+  MapPin,
+  ExternalLink
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -876,6 +877,16 @@ export default function Settings() {
                       <Shield className="w-4 h-4 mr-2" />
                       Sicherheitsprotokoll
                     </Button>
+                    
+                    <Link href="/admin-settings">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Admin-Einstellungen
+                      </Button>
+                    </Link>
                   </>
                 )}
               </div>
