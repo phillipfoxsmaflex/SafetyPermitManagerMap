@@ -54,8 +54,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
 
 
-  // Show all pending suggestions instead of just the latest one
-  const suggestions = allSuggestions.filter(suggestion => suggestion.status === 'pending');
+  // Filter suggestions for current permit and pending status
+  const suggestions = allSuggestions.filter(suggestion => 
+    suggestion.status === 'pending' && suggestion.permitId === permitId
+  );
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
