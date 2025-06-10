@@ -71,21 +71,39 @@ function DiffView({ original, suggested, fieldName }: { original?: string; sugge
 
 // Simple fetch wrapper with proper error handling
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const response = await fetch(url, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Request failed: ${response.status} ${response.statusText}. ${errorText}`);
+    if (!response.ok) {
+      let errorText = '';
+      try {
+        errorText = await response.text();
+      } catch (e) {
+        errorText = 'Unable to read error response';
+      }
+      const error = new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
+      error.name = 'HTTPError';
+      throw error;
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'HTTPError') {
+      throw error;
+    }
+    // Network or other errors
+    const networkError = new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    networkError.name = 'NetworkError';
+    throw networkError;
   }
-
-  return response.json();
 }
 
 export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
