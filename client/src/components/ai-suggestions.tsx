@@ -48,7 +48,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [analysisStage, setAnalysisStage] = useState('checking');
 
   const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
-    queryKey: ["/api/permits", permitId, "suggestions"],
+    queryKey: [`/api/permits/${permitId}/suggestions`],
     refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
@@ -58,7 +58,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     suggestionsCount: allSuggestions.length,
     isLoading,
     error,
-    suggestions: allSuggestions
+    firstSuggestion: allSuggestions[0],
+    dataType: typeof allSuggestions[0]
   });
 
   // Show all pending suggestions instead of just the latest one
@@ -87,10 +88,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     onSuccess: () => {
       // Poll for new suggestions with proper completion detection
       const pollInterval = setInterval(async () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
         
         // Check if suggestions have been received
-        const currentSuggestions = queryClient.getQueryData(["/api/permits", permitId, "suggestions"]) as any[];
+        const currentSuggestions = queryClient.getQueryData([`/api/permits/${permitId}/suggestions`]) as any[];
         if (currentSuggestions && currentSuggestions.length > 0) {
           clearInterval(pollInterval);
           setIsAnalyzing(false);
@@ -128,7 +129,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: () => {
       // Only invalidate suggestions, not the permit data to keep edit form open
-      queryClient.invalidateQueries({ queryKey: ["/api/permits", permitId, "suggestions"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
