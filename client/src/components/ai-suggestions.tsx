@@ -119,28 +119,33 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const applySuggestionMutation = useMutation({
-    mutationFn: async (suggestionId: number) => {
+    mutationFn: (suggestionId: number) => {
       console.log(`Client: Applying suggestion ${suggestionId}`);
       
-      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
+      return fetch(`/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
+      })
+      .then(async (response) => {
+        console.log(`Client: Response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Client: API error: ${response.status} - ${errorText}`);
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("Client: Success response:", data);
+        return data;
+      })
+      .catch((error) => {
+        console.error("Client: Fetch error:", error);
+        throw new Error(`Network Error: ${error.message}`);
       });
-
-      console.log(`Client: Response status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Client: API error: ${response.status} - ${errorText}`);
-        throw new Error(`${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log("Client: Success response:", data);
-      return data;
     },
     onSuccess: (data) => {
       console.log("Client: onSuccess called with:", data);
@@ -153,7 +158,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Client: onError called with:", error);
-      const errorMessage = error?.message || "Der Vorschlag konnte nicht übernommen werden.";
+      console.error("Client: Error type:", typeof error);
+      console.error("Client: Error constructor:", error?.constructor?.name);
+      const errorMessage = error?.message || String(error) || "Der Vorschlag konnte nicht übernommen werden.";
       toast({
         title: "Fehler",
         description: errorMessage,
@@ -163,8 +170,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
-      return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+    mutationFn: ({ suggestionId, status }: { suggestionId: number; status: string }) => {
+      return fetch(`/api/suggestions/${suggestionId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      })
+      .catch((error) => {
+        throw new Error(`Network Error: ${error.message}`);
+      });
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -175,18 +197,32 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Status update error:", error);
+      const errorMessage = error?.message || String(error) || "Fehler beim Aktualisieren des Vorschlags.";
       toast({
         title: "Fehler",
-        description: "Fehler beim Aktualisieren des Vorschlags.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const applyAllMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
-      return await response.json();
+    mutationFn: () => {
+      return fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      })
+      .catch((error) => {
+        throw new Error(`Network Error: ${error.message}`);
+      });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -198,7 +234,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Apply all error:", error);
-      const errorMessage = error?.message || "Fehler beim Übernehmen aller Vorschläge.";
+      const errorMessage = error?.message || String(error) || "Fehler beim Übernehmen aller Vorschläge.";
       toast({
         title: "Fehler",
         description: errorMessage,
@@ -208,9 +244,22 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const rejectAllMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
-      return await response.json();
+    mutationFn: () => {
+      return fetch(`/api/permits/${permitId}/suggestions/reject-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      })
+      .catch((error) => {
+        throw new Error(`Network Error: ${error.message}`);
+      });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -221,7 +270,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Reject all error:", error);
-      const errorMessage = error?.message || "Fehler beim Ablehnen aller Vorschläge.";
+      const errorMessage = error?.message || String(error) || "Fehler beim Ablehnen aller Vorschläge.";
       toast({
         title: "Fehler",
         description: errorMessage,
@@ -231,9 +280,22 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const deleteAllMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
-      return await response.json();
+    mutationFn: () => {
+      return fetch(`/api/permits/${permitId}/suggestions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      })
+      .catch((error) => {
+        throw new Error(`Network Error: ${error.message}`);
+      });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -244,7 +306,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Delete all error:", error);
-      const errorMessage = error?.message || "Fehler beim Löschen aller Vorschläge.";
+      const errorMessage = error?.message || String(error) || "Fehler beim Löschen aller Vorschläge.";
       toast({
         title: "Fehler",
         description: errorMessage,
