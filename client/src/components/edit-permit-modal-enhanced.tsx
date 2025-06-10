@@ -483,7 +483,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Genehmigungstyp</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Genehmigungstyp auswählen..." />
@@ -509,7 +509,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Arbeitsort</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Arbeitsort auswählen..." />
@@ -996,7 +996,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Gesamtrisiko</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Risikostufe auswählen" />
