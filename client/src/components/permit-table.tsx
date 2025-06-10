@@ -70,22 +70,9 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: P
     setLocation(`/permit/${permit.id}`);
   };
 
-  const handlePrint = async (permit: Permit) => {
+  const handlePrint = (permit: Permit) => {
     console.log("Printing permit:", permit.permitId);
-    
-    // Fetch attachments for this permit
-    try {
-      const response = await fetch(`/api/permits/${permit.id}/attachments`);
-      const attachments = response.ok ? await response.json() : [];
-      
-      // Use the new unified print function
-      const { printPermitUnified } = await import("@/lib/print-utils");
-      await printPermitUnified(permit, attachments);
-    } catch (error) {
-      console.error("Error printing permit:", error);
-      // Fallback to the modal view
-      setPrintPermit(permit);
-    }
+    setPrintPermit(permit);
   };
 
   if (isLoading) {
