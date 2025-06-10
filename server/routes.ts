@@ -13,7 +13,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
-      const sessionId = req.cookies?.sessionId;
+      // Try both sessionId and connect.sid for compatibility
+      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
       console.log("Auth check - sessionId:", sessionId);
       
       if (!sessionId) {
@@ -537,7 +538,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", async (req, res) => {
     try {
-      const sessionId = req.cookies?.sessionId;
+      // Try both sessionId and connect.sid for compatibility
+      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
       console.log('Auth check - sessionId:', sessionId);
       
       if (!sessionId) {
