@@ -190,8 +190,6 @@ export const insertDraftPermitSchema = createInsertSchema(permits).omit({
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
   overallRisk: z.string().optional(),
-  riskFactors: z.string().optional(),
-  complianceScore: z.number().optional(),
   status: z.string().default("draft"),
 }).partial();
 
