@@ -61,6 +61,11 @@ export const permits = pgTable("permits", {
   workStartedAt: timestamp("work_started_at"),
   workCompletedAt: timestamp("work_completed_at"),
   
+  // Safety assessment fields - AI recommendations
+  immediateActions: text("immediate_actions"), // JSON array of immediate actions needed
+  beforeWorkStarts: text("before_work_starts"), // JSON array of actions before work begins
+  complianceNotes: text("compliance_notes"), // Compliance and regulatory notes
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -147,6 +152,9 @@ export const insertPermitSchema = createInsertSchema(permits).omit({
 }).extend({
   startDate: z.string(),
   endDate: z.string(),
+  immediateActions: z.string().optional(),
+  beforeWorkStarts: z.string().optional(),
+  complianceNotes: z.string().optional(),
 });
 
 // Schema for draft permits with optional fields

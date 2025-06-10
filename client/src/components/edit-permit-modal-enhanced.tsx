@@ -61,7 +61,6 @@ const editPermitSchema = z.object({
   departmentHead: z.string().min(1, "Abteilungsleiter ist erforderlich"),
   maintenanceApprover: z.string().min(1, "Instandhaltungsgenehmiger ist erforderlich"),
   identifiedHazards: z.string().optional(),
-  additionalComments: z.string().optional(),
   selectedHazards: z.array(z.string()).optional(),
   hazardNotes: z.string().optional(),
   completedMeasures: z.array(z.string()).optional(),
@@ -70,6 +69,11 @@ const editPermitSchema = z.object({
   performerSignature: z.string().optional(),
   workStartedAt: z.string().optional(),
   workCompletedAt: z.string().optional(),
+  // Safety assessment fields
+  additionalComments: z.string().optional(),
+  immediateActions: z.string().optional(),
+  beforeWorkStarts: z.string().optional(),
+  complianceNotes: z.string().optional(),
 });
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
@@ -281,7 +285,6 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       departmentHead: currentPermit?.departmentHead || "",
       maintenanceApprover: currentPermit?.maintenanceApprover || "",
       identifiedHazards: currentPermit?.identifiedHazards || "",
-      additionalComments: currentPermit?.additionalComments || "",
       selectedHazards: currentPermit?.selectedHazards || [],
       hazardNotes: currentPermit?.hazardNotes || "{}",
       completedMeasures: currentPermit?.completedMeasures || [],
@@ -289,6 +292,11 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       performerSignature: currentPermit?.performerSignature || "",
       workStartedAt: currentPermit?.workStartedAt ? new Date(currentPermit.workStartedAt).toISOString().slice(0, 16) : "",
       workCompletedAt: currentPermit?.workCompletedAt ? new Date(currentPermit.workCompletedAt).toISOString().slice(0, 16) : "",
+      // Safety assessment fields
+      additionalComments: currentPermit?.additionalComments || "",
+      immediateActions: currentPermit?.immediateActions || "",
+      beforeWorkStarts: currentPermit?.beforeWorkStarts || "",
+      complianceNotes: currentPermit?.complianceNotes || "",
     },
   });
 
@@ -343,6 +351,31 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
       }
     }
   }, [currentPermit?.hazardNotes]);
+
+  // Update safety assessment fields when permit data changes
+  React.useEffect(() => {
+    if (currentPermit?.additionalComments !== undefined) {
+      form.setValue("additionalComments", currentPermit.additionalComments);
+    }
+  }, [currentPermit?.additionalComments]);
+
+  React.useEffect(() => {
+    if (currentPermit?.immediateActions !== undefined) {
+      form.setValue("immediateActions", currentPermit.immediateActions);
+    }
+  }, [currentPermit?.immediateActions]);
+
+  React.useEffect(() => {
+    if (currentPermit?.beforeWorkStarts !== undefined) {
+      form.setValue("beforeWorkStarts", currentPermit.beforeWorkStarts);
+    }
+  }, [currentPermit?.beforeWorkStarts]);
+
+  React.useEffect(() => {
+    if (currentPermit?.complianceNotes !== undefined) {
+      form.setValue("complianceNotes", currentPermit.complianceNotes);
+    }
+  }, [currentPermit?.complianceNotes]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
