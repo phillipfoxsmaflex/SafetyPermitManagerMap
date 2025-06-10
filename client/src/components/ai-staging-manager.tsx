@@ -162,7 +162,13 @@ export function AiStagingManager({ permitId }: AiStagingManagerProps) {
     }
   };
 
-
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return 'Nicht angegeben';
+    if (typeof value === 'boolean') return value ? 'Ja' : 'Nein';
+    if (Array.isArray(value)) return value.join(', ') || 'Leer';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+  };
 
   const formatFieldName = (field: string): string => {
     const fieldMap: Record<string, string> = {

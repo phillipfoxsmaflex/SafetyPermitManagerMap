@@ -879,7 +879,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error starting AI analysis:", error);
-      res.status(500).json({ message: "Failed to start AI analysis: " + error.message });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ message: "Failed to start AI analysis: " + errorMessage });
     }
   });
 
