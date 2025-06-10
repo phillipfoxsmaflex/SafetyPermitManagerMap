@@ -520,11 +520,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sessionId = req.cookies?.sessionId;
       if (sessionId) {
+        // Get user from session before deleting it
+        const session = await storage.getSessionBySessionId(sessionId);
+        
+        // Clean up AI suggestions for this user's permits
+        if (session) {
+          const userPermits = await storage.getPermitsByRequestor(session.userId);
+          for (const permit of userPermits) {
+            await storage.deleteAllSuggestions(permit.id);
+          }
+        }
+        
         await storage.deleteSession(sessionId);
       }
       res.clearCookie('sessionId');
       res.json({ success: true });
     } catch (error) {
+      console.error("Logout error:", error);
       res.status(500).json({ message: "Logout failed" });
     }
   });

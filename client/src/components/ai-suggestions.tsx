@@ -123,17 +123,20 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
     onSuccess: () => {
-      // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
-      setResultType('success');
-      setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
-      setResultDialogOpen(true);
+      toast({
+        title: "Vorschlag übernommen",
+        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
+      });
     },
-    onError: () => {
-      setResultType('error');
-      setResultMessage('Der Vorschlag konnte nicht übernommen werden.');
-      setResultDialogOpen(true);
+    onError: (error: any) => {
+      console.error("Apply error:", error);
+      toast({
+        title: "Fehler",
+        description: "Der Vorschlag konnte nicht übernommen werden.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -143,14 +146,18 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      setResultType('success');
-      setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
-      setResultDialogOpen(true);
+      toast({
+        title: variables.status === 'accepted' ? 'Vorschlag akzeptiert' : 'Vorschlag abgelehnt',
+        description: variables.status === 'accepted' ? 'Änderung wurde akzeptiert.' : 'Änderung wurde abgelehnt.',
+      });
     },
-    onError: () => {
-      setResultType('error');
-      setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
-      setResultDialogOpen(true);
+    onError: (error: any) => {
+      console.error("Status update error:", error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Aktualisieren des Vorschlags.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -159,17 +166,20 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
     },
     onSuccess: (data: any) => {
-      // Invalidate both suggestions and permit data when applying all suggestions
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
-      setResultType('success');
-      setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
-      setResultDialogOpen(true);
+      toast({
+        title: "Alle Vorschläge übernommen",
+        description: data?.message || 'Alle Vorschläge wurden erfolgreich übernommen.',
+      });
     },
-    onError: () => {
-      setResultType('error');
-      setResultMessage('Fehler beim Übernehmen aller Vorschläge.');
-      setResultDialogOpen(true);
+    onError: (error: any) => {
+      console.error("Apply all error:", error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Übernehmen aller Vorschläge.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -179,14 +189,18 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      setResultType('success');
-      setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
-      setResultDialogOpen(true);
+      toast({
+        title: "Alle Vorschläge abgelehnt",
+        description: data?.message || 'Alle Vorschläge wurden abgelehnt.',
+      });
     },
-    onError: () => {
-      setResultType('error');
-      setResultMessage('Fehler beim Ablehnen aller Vorschläge.');
-      setResultDialogOpen(true);
+    onError: (error: any) => {
+      console.error("Reject all error:", error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Ablehnen aller Vorschläge.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -196,14 +210,18 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      setResultType('success');
-      setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
-      setResultDialogOpen(true);
+      toast({
+        title: "Alle Vorschläge gelöscht",
+        description: data?.message || 'Alle Vorschläge wurden erfolgreich gelöscht.',
+      });
     },
-    onError: () => {
-      setResultType('error');
-      setResultMessage('Fehler beim Löschen aller Vorschläge.');
-      setResultDialogOpen(true);
+    onError: (error: any) => {
+      console.error("Delete all error:", error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Löschen aller Vorschläge.",
+        variant: "destructive",
+      });
     },
   });
 
