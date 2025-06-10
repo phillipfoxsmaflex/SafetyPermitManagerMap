@@ -120,21 +120,23 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       toast({
         title: "Vorschlag übernommen",
-        description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
+        description: data?.message || "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
       });
     },
     onError: (error: any) => {
       console.error("Apply error:", error);
+      const errorMessage = error?.message || "Der Vorschlag konnte nicht übernommen werden.";
       toast({
         title: "Fehler",
-        description: "Der Vorschlag konnte nicht übernommen werden.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -163,7 +165,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -175,9 +178,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Apply all error:", error);
+      const errorMessage = error?.message || "Fehler beim Übernehmen aller Vorschläge.";
       toast({
         title: "Fehler",
-        description: "Fehler beim Übernehmen aller Vorschläge.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -185,7 +189,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -196,9 +201,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Reject all error:", error);
+      const errorMessage = error?.message || "Fehler beim Ablehnen aller Vorschläge.";
       toast({
         title: "Fehler",
-        description: "Fehler beim Ablehnen aller Vorschläge.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -206,7 +212,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -217,9 +224,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onError: (error: any) => {
       console.error("Delete all error:", error);
+      const errorMessage = error?.message || "Fehler beim Löschen aller Vorschläge.";
       toast({
         title: "Fehler",
-        description: "Fehler beim Löschen aller Vorschläge.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
