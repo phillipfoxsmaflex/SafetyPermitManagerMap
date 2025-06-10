@@ -448,7 +448,7 @@ export default function PermitDetails() {
                         <span className="font-medium text-blue-700">{hazard}:</span>
                         <span className="text-gray-600 ml-2">{note}</span>
                       </div>
-                    ) : <div key={hazardId}></div>;
+                    ) : null;
                   })}
                 </div>
               )}

@@ -752,7 +752,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                                           Zusätzliche Notizen:
                                         </label>
                                         <Textarea
-                                          value={note}
+                                          value={note || ""}
                                           onChange={(e) => updateHazardNote(hazardId, e.target.value)}
                                           placeholder="Zusätzliche Informationen oder spezifische Maßnahmen..."
                                           className="text-sm"
