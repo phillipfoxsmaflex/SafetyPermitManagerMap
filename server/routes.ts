@@ -1193,6 +1193,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Staging Permit Routes
+  
+  // Get permit diff for staging preview
+  app.get("/api/permits/:id/diff/:batchId", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const batchId = req.params.batchId;
+      
+      const diff = await storage.getPermitDiff(permitId, batchId);
+      if (!diff) {
+        return res.status(404).json({ message: "Diff not found" });
+      }
+      
+      res.json(diff);
+    } catch (error) {
+      console.error("Error fetching permit diff:", error);
+      res.status(500).json({ message: "Failed to fetch permit diff" });
+    }
+  });
+
+  // Apply staging permit (commit all changes)
+  app.post("/api/permits/:id/staging/:batchId/apply", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const batchId = req.params.batchId;
+      
+      const success = await storage.applyStagingPermit(permitId, batchId);
+      if (!success) {
+        return res.status(404).json({ message: "Failed to apply staging permit" });
+      }
+      
+      res.json({ message: "Staging permit applied successfully" });
+    } catch (error) {
+      console.error("Error applying staging permit:", error);
+      res.status(500).json({ message: "Failed to apply staging permit" });
+    }
+  });
+
+  // Reject staging permit (discard all changes)
+  app.delete("/api/permits/:id/staging/:batchId", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const batchId = req.params.batchId;
+      
+      const success = await storage.deleteStagingPermitsBatch(batchId);
+      if (!success) {
+        return res.status(404).json({ message: "Failed to reject staging permit" });
+      }
+      
+      // Also reject related AI suggestions
+      await storage.rejectAllSuggestions(permitId);
+      
+      res.json({ message: "Staging permit rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting staging permit:", error);
+      res.status(500).json({ message: "Failed to reject staging permit" });
+    }
+  });
+
   // Update suggestion status
   app.patch("/api/suggestions/:id/status", requireAuth, async (req, res) => {
     try {

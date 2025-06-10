@@ -16,13 +16,16 @@ import {
   Trash2,
   Lightbulb,
   Send,
-  Loader2
+  Loader2,
+  GitCompare
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { PermitDiffView } from "./permit-diff-view";
 
 interface AiSuggestion {
   id: number;
   permitId: number;
+  suggestionBatchId?: string;
   suggestionType: string;
   fieldName?: string;
   originalValue?: string;
@@ -47,6 +50,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultMessage, setResultMessage] = useState('');
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [analysisStage, setAnalysisStage] = useState('checking');
+  const [diffViewOpen, setDiffViewOpen] = useState(false);
+  const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
 
   const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
     queryKey: [`/api/permits/${permitId}/suggestions`],
