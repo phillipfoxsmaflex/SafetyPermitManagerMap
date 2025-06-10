@@ -851,6 +851,20 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
 
 
 
+
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="safety" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-industrial-gray">Sicherheitsbewertung und Kommentare</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Zusätzliche Sicherheitsinformationen und AI-generierte Empfehlungen
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <FormField
                       control={form.control}
                       name="additionalComments"
@@ -860,6 +874,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                           <FormControl>
                             <Textarea
                               placeholder="Besondere Anweisungen, zusätzliche Sicherheitsmaßnahmen oder andere wichtige Informationen..."
+                              rows={4}
                               {...field}
                             />
                           </FormControl>
@@ -867,6 +882,71 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         </FormItem>
                       )}
                     />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="immediateActions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sofortmaßnahmen</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Maßnahmen, die sofort umgesetzt werden müssen..."
+                                rows={4}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="beforeWorkStarts"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Vor Arbeitsbeginn</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Maßnahmen, die vor Arbeitsbeginn durchgeführt werden müssen..."
+                                rows={4}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="complianceNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Compliance-Hinweise</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Regulatorische Anforderungen und Compliance-Notizen..."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <Info className="h-4 w-4 text-safety-blue" />
+                      <AlertDescription className="text-industrial-gray">
+                        <strong>Hinweis:</strong> Diese Felder werden automatisch durch AI-Analysen ausgefüllt, 
+                        können aber manuell angepasst werden. Die Informationen unterstützen bei der 
+                        Sicherheitsbewertung und Compliance-Prüfung.
+                      </AlertDescription>
+                    </Alert>
                   </CardContent>
                 </Card>
               </TabsContent>
