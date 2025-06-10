@@ -13,36 +13,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
-      // Try both sessionId and connect.sid for compatibility
-      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
-      console.log("Auth check - sessionId:", sessionId);
+      const sessionId = req.cookies?.sessionId;
       
       if (!sessionId) {
-        console.log("No session ID found");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const session = await storage.getSessionBySessionId(sessionId);
       if (!session) {
-        console.log("Session not found in database");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       // Check if session has expired
       if (session.expiresAt < new Date()) {
-        console.log("Session expired");
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(session.userId);
       if (!user) {
-        console.log("User not found");
         await storage.deleteSession(sessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      console.log("Auth check successful for user:", user.username);
       req.user = user;
       next();
     } catch (error) {
@@ -498,9 +491,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt
       });
       
-      // Set session cookie (remove httpOnly for API access)
+      // Set session cookie
       res.cookie('sessionId', sessionId, { 
-        httpOnly: false, // Allow JavaScript access for API calls
+        httpOnly: true, 
         secure: false, // In production, set to true with HTTPS
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -538,8 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", async (req, res) => {
     try {
-      // Try both sessionId and connect.sid for compatibility
-      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
+      const sessionId = req.cookies?.sessionId;
       console.log('Auth check - sessionId:', sessionId);
       
       if (!sessionId) {
@@ -784,128 +776,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      // Use direct analysis instead of external webhook to avoid JSON parsing issues
-      console.log('Starting direct AI analysis for permit:', permit.permitId);
-      
-      // Generate comprehensive suggestions based on permit data
-      const suggestions = await generatePermitSuggestions(permit);
-      
-      // Process suggestions directly
-      let successCount = 0;
-      for (const suggestion of suggestions) {
-        try {
-          await storage.createAiSuggestion({
-            permitId: permit.id,
-            suggestionType: suggestion.type,
-            fieldName: suggestion.fieldName,
-            originalValue: suggestion.originalValue || '',
-            suggestedValue: suggestion.suggestedValue,
-            reasoning: suggestion.reasoning,
-            priority: suggestion.priority,
-            status: 'pending'
-          });
-          successCount++;
-        } catch (error) {
-          console.error('Error creating suggestion:', error);
-        }
+      const webhookConfig = await storage.getActiveWebhookConfig();
+      if (!webhookConfig) {
+        return res.status(400).json({ message: "No active webhook configuration found" });
       }
 
-      console.log(`Created ${successCount} AI suggestions for permit ${permit.permitId}`);
-      
-      res.json({ 
-        message: "AI analysis completed successfully",
-        suggestionsCreated: successCount
+      // Create comprehensive permit data for analysis
+      const permitAnalysisData = {
+        // Basic permit information
+        permitId: permit.permitId,
+        internalId: permit.id,
+        type: permit.type,
+        location: permit.location,
+        description: permit.description,
+        department: permit.department,
+        riskLevel: permit.riskLevel,
+        status: permit.status,
+        
+        // Personnel information
+        requestorName: permit.requestorName,
+        contactNumber: permit.contactNumber,
+        emergencyContact: permit.emergencyContact,
+        safetyOfficer: permit.safetyOfficer,
+        departmentHead: permit.departmentHead,
+        maintenanceApprover: permit.maintenanceApprover,
+        performerName: permit.performerName,
+        
+        // Dates and timing
+        startDate: permit.startDate?.toISOString(),
+        endDate: permit.endDate?.toISOString(),
+        workStartedAt: permit.workStartedAt?.toISOString(),
+        workCompletedAt: permit.workCompletedAt?.toISOString(),
+        
+        // Safety assessment
+        selectedHazards: permit.selectedHazards,
+        hazardNotes: permit.hazardNotes,
+        completedMeasures: permit.completedMeasures,
+        identifiedHazards: permit.identifiedHazards,
+        additionalComments: permit.additionalComments,
+        
+        // Approval status
+        departmentHeadApproval: permit.departmentHeadApproval,
+        departmentHeadApprovalDate: permit.departmentHeadApprovalDate?.toISOString(),
+        maintenanceApproval: permit.maintenanceApproval,
+        maintenanceApprovalDate: permit.maintenanceApprovalDate?.toISOString(),
+        safetyOfficerApproval: permit.safetyOfficerApproval,
+        safetyOfficerApprovalDate: permit.safetyOfficerApprovalDate?.toISOString(),
+        
+        // Analysis metadata
+        analysisType: 'permit_improvement',
+        timestamp: new Date().toISOString(),
+        systemVersion: '1.0'
+      };
+
+      // Prepare webhook payload for POST request
+      const webhookPayload = {
+        action: 'analyze_permit',
+        permitData: permitAnalysisData
+      };
+
+      console.log('Sending permit for AI analysis:', {
+        permitId: permit.permitId,
+        internalId: permit.id,
+        webhookUrl: webhookConfig.webhookUrl,
+        dataSize: JSON.stringify(webhookPayload).length
       });
-    } catch (error) {
-      console.error("Error in AI analysis:", error);
-      res.status(500).json({ message: "Failed to analyze permit" });
-    }
-  });
 
-  // Generate AI suggestions based on permit analysis
-  async function generatePermitSuggestions(permit: any) {
-    const suggestions = [];
-    
-    // Check description completeness
-    if (!permit.description || permit.description.length < 20) {
-      suggestions.push({
-        type: "description_improvement",
-        fieldName: "description",
-        originalValue: permit.description || "",
-        suggestedValue: `Detaillierte Beschreibung der ${permit.type === 'hot_work' ? 'Heißarbeiten' : permit.type === 'confined_space' ? 'Arbeiten in engen Räumen' : 'Arbeiten'} einschließlich verwendeter Geräte, Verfahren und spezifischer Arbeitsschritte`,
-        reasoning: "Vollständige Arbeitsbeschreibung für präzise Gefährdungsbeurteilung erforderlich",
-        priority: "high"
+      console.log('Permit data being sent:', JSON.stringify(permitAnalysisData, null, 2));
+
+      // Send POST request to webhook with data in body
+      const response = await fetch(webhookConfig.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+        signal: AbortSignal.timeout(120000) // 2 minute timeout for AI analysis
       });
-    }
 
-    // Check emergency contact
-    if (!permit.emergencyContact || permit.emergencyContact === "112") {
-      suggestions.push({
-        type: "emergency_contact",
-        fieldName: "emergencyContact",
-        originalValue: permit.emergencyContact || "",
-        suggestedValue: "Spezifische Notfallnummer der Werksfeuerwehr oder zuständigen Stelle (z.B. +49 XXX XXXXXXX)",
-        reasoning: "Konkrete Notfallkontaktdaten für schnelle Reaktion bei Zwischenfällen",
-        priority: "high"
-      });
-    }
-
-    // Check performer name
-    if (!permit.performerName || permit.performerName.length < 3) {
-      suggestions.push({
-        type: "performer_qualification",
-        fieldName: "performerName",
-        originalValue: permit.performerName || "",
-        suggestedValue: "Vollständiger Name der ausführenden Person mit Qualifikationsnachweis",
-        reasoning: "Eindeutige Identifikation der qualifizierten ausführenden Person erforderlich",
-        priority: "high"
-      });
-    }
-
-    // Check hazard identification
-    if (!permit.selectedHazards || permit.selectedHazards.length === 0) {
-      suggestions.push({
-        type: "hazard_identification",
-        fieldName: "selectedHazards", 
-        originalValue: JSON.stringify(permit.selectedHazards || []),
-        suggestedValue: permit.type === 'hot_work' ? '["4-0", "4-1", "7-0"]' : permit.type === 'confined_space' ? '["3-0", "3-1", "5-0", "5-1"]' : '["1-0", "2-0"]',
-        reasoning: "Systematische Gefährdungsidentifikation nach TRBS erforderlich",
-        priority: "high"
-      });
-    }
-
-    // Check safety measures
-    if (!permit.completedMeasures || permit.completedMeasures.length < 3) {
-      suggestions.push({
-        type: "safety_measures",
-        fieldName: "completedMeasures",
-        originalValue: JSON.stringify(permit.completedMeasures || []),
-        suggestedValue: permit.type === 'hot_work' ? '["fire_watch", "fire_extinguisher", "hot_work_permit", "area_clearing"]' : '["atmospheric_monitoring", "ventilation", "ppe_required", "emergency_procedures"]',
-        reasoning: "Vollständige Schutzmaßnahmen für sichere Arbeitsausführung",
-        priority: "medium"
-      });
-    }
-
-    return suggestions;
-  }
-
-  // Test AI suggestions endpoint (fallback for debugging)
-  app.post("/api/permits/:id/test-suggestions", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const permit = await storage.getPermit(permitId);
-      
-      if (!permit) {
-        return res.status(404).json({ message: "Permit not found" });
+      if (!response.ok) {
+        console.error('Webhook request failed:', response.status, response.statusText);
+        throw new Error(`Webhook request failed: ${response.status}`);
       }
 
+      console.log('Permit data sent successfully to AI analysis webhook');
+
       res.json({ 
-        message: "Legacy webhook endpoint - use /analyze instead",
-        redirect: `/api/permits/${permit.id}/analyze`
+        message: "Permit sent for AI analysis successfully",
+        status: "processing" 
       });
     } catch (error) {
-      console.error("Error in legacy analysis endpoint:", error);
-      res.status(500).json({ message: "Use the main /analyze endpoint instead" });
+      console.error("Error sending permit for analysis:", error);
+      res.status(500).json({ message: "Failed to send permit for analysis" });
     }
   });
 
@@ -1183,6 +1145,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk apply all suggestions for a permit
+  app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const appliedCount = await storage.applyAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${appliedCount} Vorschläge wurden erfolgreich übernommen`,
+        appliedCount 
+      });
+    } catch (error) {
+      console.error("Error applying all suggestions:", error);
+      res.status(500).json({ message: "Failed to apply suggestions" });
+    }
+  });
+
+  // Bulk reject all suggestions for a permit
+  app.post("/api/permits/:id/suggestions/reject-all", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const rejectedCount = await storage.rejectAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${rejectedCount} Vorschläge wurden abgelehnt`,
+        rejectedCount 
+      });
+    } catch (error) {
+      console.error("Error rejecting all suggestions:", error);
+      res.status(500).json({ message: "Failed to reject suggestions" });
+    }
+  });
+
+  // Bulk delete all suggestions for a permit
+  app.delete("/api/permits/:id/suggestions", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const deletedCount = await storage.deleteAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${deletedCount} Vorschläge wurden gelöscht`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error("Error deleting all suggestions:", error);
+      res.status(500).json({ message: "Failed to delete suggestions" });
+    }
+  });
+
   // Update suggestion status
   app.patch("/api/suggestions/:id/status", requireAuth, async (req, res) => {
     try {
@@ -1202,54 +1212,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating suggestion status:", error);
       res.status(500).json({ message: "Failed to update suggestion status" });
-    }
-  });
-
-  // Apply all suggestions for a permit
-  app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const appliedCount = await storage.applyAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${appliedCount} Vorschläge wurden erfolgreich übernommen`,
-        appliedCount 
-      });
-    } catch (error) {
-      console.error("Error applying all suggestions:", error);
-      res.status(500).json({ message: "Failed to apply all suggestions" });
-    }
-  });
-
-  // Reject all suggestions for a permit
-  app.post("/api/permits/:id/suggestions/reject-all", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const rejectedCount = await storage.rejectAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${rejectedCount} Vorschläge wurden abgelehnt`,
-        rejectedCount 
-      });
-    } catch (error) {
-      console.error("Error rejecting all suggestions:", error);
-      res.status(500).json({ message: "Failed to reject all suggestions" });
-    }
-  });
-
-  // Delete all suggestions for a permit
-  app.delete("/api/permits/:id/suggestions", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const deletedCount = await storage.deleteAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${deletedCount} Vorschläge wurden gelöscht`,
-        deletedCount 
-      });
-    } catch (error) {
-      console.error("Error deleting all suggestions:", error);
-      res.status(500).json({ message: "Failed to delete all suggestions" });
     }
   });
 
@@ -1607,137 +1569,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Disposition', 'inline; filename="n8n-ai-agent-integration.md"');
       res.send(data);
     });
-  });
-
-  // Company logo management (admin only)
-  app.post("/api/admin/company-logo", requireAuth, upload.single('logo'), async (req, res) => {
-    try {
-      // Check admin access
-      const sessionId = req.cookies?.sessionId;
-      if (!sessionId) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const session = await storage.getSessionBySessionId(sessionId);
-      if (!session) {
-        return res.status(401).json({ message: "Invalid session" });
-      }
-      
-      const user = await storage.getUser(session.userId);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Administrator access required" });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ message: "No logo file uploaded" });
-      }
-
-      // Validate file type
-      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
-      if (!allowedTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ message: "Only PNG, JPEG, JPG, and GIF files are allowed" });
-      }
-
-      // Save logo path to config file
-      const logoPath = `/uploads/${req.file.filename}`;
-      
-      const fs = await import('fs/promises');
-      const configPath = './company-config.json';
-      
-      try {
-        const config = {
-          logoPath: logoPath,
-          logoName: req.file.originalname,
-          logoSize: req.file.size,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user.username
-        };
-        await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-      } catch (error) {
-        console.error("Error saving logo config:", error);
-      }
-
-      res.json({ 
-        message: "Firmenlogo erfolgreich hochgeladen",
-        logoUrl: logoPath,
-        logoName: req.file.originalname
-      });
-    } catch (error) {
-      console.error("Error uploading company logo:", error);
-      res.status(500).json({ message: "Fehler beim Hochladen des Firmenlogos" });
-    }
-  });
-
-  app.get("/api/admin/company-logo", async (req, res) => {
-    try {
-      const fs = await import('fs/promises');
-      const configPath = './company-config.json';
-      
-      try {
-        const configData = await fs.readFile(configPath, 'utf-8');
-        const config = JSON.parse(configData);
-        res.json({ 
-          logoUrl: config.logoPath,
-          logoName: config.logoName,
-          logoSize: config.logoSize,
-          updatedAt: config.updatedAt,
-          updatedBy: config.updatedBy
-        });
-      } catch (error) {
-        // No logo configured yet
-        res.json({ logoUrl: null });
-      }
-    } catch (error) {
-      console.error("Error getting company logo:", error);
-      res.status(500).json({ message: "Fehler beim Abrufen des Firmenlogos" });
-    }
-  });
-
-  app.delete("/api/admin/company-logo", requireAuth, async (req, res) => {
-    try {
-      // Check admin access
-      const sessionId = req.cookies?.sessionId;
-      if (!sessionId) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const session = await storage.getSessionBySessionId(sessionId);
-      if (!session) {
-        return res.status(401).json({ message: "Invalid session" });
-      }
-      
-      const user = await storage.getUser(session.userId);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Administrator access required" });
-      }
-
-      const fs = await import('fs/promises');
-      const configPath = './company-config.json';
-      
-      try {
-        const configData = await fs.readFile(configPath, 'utf-8');
-        const config = JSON.parse(configData);
-        
-        // Delete the logo file if it exists
-        if (config.logoPath) {
-          const logoFilePath = `./uploads/${config.logoPath.split('/').pop()}`;
-          try {
-            await fs.unlink(logoFilePath);
-          } catch (error) {
-            console.log("Logo file not found or already deleted");
-          }
-        }
-        
-        // Remove config file
-        await fs.unlink(configPath);
-        res.json({ message: "Firmenlogo erfolgreich entfernt" });
-      } catch (error) {
-        res.json({ message: "Kein Logo zum Entfernen vorhanden" });
-      }
-    } catch (error) {
-      console.error("Error removing company logo:", error);
-      res.status(500).json({ message: "Fehler beim Entfernen des Firmenlogos" });
-    }
   });
 
   const httpServer = createServer(app);

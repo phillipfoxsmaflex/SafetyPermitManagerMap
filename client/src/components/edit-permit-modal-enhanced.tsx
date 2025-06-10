@@ -35,7 +35,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { AiSuggestionsNew } from "@/components/ai-suggestions-new";
+import { AiSuggestions } from "@/components/ai-suggestions";
 import { SignaturePad } from "@/components/signature-pad";
 import { PermitAttachments } from "@/components/permit-attachments";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
@@ -936,7 +936,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                         name="immediateActions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Allgemeine Maßnahmen</FormLabel>
+                            <FormLabel>Sofortmaßnahmen</FormLabel>
                             <FormControl>
                               <Textarea
                                 placeholder="Maßnahmen, die sofort umgesetzt werden müssen..."
@@ -1101,7 +1101,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
               </TabsContent>
 
               <TabsContent value="ai" className="space-y-6">
-                <AiSuggestionsNew permitId={permit.id} />
+                <AiSuggestions permitId={permit.id} />
               </TabsContent>
             </Tabs>
 

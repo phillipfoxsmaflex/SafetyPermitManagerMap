@@ -8,7 +8,7 @@ import { ArrowLeft, Edit, Printer, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
-import { AiSuggestionsNew } from "@/components/ai-suggestions-new";
+import { AiSuggestions } from "@/components/ai-suggestions";
 import { Permit } from "@shared/schema";
 
 export default function PermitDetails() {
@@ -44,21 +44,213 @@ export default function PermitDetails() {
     return typeMap[type] || type;
   };
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     if (!permit) return;
 
-    try {
-      // Fetch attachments for this permit
-      const response = await fetch(`/api/permits/${permit.id}/attachments`);
-      const attachments = response.ok ? await response.json() : [];
-      
-      // Use the new unified print function
-      const { printPermitUnified } = await import("@/lib/print-utils");
-      await printPermitUnified(permit, attachments);
-    } catch (error) {
-      console.error("Error printing permit:", error);
-      alert('Fehler beim Drucken der Genehmigung. Bitte versuchen Sie es erneut.');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const hazardCategories = [
+      { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
+      { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
+      { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
+      { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
+      { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
+      { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
+      { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
+      { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
+      { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
+      { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
+      { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
+    ];
+
+    let selectedHazardsHtml = '';
+    if (permit.selectedHazards && permit.selectedHazards.length > 0) {
+      selectedHazardsHtml = permit.selectedHazards.map((hazardId: string) => {
+        const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+        const category = hazardCategories.find(c => c.id === categoryId);
+        const hazard = category?.hazards[hazardIndex];
+        
+        if (!category || !hazard) return '';
+        
+        return `
+          <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;">
+            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">${category.category}</div>
+            <div style="color: #666;">${hazard}</div>
+          </div>
+        `;
+      }).join('');
     }
+
+    let hazardNotesHtml = '';
+    if (permit.hazardNotes && permit.hazardNotes !== '{}') {
+      try {
+        const notes = JSON.parse(permit.hazardNotes);
+        hazardNotesHtml = Object.entries(notes).map(([hazardId, note]) => {
+          if (!note) return '';
+          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+          const category = hazardCategories.find(c => c.id === categoryId);
+          const hazard = category?.hazards[hazardIndex];
+          
+          return `
+            <div style="margin-bottom: 10px;">
+              <span style="font-weight: bold; color: #2563eb;">${hazard}:</span>
+              <span style="color: #666; margin-left: 10px;">${note}</span>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Error parsing hazard notes:', e);
+      }
+    }
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Arbeitserlaubnis - ${permit.permitId}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 15px; }
+            .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+            .permit-id { font-size: 18px; color: #666; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+            .field-row { display: flex; margin-bottom: 8px; }
+            .field-label { width: 150px; font-weight: bold; color: #555; }
+            .field-value { flex: 1; color: #333; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; }
+            .signature-box { border: 1px solid #ccc; padding: 15px; width: 30%; text-align: center; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">ARBEITSERLAUBNIS</div>
+            <div class="permit-id">${permit.permitId}</div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <div class="section">
+                <div class="section-title">ALLGEMEINE INFORMATIONEN</div>
+                <div class="field-row">
+                  <div class="field-label">Typ:</div>
+                  <div class="field-value">${getPermitTypeLabel(permit.type)}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Standort:</div>
+                  <div class="field-value">${permit.location}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Beschreibung:</div>
+                  <div class="field-value">${permit.description}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Abteilung:</div>
+                  <div class="field-value">${permit.department}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">KONTAKTINFORMATIONEN</div>
+                <div class="field-row">
+                  <div class="field-label">Antragsteller:</div>
+                  <div class="field-value">${permit.requestorName}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Kontaktnummer:</div>
+                  <div class="field-value">${permit.contactNumber}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Notfallkontakt:</div>
+                  <div class="field-value">${permit.emergencyContact}</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="section">
+                <div class="section-title">ZEITPLAN</div>
+                <div class="field-row">
+                  <div class="field-label">Startdatum:</div>
+                  <div class="field-value">${formatDateTime(permit.startDate)}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Enddatum:</div>
+                  <div class="field-value">${formatDateTime(permit.endDate)}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">GENEHMIGUNGEN</div>
+                <div class="field-row">
+                  <div class="field-label">Abteilungsleiter:</div>
+                  <div class="field-value">${permit.departmentHead}</div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Wartungsgenehmiger:</div>
+                  <div class="field-value">${permit.maintenanceApprover}</div>
+                </div>
+                ${permit.safetyOfficer ? `
+                <div class="field-row">
+                  <div class="field-label">Sicherheitsbeauftragter:</div>
+                  <div class="field-value">${permit.safetyOfficer}</div>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+
+          ${selectedHazardsHtml ? `
+          <div class="section">
+            <div class="section-title">TRBS GEFÄHRDUNGSBEURTEILUNG</div>
+            ${selectedHazardsHtml}
+          </div>` : ''}
+
+          ${hazardNotesHtml ? `
+          <div class="section">
+            <div class="section-title">ZUSÄTZLICHE NOTIZEN ZU GEFAHREN</div>
+            ${hazardNotesHtml}
+          </div>` : ''}
+
+          ${permit.additionalComments ? `
+          <div class="section">
+            <div class="section-title">ZUSÄTZLICHE KOMMENTARE</div>
+            <div class="field-value">${permit.additionalComments}</div>
+          </div>` : ''}
+
+          <div class="signatures">
+            <div class="signature-box">
+              <div>Abteilungsleiter</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.departmentHeadApproval ? `Genehmigt: ${permit.departmentHeadApprovalDate ? formatDateTime(permit.departmentHeadApprovalDate) : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+            <div class="signature-box">
+              <div>Sicherheitsbeauftragter</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.safetyOfficerApproval ? `Genehmigt: ${permit.safetyOfficerApprovalDate ? formatDateTime(permit.safetyOfficerApprovalDate) : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+            <div class="signature-box">
+              <div>Technik</div>
+              <div style="margin-top: 20px; font-size: 10px;">
+                ${permit.maintenanceApproval ? `Genehmigt: ${permit.maintenanceApprovalDate ? formatDateTime(permit.maintenanceApprovalDate) : ''}` : 'Ausstehend'}
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   if (isLoading) {
@@ -251,13 +443,12 @@ export default function PermitDetails() {
                     const category = categories.find(c => c.id === categoryId);
                     const hazard = category?.hazards[hazardIndex];
                     
-                    if (!hazard) return <div key={hazardId}></div>;
-                    return (
+                    return hazard ? (
                       <div key={hazardId} className="text-sm mb-2">
                         <span className="font-medium text-blue-700">{hazard}:</span>
                         <span className="text-gray-600 ml-2">{note}</span>
                       </div>
-                    );
+                    ) : null;
                   })}
                 </div>
               )}
@@ -358,7 +549,8 @@ export default function PermitDetails() {
           </CardContent>
         </Card>
 
-        {/* AI Suggestions integrated into edit modal */}
+        {/* AI Suggestions - only show in edit mode */}
+        {isEditModalOpen && <AiSuggestions permitId={permit.id} />}
       </div>
 
       <EditPermitModalEnhanced
