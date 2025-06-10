@@ -18,7 +18,6 @@ import {
   Send,
   Loader2
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
 
 interface AiSuggestion {
   id: number;
@@ -209,36 +208,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   });
 
   const applyAllMutation = useMutation({
-    mutationFn: () => {
-      console.log(`Starting applyAll mutation for permit ${permitId}`);
-      
-      return new Promise((resolve, reject) => {
-        fetch(`/api/permits/${permitId}/suggestions/apply-all`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        })
-        .then(async (response) => {
-          console.log(`ApplyAll response status: ${response.status}`);
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`ApplyAll API error: ${response.status} - ${errorText}`);
-            reject(new Error(`API Error: ${response.status} - ${errorText}`));
-            return;
-          }
-          const data = await response.json();
-          console.log(`ApplyAll success:`, data);
-          resolve(data);
-        })
-        .catch((error) => {
-          console.error(`ApplyAll fetch error:`, error);
-          console.error(`ApplyAll error type:`, typeof error);
-          console.error(`ApplyAll error keys:`, Object.keys(error));
-          console.error(`ApplyAll error string:`, String(error));
-          console.error(`ApplyAll error JSON:`, JSON.stringify(error));
-          reject(new Error(`Network Error: ${error?.message || 'Unknown fetch error'}`));
-        });
-      });
+    mutationFn: async () => {
+      console.log(`Starting applyAll with React Query for permit ${permitId}`);
+      const response = await apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, 'POST');
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
@@ -331,57 +304,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
   });
 
-  const handleApplySuggestion = async (suggestionId: number) => {
-    console.log(`Direct test: Applying suggestion ${suggestionId}`);
-    
-    try {
-      console.log("Applying suggestion directly...");
-      const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      
-      console.log(`Direct test: Response status: ${response.status}`);
-      console.log(`Direct test: Response ok: ${response.ok}`);
-      console.log(`Direct test: Response headers:`, response.headers);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Direct test: API error: ${response.status} - ${errorText}`);
-        toast({
-          title: "Fehler",
-          description: `API Fehler: ${response.status} - ${errorText}`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const data = await response.json();
-      console.log("Direct test: Success response:", data);
-      
-      // Manually update queries
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
-      
-      toast({
-        title: "Vorschlag übernommen",
-        description: data?.message || "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
-      });
-      
-    } catch (error) {
-      console.error("Direct test: Catch block error:", error);
-      console.error("Direct test: Error type:", typeof error);
-      console.error("Direct test: Error constructor:", error?.constructor?.name);
-      console.error("Direct test: Error keys:", Object.keys(error || {}));
-      console.error("Direct test: Error string:", String(error));
-      
-      toast({
-        title: "Fehler",
-        description: "Netzwerk Fehler beim Übernehmen des Vorschlags.",
-        variant: "destructive",
-      });
-    }
+  const handleApplySuggestion = (suggestionId: number) => {
+    console.log(`Using React Query for suggestion ${suggestionId}`);
+    applySuggestionMutation.mutate(suggestionId);
   };
 
   const handleAcceptSuggestion = (suggestionId: number) => {
