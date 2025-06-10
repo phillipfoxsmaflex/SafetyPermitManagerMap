@@ -171,7 +171,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      // Use staging permit apply if we have a batch ID, otherwise fall back to individual apply
+      if (currentBatchId) {
+        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}/apply`, "POST");
+      } else {
+        return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
+      }
     },
     onSuccess: (data: any) => {
       // Invalidate both suggestions and permit data when applying all suggestions
@@ -180,27 +185,36 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);
+      // Clear current batch ID since suggestions are applied
+      setCurrentBatchId(null);
     },
-    onError: () => {
+    onError: (error: any) => {
       setResultType('error');
-      setResultMessage('Fehler beim Übernehmen aller Vorschläge.');
+      setResultMessage(error?.response?.data?.message || 'Fehler beim Übernehmen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
 
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      // Use staging permit reject if we have a batch ID, otherwise fall back to individual reject
+      if (currentBatchId) {
+        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}`, "DELETE");
+      } else {
+        return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
+      }
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
       setResultDialogOpen(true);
+      // Clear current batch ID since suggestions are rejected
+      setCurrentBatchId(null);
     },
-    onError: () => {
+    onError: (error: any) => {
       setResultType('error');
-      setResultMessage('Fehler beim Ablehnen aller Vorschläge.');
+      setResultMessage(error?.response?.data?.message || 'Fehler beim Ablehnen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });

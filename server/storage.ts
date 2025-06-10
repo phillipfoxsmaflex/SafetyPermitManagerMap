@@ -1001,15 +1001,20 @@ export class DatabaseStorage implements IStorage {
       const stagingPermit = await this.getStagingPermit(sourcePermitId, batchId);
       if (!stagingPermit) return false;
 
-      // Update original permit with staging data
+      // Update original permit with staging data, converting dates properly
       const { id, sourcePermitId: _, suggestionBatchId: __, createdAt: ___, ...updateData } = stagingPermit;
+      
+      // Convert string dates back to Date objects for database
+      const processedUpdateData = {
+        ...updateData,
+        startDate: updateData.startDate ? new Date(updateData.startDate) : null,
+        endDate: updateData.endDate ? new Date(updateData.endDate) : null,
+        updatedAt: new Date()
+      };
       
       const [updatedPermit] = await db
         .update(permits)
-        .set({
-          ...updateData,
-          updatedAt: new Date()
-        })
+        .set(processedUpdateData)
         .where(eq(permits.id, sourcePermitId))
         .returning();
 
