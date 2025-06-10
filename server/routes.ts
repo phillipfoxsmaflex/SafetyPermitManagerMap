@@ -13,26 +13,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
-      const sessionId = req.cookies?.sessionId;
+      // Check for both possible session cookie names
+      const sessionId = req.cookies?.sessionId || req.cookies?.['connect.sid'];
       
       if (!sessionId) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const session = await storage.getSessionBySessionId(sessionId);
+      // If using connect.sid format, extract the actual session ID
+      let actualSessionId = sessionId;
+      if (sessionId.startsWith('s:')) {
+        // Extract session ID from signed cookie format: s:sessionId.signature
+        actualSessionId = sessionId.split('.')[0].substring(2);
+      }
+      
+      const session = await storage.getSessionBySessionId(actualSessionId);
       if (!session) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       // Check if session has expired
       if (session.expiresAt < new Date()) {
-        await storage.deleteSession(sessionId);
+        await storage.deleteSession(actualSessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(session.userId);
       if (!user) {
-        await storage.deleteSession(sessionId);
+        await storage.deleteSession(actualSessionId);
         return res.status(401).json({ message: "Not authenticated" });
       }
       
