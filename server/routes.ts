@@ -1145,54 +1145,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk apply all suggestions for a permit
-  app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const appliedCount = await storage.applyAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${appliedCount} Vorschläge wurden erfolgreich übernommen`,
-        appliedCount 
-      });
-    } catch (error) {
-      console.error("Error applying all suggestions:", error);
-      res.status(500).json({ message: "Failed to apply suggestions" });
-    }
-  });
-
-  // Bulk reject all suggestions for a permit
-  app.post("/api/permits/:id/suggestions/reject-all", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const rejectedCount = await storage.rejectAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${rejectedCount} Vorschläge wurden abgelehnt`,
-        rejectedCount 
-      });
-    } catch (error) {
-      console.error("Error rejecting all suggestions:", error);
-      res.status(500).json({ message: "Failed to reject suggestions" });
-    }
-  });
-
-  // Bulk delete all suggestions for a permit
-  app.delete("/api/permits/:id/suggestions", requireAuth, async (req, res) => {
-    try {
-      const permitId = parseInt(req.params.id);
-      const deletedCount = await storage.deleteAllSuggestions(permitId);
-      
-      res.json({ 
-        message: `${deletedCount} Vorschläge wurden gelöscht`,
-        deletedCount 
-      });
-    } catch (error) {
-      console.error("Error deleting all suggestions:", error);
-      res.status(500).json({ message: "Failed to delete suggestions" });
-    }
-  });
-
   // Update suggestion status
   app.patch("/api/suggestions/:id/status", requireAuth, async (req, res) => {
     try {
@@ -1212,6 +1164,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating suggestion status:", error);
       res.status(500).json({ message: "Failed to update suggestion status" });
+    }
+  });
+
+  // Apply all suggestions for a permit
+  app.post("/api/permits/:id/suggestions/apply-all", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const appliedCount = await storage.applyAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${appliedCount} Vorschläge wurden erfolgreich übernommen`,
+        appliedCount 
+      });
+    } catch (error) {
+      console.error("Error applying all suggestions:", error);
+      res.status(500).json({ message: "Failed to apply all suggestions" });
+    }
+  });
+
+  // Reject all suggestions for a permit
+  app.post("/api/permits/:id/suggestions/reject-all", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const rejectedCount = await storage.rejectAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${rejectedCount} Vorschläge wurden abgelehnt`,
+        rejectedCount 
+      });
+    } catch (error) {
+      console.error("Error rejecting all suggestions:", error);
+      res.status(500).json({ message: "Failed to reject all suggestions" });
+    }
+  });
+
+  // Delete all suggestions for a permit
+  app.delete("/api/permits/:id/suggestions", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const deletedCount = await storage.deleteAllSuggestions(permitId);
+      
+      res.json({ 
+        message: `${deletedCount} Vorschläge wurden gelöscht`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error("Error deleting all suggestions:", error);
+      res.status(500).json({ message: "Failed to delete all suggestions" });
     }
   });
 
