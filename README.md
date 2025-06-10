@@ -56,35 +56,61 @@ Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie 
 
 ## 📋 Installation & Setup
 
-### Voraussetzungen
-- Node.js 18+
-- PostgreSQL 14+
+### Automatisierte Installation (Empfohlen)
 
-### Installation
 ```bash
 # Repository klonen
 git clone <repository-url>
 cd biggs-permit-system
 
-# Dependencies installieren
+# Vollständige Installation mit allen Abhängigkeiten
+chmod +x install.sh
+./install.sh
+```
+
+Das Installationsskript führt automatisch aus:
+- Prüfung und Installation von Node.js 18+ und PostgreSQL
+- Installation aller npm-Abhängigkeiten
+- Erstellung der Datenbank und Benutzer
+- Generierung sicherer Passwörter und Session-Secrets
+- Initialisierung des Datenbankschemas
+- Erstellung der .env-Datei mit sicheren Standardwerten
+
+### Schnelle Entwicklungsumgebung
+
+```bash
+# Nur für bereits installierte Systeme
+chmod +x setup.sh
+./setup.sh
+```
+
+### Manuelle Installation
+
+```bash
+# Abhängigkeiten installieren
 npm install
 
-# Umgebungsvariablen konfigurieren
+# Umgebung konfigurieren
 cp .env.example .env
-# DATABASE_URL, SESSION_SECRET anpassen
+# Bearbeiten Sie .env mit Ihren Einstellungen
 
-# Datenbank migrieren
+# Datenbank initialisieren
 npm run db:push
+
+# Beispieldaten laden (optional)
+npx tsx server/seed.ts
 
 # Development Server starten
 npm run dev
 ```
 
-### Umgebungsvariablen
+### Wichtige Umgebungsvariablen
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/biggs
-SESSION_SECRET=your-secure-secret-key
+DATABASE_URL=postgresql://biggs_user:password@localhost:5432/biggs_permits
+SESSION_SECRET=your-64-character-secure-secret
+NODE_ENV=development
 WEBHOOK_URL=https://your-ai-service.com/webhook  # Optional
+MAX_FILE_SIZE=10485760
 ```
 
 ## 🔌 AI-Integration
