@@ -410,12 +410,23 @@ export class DatabaseStorage implements IStorage {
           if (Array.isArray(suggestedValue)) {
             return suggestedValue;
           } else if (typeof suggestedValue === 'string') {
+            // Try to parse as JSON array first
             try {
               const parsed = JSON.parse(suggestedValue);
-              return Array.isArray(parsed) ? parsed : suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+              if (Array.isArray(parsed)) {
+                return parsed;
+              }
             } catch {
+              // Not valid JSON, continue with string parsing
+            }
+            
+            // Handle comma-separated string format like "1-0, 7-1, 8-0, 4-0"
+            if (suggestedValue.includes(',')) {
               return suggestedValue.split(',').map(s => s.trim()).filter(s => s);
             }
+            
+            // Single value or space-separated values
+            return suggestedValue.split(/[,\s]+/).map(s => s.trim()).filter(s => s);
           }
           return [];
 
