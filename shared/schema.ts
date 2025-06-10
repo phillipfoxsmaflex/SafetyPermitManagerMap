@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -93,66 +93,10 @@ export const templates = pgTable("templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Staging permits for AI suggestions preview
-export const permitsStaging = pgTable("permits_staging", {
-  id: serial("id").primaryKey(),
-  sourcePermitId: integer("source_permit_id").references(() => permits.id).notNull(),
-  suggestionBatchId: text("suggestion_batch_id").notNull(), // Groups related suggestions
-  
-  // All permit fields copied from main permits table
-  permitId: text("permit_id").notNull(),
-  type: text("type").notNull(),
-  location: text("location").notNull(),
-  description: text("description").notNull(),
-  requestorId: integer("requestor_id").references(() => users.id),
-  requestorName: text("requestor_name").notNull(),
-  department: text("department").notNull(),
-  contactNumber: text("contact_number").notNull(),
-  emergencyContact: text("emergency_contact").notNull(),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
-  status: text("status").notNull().default('pending'),
-  riskLevel: text("risk_level"),
-  safetyOfficer: text("safety_officer"),
-  departmentHead: text("department_head"),
-  maintenanceApprover: text("maintenance_approver"),
-  identifiedHazards: text("identified_hazards"),
-  additionalComments: text("additional_comments"),
-  
-  // TRBS Hazard Assessment
-  selectedHazards: text("selected_hazards").array(),
-  hazardNotes: text("hazard_notes"),
-  completedMeasures: text("completed_measures").array(),
-  
-  // Approval tracking
-  departmentHeadApproval: boolean("department_head_approval").default(false),
-  departmentHeadApprovalDate: timestamp("department_head_approval_date"),
-  maintenanceApproval: boolean("maintenance_approval").default(false),
-  maintenanceApprovalDate: timestamp("maintenance_approval_date"),
-  safetyOfficerApproval: boolean("safety_officer_approval").default(false),
-  safetyOfficerApprovalDate: timestamp("safety_officer_approval_date"),
-  
-  // Performer information
-  performerName: text("performer_name"),
-  performerSignature: text("performer_signature"),
-  workStartedAt: timestamp("work_started_at"),
-  workCompletedAt: timestamp("work_completed_at"),
-  
-  // Safety assessment fields
-  immediateActions: text("immediate_actions"),
-  beforeWorkStarts: text("before_work_starts"),
-  complianceNotes: text("compliance_notes"),
-  
-  // Risk assessment fields
-  overallRisk: text("overall_risk"),
-  
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const aiSuggestions = pgTable("ai_suggestions", {
   id: serial("id").primaryKey(),
   permitId: integer("permit_id").references(() => permits.id).notNull(),
-  suggestionBatchId: text("suggestion_batch_id"), // Links to staging permit batch
+  stagingPermitId: integer("staging_permit_id").references(() => permitsStaging.id), // Link to staging permit
   suggestionType: text("suggestion_type").notNull(), // 'improvement', 'safety', 'compliance'
   fieldName: text("field_name"), // Which permit field this suggestion applies to
   originalValue: text("original_value"),
@@ -160,6 +104,8 @@ export const aiSuggestions = pgTable("ai_suggestions", {
   reasoning: text("reasoning").notNull(),
   priority: text("priority").notNull(), // 'low', 'medium', 'high', 'critical'
   status: text("status").notNull().default('pending'), // 'pending', 'accepted', 'rejected'
+  confidence: text("confidence"), // AI confidence as string "0.95"
+  batchId: text("batch_id"), // Group related suggestions
   appliedAt: timestamp("applied_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -198,6 +144,58 @@ export const permitAttachments = pgTable("permit_attachments", {
   uploadedBy: integer("uploaded_by").references(() => users.id),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Staging table for AI-processed permits
+export const permitsStaging = pgTable("permits_staging", {
+  id: serial("id").primaryKey(),
+  originalPermitId: integer("original_permit_id").references(() => permits.id).notNull(),
+  permitId: text("permit_id").notNull(), // Same as original
+  type: text("type").notNull(),
+  location: text("location").notNull(),
+  description: text("description").notNull(),
+  requestorId: integer("requestor_id").references(() => users.id),
+  requestorName: text("requestor_name").notNull(),
+  department: text("department").notNull(),
+  contactNumber: text("contact_number").notNull(),
+  emergencyContact: text("emergency_contact").notNull(),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: text("status").notNull().default('pending'),
+  riskLevel: text("risk_level"),
+  safetyOfficer: text("safety_officer"),
+  departmentHead: text("department_head"),
+  maintenanceApprover: text("maintenance_approver"),
+  identifiedHazards: text("identified_hazards"),
+  additionalComments: text("additional_comments"),
+  selectedHazards: text("selected_hazards").array(),
+  hazardNotes: text("hazard_notes"),
+  completedMeasures: text("completed_measures").array(),
+  departmentHeadApproval: boolean("department_head_approval").default(false),
+  departmentHeadApprovalDate: timestamp("department_head_approval_date"),
+  maintenanceApproval: boolean("maintenance_approval").default(false),
+  maintenanceApprovalDate: timestamp("maintenance_approval_date"),
+  safetyOfficerApproval: boolean("safety_officer_approval").default(false),
+  safetyOfficerApprovalDate: timestamp("safety_officer_approval_date"),
+  performerName: text("performer_name"),
+  performerSignature: text("performer_signature"),
+  workStartedAt: timestamp("work_started_at"),
+  workCompletedAt: timestamp("work_completed_at"),
+  immediateActions: text("immediate_actions"),
+  beforeWorkStarts: text("before_work_starts"),
+  complianceNotes: text("compliance_notes"),
+  overallRisk: text("overall_risk"),
+  
+  // AI processing metadata
+  aiProcessingStatus: text("ai_processing_status").default('processing'), // 'processing', 'completed', 'error'
+  aiProcessingStarted: timestamp("ai_processing_started").defaultNow(),
+  aiProcessingCompleted: timestamp("ai_processing_completed"),
+  changedFields: text("changed_fields").array(), // Array of field names that were changed
+  approvalStatus: text("approval_status").default('pending_review'), // 'pending_review', 'approved', 'rejected'
+  batchId: text("batch_id"), // For grouping related changes
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -283,17 +281,16 @@ export const insertPermitAttachmentSchema = createInsertSchema(permitAttachments
   createdAt: true,
 });
 
+export const insertPermitStagingSchema = createInsertSchema(permitsStaging).omit({
+  id: true,
+  aiProcessingStarted: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertSessionSchema = createInsertSchema(sessions).omit({
   id: true,
   createdAt: true,
-});
-
-export const insertPermitStagingSchema = createInsertSchema(permitsStaging).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  startDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

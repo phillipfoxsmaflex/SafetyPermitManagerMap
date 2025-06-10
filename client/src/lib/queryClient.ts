@@ -2,33 +2,16 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    let errorMessage = res.statusText;
-    try {
-      const text = await res.text();
-      if (text) {
-        try {
-          const jsonError = JSON.parse(text);
-          errorMessage = jsonError.message || text;
-        } catch {
-          errorMessage = text;
-        }
-      }
-    } catch {
-      // If we can't read the response, use status text
-    }
-    
-    const error = new Error(errorMessage);
-    (error as any).response = { data: { message: errorMessage }, status: res.status };
-    throw error;
+    const text = (await res.text()) || res.statusText;
+    throw new Error(`${res.status}: ${text}`);
   }
-  return res;
 }
 
 export async function apiRequest(
   url: string,
   method: string,
   data?: unknown | undefined,
-): Promise<any> {
+): Promise<Response> {
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -36,34 +19,7 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Check for errors first, but don't consume the response body yet
-  if (!res.ok) {
-    let errorMessage = res.statusText;
-    try {
-      const text = await res.text();
-      if (text) {
-        try {
-          const jsonError = JSON.parse(text);
-          errorMessage = jsonError.message || text;
-        } catch {
-          errorMessage = text;
-        }
-      }
-    } catch {
-      // If we can't read the response, use status text
-    }
-    
-    const error = new Error(errorMessage);
-    (error as any).response = { data: { message: errorMessage }, status: res.status };
-    throw error;
-  }
-  
-  // Return parsed JSON response for successful requests
-  const contentType = res.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return await res.json();
-  }
-  
+  await throwIfResNotOk(res);
   return res;
 }
 

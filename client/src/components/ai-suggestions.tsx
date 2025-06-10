@@ -16,16 +16,13 @@ import {
   Trash2,
   Lightbulb,
   Send,
-  Loader2,
-  GitCompare
+  Loader2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { PermitDiffView } from "./permit-diff-view";
 
 interface AiSuggestion {
   id: number;
   permitId: number;
-  suggestionBatchId?: string;
   suggestionType: string;
   fieldName?: string;
   originalValue?: string;
@@ -50,8 +47,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const [resultMessage, setResultMessage] = useState('');
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
   const [analysisStage, setAnalysisStage] = useState('checking');
-  const [diffViewOpen, setDiffViewOpen] = useState(false);
-  const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
 
   const { data: allSuggestions = [], isLoading, error } = useQuery<AiSuggestion[]>({
     queryKey: [`/api/permits/${permitId}/suggestions`],
@@ -65,29 +60,9 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     suggestion.status === 'pending' && suggestion.permitId === permitId
   );
 
-  // Get current batch ID from suggestions
-  const latestBatchId = suggestions.length > 0 && suggestions[0].suggestionBatchId 
-    ? suggestions[0].suggestionBatchId 
-    : null;
-
-  // Update current batch ID when suggestions change
-  if (latestBatchId && latestBatchId !== currentBatchId) {
-    setCurrentBatchId(latestBatchId);
-  }
-
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       setAnalysisStage('checking');
-      
-      // Check if webhook is configured before starting analysis
-      const response = await fetch('/api/webhook-configs');
-      const webhookConfigs = await response.json();
-      const activeWebhook = webhookConfigs.find((config: any) => config.isActive);
-      
-      if (!activeWebhook) {
-        throw new Error('Keine aktive Webhook-Konfiguration gefunden. Bitte konfigurieren Sie eine n8n Webhook-URL in den Einstellungen.');
-      }
-
       setAnalysisStage('analyzing');
       return apiRequest(`/api/permits/${permitId}/analyze`, "POST");
     },
@@ -95,34 +70,16 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setAnalysisDialogOpen(true);
       setIsAnalyzing(true);
     },
-    onSuccess: () => {
-      // Poll for new suggestions with proper completion detection
-      const pollInterval = setInterval(async () => {
-        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-        
-        // Check if suggestions have been received
-        const currentSuggestions = queryClient.getQueryData([`/api/permits/${permitId}/suggestions`]) as any[];
-        if (currentSuggestions && currentSuggestions.length > 0) {
-          clearInterval(pollInterval);
-          setIsAnalyzing(false);
-          setAnalysisDialogOpen(false);
-          setResultType('success');
-          setResultMessage(`AI-Analyse abgeschlossen. ${currentSuggestions.length} Verbesserungsvorschläge erhalten.`);
-          setResultDialogOpen(true);
-        }
-      }, 3000);
-
-      // Stop polling after 3 minutes with timeout message
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isAnalyzing) {
-          setIsAnalyzing(false);
-          setAnalysisDialogOpen(false);
-          setResultType('error');
-          setResultMessage('AI-Analyse-Timeout. Bitte versuchen Sie es erneut.');
-          setResultDialogOpen(true);
-        }
-      }, 180000);
+    onSuccess: (response: any) => {
+      setIsAnalyzing(false);
+      setAnalysisDialogOpen(false);
+      setResultType('success');
+      setResultMessage(`AI-Analyse gestartet. Staging-Permit erstellt mit Batch-ID: ${response.batchId}. Das n8n-System wird die Verbesserungen direkt in die Datenbank schreiben.`);
+      setResultDialogOpen(true);
+      
+      // Refresh suggestions and staging data
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/staging`] });
     },
     onError: (error: any) => {
       setIsAnalyzing(false);
@@ -135,68 +92,43 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      console.log('Applying suggestion:', suggestionId);
-      try {
-        const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
-        console.log('Apply response:', response);
-        return response;
-      } catch (error) {
-        console.error('API Request failed:', error);
-        throw error;
-      }
+      return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
     },
-    onSuccess: (data: any) => {
-      console.log('Apply success:', data);
+    onSuccess: () => {
       // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
-      setResultMessage(data?.message || 'Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
+      setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
     },
-    onError: (error: any) => {
-      console.error('Apply error details:', {
-        error,
-        message: error?.message,
-        response: error?.response,
-        stack: error?.stack
-      });
+    onError: () => {
       setResultType('error');
-      setResultMessage(error?.message || error?.response?.data?.message || 'Der Vorschlag konnte nicht übernommen werden.');
+      setResultMessage('Der Vorschlag konnte nicht übernommen werden.');
       setResultDialogOpen(true);
     },
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
-      console.log('Updating suggestion status:', { suggestionId, status });
-      const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
-      console.log('Status update response:', response);
-      return response;
+      return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
     },
     onSuccess: (data, variables) => {
-      console.log('Status update success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
       setResultDialogOpen(true);
     },
-    onError: (error: any) => {
-      console.error('Status update error:', error);
+    onError: () => {
       setResultType('error');
-      setResultMessage(error?.response?.data?.message || 'Fehler beim Aktualisieren des Vorschlags.');
+      setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
       setResultDialogOpen(true);
     },
   });
 
   const applyAllMutation = useMutation({
     mutationFn: async () => {
-      // Use staging permit apply if we have a batch ID, otherwise fall back to individual apply
-      if (currentBatchId) {
-        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}/apply`, "POST");
-      } else {
-        return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
-      }
+      return apiRequest(`/api/permits/${permitId}/suggestions/apply-all`, "POST");
     },
     onSuccess: (data: any) => {
       // Invalidate both suggestions and permit data when applying all suggestions
@@ -205,65 +137,44 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden übernommen');
       setResultDialogOpen(true);
-      // Clear current batch ID since suggestions are applied
-      setCurrentBatchId(null);
     },
-    onError: (error: any) => {
+    onError: () => {
       setResultType('error');
-      setResultMessage(error?.response?.data?.message || 'Fehler beim Übernehmen aller Vorschläge.');
+      setResultMessage('Fehler beim Übernehmen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
 
   const rejectAllMutation = useMutation({
     mutationFn: async () => {
-      // Use staging permit reject if we have a batch ID, otherwise fall back to individual reject
-      if (currentBatchId) {
-        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}`, "DELETE");
-      } else {
-        return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
-      }
+      return apiRequest(`/api/permits/${permitId}/suggestions/reject-all`, "POST");
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden abgelehnt');
       setResultDialogOpen(true);
-      // Clear current batch ID since suggestions are rejected
-      setCurrentBatchId(null);
     },
-    onError: (error: any) => {
+    onError: () => {
       setResultType('error');
-      setResultMessage(error?.response?.data?.message || 'Fehler beim Ablehnen aller Vorschläge.');
+      setResultMessage('Fehler beim Ablehnen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
 
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
-      console.log('Deleting all suggestions for permit:', permitId);
-      // Use staging permit delete if we have a batch ID, otherwise fall back to individual delete
-      if (currentBatchId) {
-        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}`, "DELETE");
-      } else {
-        return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
-      }
+      return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
     },
     onSuccess: (data: any) => {
-      console.log('Delete all success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
       setResultDialogOpen(true);
-      // Clear current batch ID since suggestions are deleted
-      if (currentBatchId) {
-        setCurrentBatchId(null);
-      }
     },
-    onError: (error: any) => {
-      console.error('Delete all error:', error);
+    onError: () => {
       setResultType('error');
-      setResultMessage(error?.response?.data?.message || 'Fehler beim Löschen aller Vorschläge.');
+      setResultMessage('Fehler beim Löschen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
@@ -336,18 +247,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
         
         {suggestions.length > 0 && (
           <div className="mt-4 flex gap-2 flex-wrap">
-            {currentBatchId && (
-              <Button
-                onClick={() => setDiffViewOpen(true)}
-                size="sm"
-                variant="outline"
-                className="text-blue-600 border-blue-600 hover:bg-blue-50"
-              >
-                <GitCompare className="h-4 w-4 mr-2" />
-                Änderungen anzeigen
-              </Button>
-            )}
-            
             <Button
               onClick={() => applyAllMutation.mutate()}
               disabled={applyAllMutation.isPending}
@@ -572,16 +471,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Diff View Dialog */}
-      {currentBatchId && (
-        <PermitDiffView
-          permitId={permitId}
-          batchId={currentBatchId}
-          open={diffViewOpen}
-          onOpenChange={setDiffViewOpen}
-        />
-      )}
     </Card>
   );
 }

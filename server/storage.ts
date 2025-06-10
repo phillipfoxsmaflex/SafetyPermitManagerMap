@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, permitsStaging, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type PermitStaging, type InsertPermitStaging } from "@shared/schema";
+import { users, permits, permitsStaging, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, type User, type InsertUser, type Permit, type InsertPermit, type PermitStaging, type InsertPermitStaging, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt } from "drizzle-orm";
 
@@ -82,22 +82,15 @@ export interface IStorage {
   deleteSession(sessionId: string): Promise<boolean>;
   cleanupExpiredSessions(): Promise<void>;
   
-  // Staging Permit operations
-  createStagingPermit(permit: InsertPermitStaging): Promise<PermitStaging>;
-  getStagingPermit(sourcePermitId: number, batchId: string): Promise<PermitStaging | undefined>;
-  getStagingPermitsByBatch(batchId: string): Promise<PermitStaging[]>;
-  deleteStagingPermitsBatch(batchId: string): Promise<boolean>;
-  applyStagingPermit(sourcePermitId: number, batchId: string): Promise<boolean>;
-  getPermitDiff(sourcePermitId: number, batchId: string): Promise<{
-    original: Permit;
-    staged: PermitStaging;
-    changes: Array<{
-      field: string;
-      originalValue: any;
-      stagedValue: any;
-      hasChanged: boolean;
-    }>;
-  } | null>;
+  // Permit Staging operations for AI processing
+  createStagingPermit(originalPermitId: number): Promise<PermitStaging>;
+  getStagingPermit(originalPermitId: number): Promise<PermitStaging | undefined>;
+  getStagingPermitById(stagingId: number): Promise<PermitStaging | undefined>;
+  updateStagingPermit(stagingId: number, updates: Partial<PermitStaging>): Promise<PermitStaging | undefined>;
+  applyStagingChanges(originalPermitId: number): Promise<Permit | undefined>;
+  rejectStagingChanges(originalPermitId: number): Promise<boolean>;
+  getPermitDiff(originalPermitId: number): Promise<{field: string, originalValue: any, stagingValue: any}[]>;
+  markStagingComplete(stagingId: number): Promise<PermitStaging | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -950,154 +943,170 @@ export class DatabaseStorage implements IStorage {
       .where(lt(sessions.expiresAt, new Date()));
   }
 
-  // Staging Permit operations
-  async createStagingPermit(insertPermit: InsertPermitStaging): Promise<PermitStaging> {
-    const [stagingPermit] = await db
-      .insert(permitsStaging)
-      .values({
-        ...insertPermit,
-        startDate: insertPermit.startDate ? new Date(insertPermit.startDate) : null,
-        endDate: insertPermit.endDate ? new Date(insertPermit.endDate) : null,
-      })
+  // Permit Staging operations for AI processing
+  async createStagingPermit(originalPermitId: number): Promise<PermitStaging> {
+    const originalPermit = await this.getPermit(originalPermitId);
+    if (!originalPermit) {
+      throw new Error("Original permit not found");
+    }
+
+    const stagingData: InsertPermitStaging = {
+      originalPermitId,
+      permitId: originalPermit.permitId,
+      type: originalPermit.type,
+      location: originalPermit.location,
+      description: originalPermit.description,
+      requestorId: originalPermit.requestorId,
+      requestorName: originalPermit.requestorName,
+      department: originalPermit.department,
+      contactNumber: originalPermit.contactNumber,
+      emergencyContact: originalPermit.emergencyContact,
+      startDate: originalPermit.startDate,
+      endDate: originalPermit.endDate,
+      status: originalPermit.status,
+      riskLevel: originalPermit.riskLevel,
+      safetyOfficer: originalPermit.safetyOfficer,
+      departmentHead: originalPermit.departmentHead,
+      maintenanceApprover: originalPermit.maintenanceApprover,
+      identifiedHazards: originalPermit.identifiedHazards,
+      additionalComments: originalPermit.additionalComments,
+      selectedHazards: originalPermit.selectedHazards,
+      hazardNotes: originalPermit.hazardNotes,
+      completedMeasures: originalPermit.completedMeasures,
+      departmentHeadApproval: originalPermit.departmentHeadApproval,
+      departmentHeadApprovalDate: originalPermit.departmentHeadApprovalDate,
+      maintenanceApproval: originalPermit.maintenanceApproval,
+      maintenanceApprovalDate: originalPermit.maintenanceApprovalDate,
+      safetyOfficerApproval: originalPermit.safetyOfficerApproval,
+      safetyOfficerApprovalDate: originalPermit.safetyOfficerApprovalDate,
+      performerName: originalPermit.performerName,
+      performerSignature: originalPermit.performerSignature,
+      workStartedAt: originalPermit.workStartedAt,
+      workCompletedAt: originalPermit.workCompletedAt,
+      immediateActions: originalPermit.immediateActions,
+      beforeWorkStarts: originalPermit.beforeWorkStarts,
+      complianceNotes: originalPermit.complianceNotes,
+      overallRisk: originalPermit.overallRisk,
+      aiProcessingStatus: 'processing',
+      approvalStatus: 'pending_review',
+      batchId: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      changedFields: []
+    };
+
+    // Delete existing staging permit if exists
+    await db.delete(permitsStaging).where(eq(permitsStaging.originalPermitId, originalPermitId));
+
+    const [stagingPermit] = await db.insert(permitsStaging).values(stagingData).returning();
+    return stagingPermit;
+  }
+
+  async getStagingPermit(originalPermitId: number): Promise<PermitStaging | undefined> {
+    const [staging] = await db.select().from(permitsStaging).where(eq(permitsStaging.originalPermitId, originalPermitId));
+    return staging;
+  }
+
+  async getStagingPermitById(stagingId: number): Promise<PermitStaging | undefined> {
+    const [staging] = await db.select().from(permitsStaging).where(eq(permitsStaging.id, stagingId));
+    return staging;
+  }
+
+  async updateStagingPermit(stagingId: number, updates: Partial<PermitStaging>): Promise<PermitStaging | undefined> {
+    const [updatedStaging] = await db.update(permitsStaging)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(permitsStaging.id, stagingId))
       .returning();
-    return stagingPermit;
+    return updatedStaging;
   }
 
-  async getStagingPermit(sourcePermitId: number, batchId: string): Promise<PermitStaging | undefined> {
-    const [stagingPermit] = await db
-      .select()
-      .from(permitsStaging)
-      .where(and(
-        eq(permitsStaging.sourcePermitId, sourcePermitId),
-        eq(permitsStaging.suggestionBatchId, batchId)
-      ))
-      .limit(1);
-    return stagingPermit;
+  async applyStagingChanges(originalPermitId: number): Promise<Permit | undefined> {
+    const staging = await this.getStagingPermit(originalPermitId);
+    if (!staging) {
+      throw new Error("No staging permit found");
+    }
+
+    const updates: Partial<Permit> = {
+      type: staging.type,
+      location: staging.location,
+      description: staging.description,
+      riskLevel: staging.riskLevel,
+      safetyOfficer: staging.safetyOfficer,
+      departmentHead: staging.departmentHead,
+      maintenanceApprover: staging.maintenanceApprover,
+      identifiedHazards: staging.identifiedHazards,
+      additionalComments: staging.additionalComments,
+      selectedHazards: staging.selectedHazards,
+      hazardNotes: staging.hazardNotes,
+      completedMeasures: staging.completedMeasures,
+      immediateActions: staging.immediateActions,
+      beforeWorkStarts: staging.beforeWorkStarts,
+      complianceNotes: staging.complianceNotes,
+      overallRisk: staging.overallRisk,
+      updatedAt: new Date()
+    };
+
+    const updatedPermit = await this.updatePermit(originalPermitId, updates);
+    
+    await this.updateStagingPermit(staging.id, { 
+      approvalStatus: 'approved',
+      aiProcessingCompleted: new Date()
+    });
+
+    return updatedPermit;
   }
 
-  async getStagingPermitsByBatch(batchId: string): Promise<PermitStaging[]> {
-    return await db
-      .select()
-      .from(permitsStaging)
-      .where(eq(permitsStaging.suggestionBatchId, batchId))
-      .orderBy(desc(permitsStaging.createdAt));
-  }
-
-  async deleteStagingPermitsBatch(batchId: string): Promise<boolean> {
-    try {
-      const result = await db
-        .delete(permitsStaging)
-        .where(eq(permitsStaging.suggestionBatchId, batchId));
-      return (result.rowCount || 0) > 0;
-    } catch (error) {
-      console.error('Error deleting staging permits batch:', error);
+  async rejectStagingChanges(originalPermitId: number): Promise<boolean> {
+    const staging = await this.getStagingPermit(originalPermitId);
+    if (!staging) {
       return false;
     }
+
+    await this.updateStagingPermit(staging.id, { 
+      approvalStatus: 'rejected',
+      aiProcessingCompleted: new Date()
+    });
+
+    await db.delete(permitsStaging).where(eq(permitsStaging.originalPermitId, originalPermitId));
+    return true;
   }
 
-  async applyStagingPermit(sourcePermitId: number, batchId: string): Promise<boolean> {
-    try {
-      // Get staging permit
-      const stagingPermit = await this.getStagingPermit(sourcePermitId, batchId);
-      if (!stagingPermit) return false;
-
-      // Update original permit with staging data, converting dates properly
-      const { id, sourcePermitId: _, suggestionBatchId: __, createdAt: ___, ...updateData } = stagingPermit;
-      
-      // Convert string dates back to Date objects for database
-      const processedUpdateData = {
-        ...updateData,
-        startDate: updateData.startDate ? new Date(updateData.startDate) : null,
-        endDate: updateData.endDate ? new Date(updateData.endDate) : null,
-        updatedAt: new Date()
-      };
-      
-      const [updatedPermit] = await db
-        .update(permits)
-        .set(processedUpdateData)
-        .where(eq(permits.id, sourcePermitId))
-        .returning();
-
-      if (!updatedPermit) return false;
-
-      // Mark related AI suggestions as accepted
-      await db
-        .update(aiSuggestions)
-        .set({ 
-          status: 'accepted',
-          appliedAt: new Date()
-        })
-        .where(and(
-          eq(aiSuggestions.permitId, sourcePermitId),
-          eq(aiSuggestions.suggestionBatchId, batchId)
-        ));
-
-      // Clean up staging permit
-      await this.deleteStagingPermitsBatch(batchId);
-
-      return true;
-    } catch (error) {
-      console.error('Error applying staging permit:', error);
-      return false;
+  async getPermitDiff(originalPermitId: number): Promise<{field: string, originalValue: any, stagingValue: any}[]> {
+    const original = await this.getPermit(originalPermitId);
+    const staging = await this.getStagingPermit(originalPermitId);
+    
+    if (!original || !staging) {
+      return [];
     }
-  }
 
-  async getPermitDiff(sourcePermitId: number, batchId: string): Promise<{
-    original: Permit;
-    staged: PermitStaging;
-    changes: Array<{
-      field: string;
-      originalValue: any;
-      stagedValue: any;
-      hasChanged: boolean;
-    }>;
-  } | null> {
-    try {
-      // Get original permit
-      const original = await this.getPermit(sourcePermitId);
-      if (!original) return null;
+    const diff: {field: string, originalValue: any, stagingValue: any}[] = [];
+    const fieldsToCompare = [
+      'type', 'location', 'description', 'riskLevel', 'safetyOfficer', 
+      'departmentHead', 'maintenanceApprover', 'identifiedHazards', 
+      'additionalComments', 'selectedHazards', 'hazardNotes', 
+      'completedMeasures', 'immediateActions', 'beforeWorkStarts', 
+      'complianceNotes', 'overallRisk'
+    ];
 
-      // Get staging permit
-      const staged = await this.getStagingPermit(sourcePermitId, batchId);
-      if (!staged) return null;
-
-      // Compare fields and build diff
-      const changes = [];
-      const fieldsToCompare = [
-        'type', 'location', 'description', 'requestorName', 'department',
-        'contactNumber', 'emergencyContact', 'riskLevel', 'safetyOfficer',
-        'departmentHead', 'maintenanceApprover', 'identifiedHazards',
-        'additionalComments', 'selectedHazards', 'hazardNotes',
-        'completedMeasures', 'immediateActions', 'beforeWorkStarts',
-        'complianceNotes', 'overallRisk'
-      ];
-
-      for (const field of fieldsToCompare) {
-        const originalValue = (original as any)[field];
-        const stagedValue = (staged as any)[field];
-        
-        let hasChanged = false;
-        
-        // Handle array comparisons
-        if (Array.isArray(originalValue) || Array.isArray(stagedValue)) {
-          hasChanged = JSON.stringify(originalValue || []) !== JSON.stringify(stagedValue || []);
-        } else {
-          hasChanged = originalValue !== stagedValue;
-        }
-
-        changes.push({
+    for (const field of fieldsToCompare) {
+      const originalValue = (original as any)[field];
+      const stagingValue = (staging as any)[field];
+      
+      if (JSON.stringify(originalValue) !== JSON.stringify(stagingValue)) {
+        diff.push({
           field,
           originalValue,
-          stagedValue,
-          hasChanged
+          stagingValue
         });
       }
-
-      return { original, staged, changes };
-    } catch (error) {
-      console.error('Error getting permit diff:', error);
-      return null;
     }
+
+    return diff;
+  }
+
+  async markStagingComplete(stagingId: number): Promise<PermitStaging | undefined> {
+    return await this.updateStagingPermit(stagingId, {
+      aiProcessingStatus: 'completed',
+      aiProcessingCompleted: new Date()
+    });
   }
 }
 

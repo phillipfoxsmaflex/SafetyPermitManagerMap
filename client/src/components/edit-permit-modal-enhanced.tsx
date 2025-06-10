@@ -35,7 +35,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { AiSuggestions } from "@/components/ai-suggestions";
+import { AiStagingManager } from "@/components/ai-staging-manager";
 import { SignaturePad } from "@/components/signature-pad";
 import { PermitAttachments } from "@/components/permit-attachments";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
@@ -1101,7 +1101,7 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
               </TabsContent>
 
               <TabsContent value="ai" className="space-y-6">
-                <AiSuggestions permitId={permit.id} />
+                <AiStagingManager permitId={permit.id} />
               </TabsContent>
             </Tabs>
 

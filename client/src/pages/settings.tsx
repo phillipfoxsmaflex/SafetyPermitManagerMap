@@ -225,30 +225,17 @@ function WebhookConfigSection() {
           </p>
           
           <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">HTTP POST Endpoint für n8n</h4>
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Neue AI-Integration</h4>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-              Kopieren Sie diese URL und fügen Sie sie in Ihren n8n HTTP Request Node ein:
+              Das neue AI-System schreibt Verbesserungen direkt in die Datenbank. Konfigurieren Sie n8n mit den Datenbankverbindungsdaten aus den Admin-Einstellungen.
             </p>
-            <div className="bg-white dark:bg-gray-800 p-2 rounded border font-mono text-sm">
-              {window.location.origin}/api/webhooks/suggestions
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/suggestions`)}
-                className="text-xs"
-              >
-                URL kopieren
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open('/api/documentation/n8n-integration', '_blank')}
-                className="text-xs"
-              >
-                📖 n8n Setup Dokumentation
-              </Button>
+            <div className="mt-3">
+              <Link href="/admin-settings">
+                <Button size="sm" variant="outline">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Zu den Admin-Einstellungen
+                </Button>
+              </Link>
             </div>
           </div>
 
