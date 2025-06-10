@@ -135,36 +135,46 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const applySuggestionMutation = useMutation({
     mutationFn: async (suggestionId: number) => {
-      return apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      console.log('Applying suggestion:', suggestionId);
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/apply`, "POST");
+      console.log('Apply response:', response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      console.log('Apply success:', data);
       // Only invalidate suggestions and specific permit data, not the main permits list
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       setResultType('success');
-      setResultMessage('Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
+      setResultMessage(data?.message || 'Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Apply error:', error);
       setResultType('error');
-      setResultMessage('Der Vorschlag konnte nicht übernommen werden.');
+      setResultMessage(error?.response?.data?.message || 'Der Vorschlag konnte nicht übernommen werden.');
       setResultDialogOpen(true);
     },
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ suggestionId, status }: { suggestionId: number; status: string }) => {
-      return apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+      console.log('Updating suggestion status:', { suggestionId, status });
+      const response = await apiRequest(`/api/suggestions/${suggestionId}/status`, "PATCH", { status });
+      console.log('Status update response:', response);
+      return response;
     },
     onSuccess: (data, variables) => {
+      console.log('Status update success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(variables.status === 'accepted' ? 'Änderung akzeptiert' : 'Änderung abgelehnt');
       setResultDialogOpen(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Status update error:', error);
       setResultType('error');
-      setResultMessage('Fehler beim Aktualisieren des Vorschlags.');
+      setResultMessage(error?.response?.data?.message || 'Fehler beim Aktualisieren des Vorschlags.');
       setResultDialogOpen(true);
     },
   });
@@ -221,17 +231,29 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      console.log('Deleting all suggestions for permit:', permitId);
+      // Use staging permit delete if we have a batch ID, otherwise fall back to individual delete
+      if (currentBatchId) {
+        return apiRequest(`/api/permits/${permitId}/staging/${currentBatchId}`, "DELETE");
+      } else {
+        return apiRequest(`/api/permits/${permitId}/suggestions`, "DELETE");
+      }
     },
     onSuccess: (data: any) => {
+      console.log('Delete all success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       setResultType('success');
       setResultMessage(data?.message || 'Alle Vorschläge wurden gelöscht');
       setResultDialogOpen(true);
+      // Clear current batch ID since suggestions are deleted
+      if (currentBatchId) {
+        setCurrentBatchId(null);
+      }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Delete all error:', error);
       setResultType('error');
-      setResultMessage('Fehler beim Löschen aller Vorschläge.');
+      setResultMessage(error?.response?.data?.message || 'Fehler beim Löschen aller Vorschläge.');
       setResultDialogOpen(true);
     },
   });
