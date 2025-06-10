@@ -463,18 +463,45 @@ export class DatabaseStorage implements IStorage {
     try {
       const { fieldName, suggestedValue, reasoning, suggestionType } = suggestion;
       
-      // TRBS hazard category mappings based on keywords and suggestion type
+      // Enhanced TRBS hazard category mappings with comprehensive keywords
       const trbsMapping: Record<string, string[]> = {
-        'mechanical': ['0-0', '0-1', '0-2', '0-3', '0-4'],
-        'absturz': ['1-0', '1-1', '1-2', '1-3'],
-        'brand': ['2-0', '2-1', '2-2'],
-        'explosion': ['3-0', '3-1', '3-2'],
-        'electrical': ['4-0', '4-1', '4-2'],
-        'chemisch': ['5-0', '5-1', '5-2', '5-3'],
-        'biologisch': ['6-0', '6-1'],
-        'physikalisch': ['7-0', '7-1', '7-2'],
-        'ergonomisch': ['8-0', '8-1'],
-        'psychisch': ['9-0', '9-1']
+        // Mechanische Gefährdungen
+        'maschine|gerät|werkzeug|schnitt|quetsch|stoß|uncontrolled|beweglich|rotating|sharp': ['0-0', '0-1', '0-2', '0-3', '0-4'],
+        
+        // Absturzgefährdungen
+        'absturz|höhe|leiter|gerüst|plattform|fall|sturz|height|ladder|scaffold': ['1-0', '1-1', '1-2', '1-3'],
+        
+        // Brand- und Explosionsgefährdungen
+        'brand|feuer|flamm|entzünd|heiß|funken|zündung|fire|ignition|hot|spark': ['2-0', '2-1', '2-2'],
+        'explosion|explosiv|gas|dampf|staub|explosive|vapor|dust|detonation': ['3-0', '3-1', '3-2'],
+        
+        // Elektrische Gefährdungen
+        'elektr|strom|spannung|isolation|erdung|kurzschluss|electrical|voltage|current|shock': ['4-0', '4-1', '4-2'],
+        
+        // Gefahrstoffe
+        'chemisch|giftig|ätzend|reizend|chemical|toxic|corrosive|irritant|carcinogen': ['5-0', '5-1', '5-2', '5-3'],
+        'ethanol|lösungsmittel|säure|base|solvent|acid|alkali': ['5-0', '5-1'],
+        
+        // Biologische Gefährdungen
+        'biologisch|bakterien|viren|pilze|infectious|bacteria|virus|fungi|contamination': ['6-0', '6-1'],
+        
+        // Physikalische Einwirkungen
+        'lärm|vibration|strahlung|temperatur|noise|radiation|temperature|heat|cold': ['7-0', '7-1', '7-2'],
+        
+        // Ergonomische Gefährdungen
+        'ergonomisch|heben|tragen|haltung|wiederholung|ergonomic|lifting|posture|repetitive': ['8-0', '8-1'],
+        
+        // Psychische Faktoren
+        'stress|belastung|zeitdruck|überforderung|psychological|mental|pressure|overload': ['9-0', '9-1'],
+        
+        // Atemschutz und Inhalation
+        'atemschutz|inhalation|dämpfe|aerosol|respiratory|breathing|fumes|vapor|inhale': ['5-2', '7-0'],
+        
+        // Augenschutz
+        'auge|spritzer|strahlung|eye|splash|radiation|vision': ['5-3', '7-2'],
+        
+        // Hautschutz
+        'haut|kontakt|absorption|skin|contact|dermal|gloves': ['5-1', '5-3']
       };
 
       let currentSelectedHazards: string[] = [];
@@ -494,15 +521,21 @@ export class DatabaseStorage implements IStorage {
       let mappedHazards: string[] = [];
       let hasNewMapping = false;
 
-      // Map based on content analysis
-      for (const [keyword, hazardIds] of Object.entries(trbsMapping)) {
-        if (suggestionText.includes(keyword)) {
+      console.log(`Analyzing suggestion for TRBS mapping: "${suggestionText}"`);
+
+      // Map based on content analysis using regex patterns
+      for (const [keywordPattern, hazardIds] of Object.entries(trbsMapping)) {
+        const regex = new RegExp(keywordPattern, 'i');
+        if (regex.test(suggestionText)) {
+          console.log(`Matched pattern "${keywordPattern}" -> hazards: ${hazardIds.join(', ')}`);
+          
           // Add relevant hazard if not already present
           for (const hazardId of hazardIds) {
             if (!currentSelectedHazards.includes(hazardId)) {
               currentSelectedHazards.push(hazardId);
               mappedHazards.push(hazardId);
               hasNewMapping = true;
+              console.log(`Added hazard ${hazardId} to selected hazards`);
             }
           }
           
@@ -510,8 +543,9 @@ export class DatabaseStorage implements IStorage {
           if (hazardIds.length > 0) {
             const primaryHazard = hazardIds[0];
             if (!(primaryHazard in currentHazardNotes)) {
-              currentHazardNotes[primaryHazard] = reasoning;
+              currentHazardNotes[primaryHazard] = `AI-Vorschlag: ${reasoning}`;
               hasNewMapping = true;
+              console.log(`Added note for hazard ${primaryHazard}`);
             }
           }
         }
@@ -548,6 +582,10 @@ export class DatabaseStorage implements IStorage {
 
       // Update permit with new TRBS mappings if any were added
       if (hasNewMapping) {
+        console.log(`Updating permit ${permit.id} with new TRBS mappings:`);
+        console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
+        console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
+        
         await db
           .update(permits)
           .set({
@@ -557,7 +595,9 @@ export class DatabaseStorage implements IStorage {
           })
           .where(eq(permits.id, permit.id));
 
-        console.log(`Mapped AI suggestion to TRBS categories: ${mappedHazards.join(', ')}`);
+        console.log(`Successfully mapped AI suggestion to TRBS categories: ${mappedHazards.join(', ')}`);
+      } else {
+        console.log('No TRBS mappings were added for this suggestion');
       }
 
     } catch (error) {

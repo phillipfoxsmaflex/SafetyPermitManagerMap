@@ -332,6 +332,18 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
     }
   }, [currentPermit?.selectedHazards]);
 
+  React.useEffect(() => {
+    if (currentPermit?.hazardNotes !== undefined) {
+      form.setValue("hazardNotes", currentPermit.hazardNotes);
+      try {
+        const notes = JSON.parse(currentPermit.hazardNotes);
+        setHazardNotes(notes);
+      } catch (e) {
+        setHazardNotes({});
+      }
+    }
+  }, [currentPermit?.hazardNotes]);
+
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
       const response = await apiRequest(`/api/permits/${permit?.id}`, "PATCH", data);
