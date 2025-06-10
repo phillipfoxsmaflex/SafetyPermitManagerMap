@@ -230,7 +230,11 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
         })
         .catch((error) => {
           console.error(`ApplyAll fetch error:`, error);
-          reject(new Error(`Network Error: ${error.message}`));
+          console.error(`ApplyAll error type:`, typeof error);
+          console.error(`ApplyAll error keys:`, Object.keys(error));
+          console.error(`ApplyAll error string:`, String(error));
+          console.error(`ApplyAll error JSON:`, JSON.stringify(error));
+          reject(new Error(`Network Error: ${error?.message || 'Unknown fetch error'}`));
         });
       });
     },
@@ -328,7 +332,26 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const handleApplySuggestion = async (suggestionId: number) => {
     console.log(`Direct test: Applying suggestion ${suggestionId}`);
     
+    // First test basic connectivity
     try {
+      console.log("Testing basic connectivity...");
+      const testResponse = await fetch(`/api/permits/${permitId}/suggestions`, {
+        method: "GET",
+        credentials: "include",
+      });
+      console.log(`Connectivity test status: ${testResponse.status}`);
+    } catch (connectError) {
+      console.error("Basic connectivity failed:", connectError);
+      toast({
+        title: "Verbindungsfehler",
+        description: "Keine Verbindung zum Server möglich.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      console.log("Proceeding with apply request...");
       const response = await fetch(`/api/suggestions/${suggestionId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -336,6 +359,8 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       });
       
       console.log(`Direct test: Response status: ${response.status}`);
+      console.log(`Direct test: Response ok: ${response.ok}`);
+      console.log(`Direct test: Response headers:`, response.headers);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -364,10 +389,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       console.error("Direct test: Catch block error:", error);
       console.error("Direct test: Error type:", typeof error);
       console.error("Direct test: Error constructor:", error?.constructor?.name);
+      console.error("Direct test: Error keys:", Object.keys(error || {}));
+      console.error("Direct test: Error string:", String(error));
       
       toast({
         title: "Fehler",
-        description: `Netzwerk Fehler: ${error?.message || String(error)}`,
+        description: "Netzwerk Fehler beim Übernehmen des Vorschlags.",
         variant: "destructive",
       });
     }
