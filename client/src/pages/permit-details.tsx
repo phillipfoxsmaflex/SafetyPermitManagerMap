@@ -251,12 +251,13 @@ export default function PermitDetails() {
                     const category = categories.find(c => c.id === categoryId);
                     const hazard = category?.hazards[hazardIndex];
                     
-                    return hazard ? (
+                    if (!hazard) return null;
+                    return (
                       <div key={hazardId} className="text-sm mb-2">
                         <span className="font-medium text-blue-700">{hazard}:</span>
                         <span className="text-gray-600 ml-2">{note}</span>
                       </div>
-                    ) : null;
+                    );
                   })}
                 </div>
               )}

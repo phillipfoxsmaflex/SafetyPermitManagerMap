@@ -12,6 +12,7 @@ import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
 import UserManagement from "@/pages/user-management";
 import Approvals from "@/pages/approvals";
+import AdminSettings from "@/pages/admin-settings";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
@@ -56,6 +57,11 @@ function Router() {
       <Route path="/user-management">
         <ProtectedRoute>
           <UserManagement />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin-settings">
+        <ProtectedRoute>
+          <AdminSettings />
         </ProtectedRoute>
       </Route>
       <Route>
