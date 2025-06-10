@@ -69,75 +69,93 @@ function DiffView({ original, suggested, fieldName }: { original?: string; sugge
   );
 }
 
-// Debugged fetch wrapper with comprehensive error handling
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
+// XMLHttpRequest-based fetch wrapper to avoid NetworkError with fetch API
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
   console.log('fetchWithAuth called:', url, options);
-  
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      ...options,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
 
-    console.log('Response status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      let errorMessage = '';
-      try {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
-        } else {
-          errorMessage = await response.text() || `HTTP ${response.status} ${response.statusText}`;
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const method = (options.method as string) || 'GET';
+    
+    xhr.open(method, url, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    
+    // Add any custom headers
+    if (options.headers) {
+      Object.entries(options.headers).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          xhr.setRequestHeader(key, value);
         }
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        errorMessage = `HTTP ${response.status} ${response.statusText}`;
-      }
-      
-      console.error('Request failed:', errorMessage);
-      const error = new Error(errorMessage);
-      error.name = 'HTTPError';
-      throw error;
+      });
     }
 
-    try {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log('Success response:', data);
-        return data;
+    xhr.onload = function() {
+      console.log('XHR Response status:', xhr.status, xhr.statusText);
+      
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const contentType = xhr.getResponseHeader('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Success response:', data);
+            resolve(data);
+          } else {
+            console.log('Success response (text):', xhr.responseText);
+            resolve(xhr.responseText);
+          }
+        } catch (parseError) {
+          console.error('Error parsing success response:', parseError);
+          reject(new Error('Failed to parse response'));
+        }
       } else {
-        const text = await response.text();
-        console.log('Success response (text):', text);
-        return text;
+        let errorMessage = '';
+        try {
+          const contentType = xhr.getResponseHeader('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = JSON.parse(xhr.responseText);
+            errorMessage = errorData.message || errorData.error || `HTTP ${xhr.status}`;
+          } else {
+            errorMessage = xhr.responseText || `HTTP ${xhr.status} ${xhr.statusText}`;
+          }
+        } catch (parseError) {
+          errorMessage = `HTTP ${xhr.status} ${xhr.statusText}`;
+        }
+        
+        console.error('Request failed:', errorMessage);
+        const error = new Error(errorMessage);
+        (error as any).name = 'HTTPError';
+        reject(error);
       }
-    } catch (parseError) {
-      console.error('Error parsing success response:', parseError);
-      throw new Error('Failed to parse response');
-    }
-  } catch (error: unknown) {
-    const errorDetails = {
-      name: error instanceof Error ? error.name : 'UnknownError',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      url,
-      options
     };
-    console.error('Network/fetch error details:', errorDetails);
-    
-    if (error instanceof Error) {
-      throw error;
+
+    xhr.onerror = function() {
+      const errorDetails = {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        readyState: xhr.readyState,
+        url,
+        options
+      };
+      console.error('XHR error details:', errorDetails);
+      reject(new Error(`Network request failed: ${xhr.statusText || 'Unknown network error'}`));
+    };
+
+    xhr.ontimeout = function() {
+      console.error('XHR timeout:', url);
+      reject(new Error('Request timeout'));
+    };
+
+    // Set timeout (10 seconds)
+    xhr.timeout = 10000;
+
+    // Send the request
+    if (options.body) {
+      xhr.send(options.body as string);
+    } else {
+      xhr.send();
     }
-    
-    throw new Error(`Network request failed: ${String(error)}`);
-  }
+  });
 }
 
 export function AiSuggestionsNew({ permitId }: AiSuggestionsProps) {
