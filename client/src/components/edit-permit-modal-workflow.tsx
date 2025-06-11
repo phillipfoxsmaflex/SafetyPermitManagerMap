@@ -522,6 +522,23 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Workflow-Buttons im Footer */}
+        {currentPermit && user && (
+          <div className="px-6 py-4 border-t bg-gray-50">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Workflow-Aktionen</h3>
+              <div className="flex gap-2">
+                <WorkflowButtons
+                  permit={currentPermit}
+                  currentUser={user}
+                  onAction={handleWorkflowAction}
+                  isLoading={workflowMutation.isPending}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
