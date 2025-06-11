@@ -981,6 +981,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedMeasures: permit.completedMeasures,
         identifiedHazards: permit.identifiedHazards,
         additionalComments: permit.additionalComments,
+        // Note: immediateMeasures and preventiveMeasures not in current schema
+        immediateActions: permit.immediateActions,
+        beforeWorkStarts: permit.beforeWorkStarts,
+        complianceNotes: permit.complianceNotes,
+        overallRisk: permit.overallRisk,
+        
+        // Work execution tracking
+        performerSignature: permit.performerSignature,
         
         // Approval status
         departmentHeadApproval: permit.departmentHeadApproval,

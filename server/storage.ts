@@ -432,6 +432,7 @@ export class DatabaseStorage implements IStorage {
   private sanitizeSuggestionValue(fieldName: string, suggestedValue: any): any {
     try {
       switch (fieldName) {
+        // Array fields
         case 'selectedHazards':
         case 'completedMeasures':
           if (Array.isArray(suggestedValue)) {
@@ -491,12 +492,36 @@ export class DatabaseStorage implements IStorage {
         case 'beforeWorkStarts':
         case 'complianceNotes':
         case 'additionalComments':
-          // Safety assessment fields - ensure text format
-          return String(suggestedValue);
+        case 'identifiedHazards':
+        case 'location':
+        case 'description':
+        case 'requestorName':
+        case 'department':
+        case 'contactNumber':
+        case 'emergencyContact':
+        case 'performerName':
+        case 'performerSignature':
+        case 'overallRisk':
+          // Text fields - ensure string format
+          return String(suggestedValue || '');
+
+        case 'departmentHeadApproval':
+        case 'safetyOfficerApproval':
+        case 'maintenanceApproval':
+          // Boolean fields
+          return Boolean(suggestedValue);
+
+        case 'departmentHeadId':
+        case 'safetyOfficerId':
+        case 'maintenanceApproverId':
+        case 'workLocationId':
+          // ID fields - ensure valid number or null
+          const idValue = parseInt(String(suggestedValue));
+          return isNaN(idValue) ? null : idValue;
 
         default:
-          // For text fields, ensure it's a string
-          return String(suggestedValue);
+          // For any other text fields, ensure it's a string
+          return String(suggestedValue || '');
       }
     } catch (error) {
       console.error(`Error sanitizing value for ${fieldName}:`, error);
