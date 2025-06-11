@@ -1124,7 +1124,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error sending permit for analysis:", error);
-      res.status(500).json({ message: "Failed to send permit for analysis" });
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        permitId: req.params.id
+      });
+      res.status(500).json({ 
+        message: "Failed to send permit for analysis",
+        error: error.message 
+      });
     }
   });
 
