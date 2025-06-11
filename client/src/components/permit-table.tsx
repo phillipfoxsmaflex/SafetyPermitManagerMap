@@ -48,7 +48,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
     mutationFn: async ({ permitId, actionId, nextStatus }: { permitId: number; actionId: string; nextStatus: string }) => {
       return apiRequest(`/api/permits/${permitId}/workflow`, {
         method: 'POST',
-        body: { actionId, nextStatus }
+        body: { action: actionId, nextStatus }
       });
     },
     onSuccess: () => {
