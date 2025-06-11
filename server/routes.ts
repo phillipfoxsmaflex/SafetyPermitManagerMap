@@ -11,7 +11,10 @@ import { z } from "zod";
 // Helper function to format TRBS data for webhook
 function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes: string | null) {
   try {
-    const trbsData = require('../client/src/data/trbs_hazards.json');
+    const fs = require('fs');
+    const path = require('path');
+    const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
+    const trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
     
     let hazardNotesObj: Record<string, string> = {};
     try {
@@ -21,53 +24,62 @@ function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes:
       hazardNotesObj = {};
     }
     
+    const selectedHazardsList = selectedHazards || [];
     const formattedCategories: any[] = [];
-  
-  if (!selectedHazards || selectedHazards.length === 0) {
-    return formattedCategories;
-  }
-  
-  // Group selected hazards by category
-  const hazardsByCategory: Record<string, string[]> = {};
-  
-  selectedHazards.forEach(hazardId => {
-    const [categoryId] = hazardId.split('-');
-    if (!hazardsByCategory[categoryId]) {
-      hazardsByCategory[categoryId] = [];
-    }
-    hazardsByCategory[categoryId].push(hazardId);
-  });
-  
-  // Format each category with detailed information
-  Object.keys(hazardsByCategory).forEach(categoryId => {
-    const categoryIndex = parseInt(categoryId) - 1;
-    const category = trbsData.categories[categoryIndex];
     
-    if (category) {
-      const categoryHazards = hazardsByCategory[categoryId].map(hazardId => {
-        const [, hazardIndex] = hazardId.split('-');
-        const hazard = category.hazards[parseInt(hazardIndex)];
+    // Process all TRBS categories with complete hazard information
+    trbsData.categories.forEach((category: any) => {
+      const categoryHazards = category.hazards.map((hazard: any, hazardIndex: number) => {
+        const hazardId = `${category.id}-${hazardIndex}`;
+        const isSelected = selectedHazardsList.includes(hazardId);
         
         return {
-          id: hazardId,
-          hazardDescription: hazard?.hazard || '',
-          protectiveMeasures: hazard?.protectiveMeasures || '',
-          isSelected: true,
+          hazardId: hazardId,
+          hazardDescription: hazard.hazard,
+          protectiveMeasures: hazard.protectiveMeasures,
+          isSelected: isSelected,
           notes: hazardNotesObj[hazardId] || '',
-          category: category.category
+          riskLevel: hazard.riskLevel || 'medium'
         };
       });
       
+      const selectedCount = categoryHazards.filter(h => h.isSelected).length;
+      
+      // Only include categories that have at least one selected hazard or contain relevant data
+      if (selectedCount > 0 || Object.keys(hazardNotesObj).some(key => key.startsWith(`${category.id}-`))) {
+        formattedCategories.push({
+          categoryId: category.id,
+          categoryName: category.category,
+          categoryDescription: category.description || '',
+          hazards: categoryHazards,
+          totalHazards: category.hazards.length,
+          selectedCount: selectedCount,
+          completionPercentage: Math.round((selectedCount / category.hazards.length) * 100)
+        });
+      }
+    });
+    
+    // Add summary of non-TRBS hazards (legacy format)
+    const legacyHazards = selectedHazardsList.filter(hazard => !hazard.includes('-'));
+    if (legacyHazards.length > 0) {
       formattedCategories.push({
-        categoryId: category.id,
-        categoryName: category.category,
-        selectedHazards: categoryHazards,
-        totalHazards: category.hazards.length,
-        selectedCount: categoryHazards.length
+        categoryId: 'legacy',
+        categoryName: 'Weitere identifizierte Gefährdungen',
+        categoryDescription: 'Zusätzliche Gefährdungen im Freitextformat',
+        hazards: legacyHazards.map(hazard => ({
+          hazardId: hazard,
+          hazardDescription: hazard,
+          protectiveMeasures: 'Spezifische Schutzmaßnahmen erforderlich',
+          isSelected: true,
+          notes: '',
+          riskLevel: 'medium'
+        })),
+        totalHazards: legacyHazards.length,
+        selectedCount: legacyHazards.length,
+        completionPercentage: 100
       });
     }
-  });
-  
+    
     return formattedCategories;
   } catch (error) {
     console.error('Error formatting TRBS data for webhook:', error);
@@ -1042,30 +1054,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workStartedAt: permit.workStartedAt?.toISOString(),
         workCompletedAt: permit.workCompletedAt?.toISOString(),
         
-        // Safety assessment
-        selectedHazards: permit.selectedHazards,
-        hazardNotes: permit.hazardNotes,
-        completedMeasures: permit.completedMeasures,
-        identifiedHazards: permit.identifiedHazards,
-        additionalComments: permit.additionalComments,
-        immediateActions: permit.immediateActions,
-        beforeWorkStarts: permit.beforeWorkStarts,
-        complianceNotes: permit.complianceNotes,
-        overallRisk: permit.overallRisk,
-        
-        // Detailed TRBS hazard assessment data
+        // Comprehensive TRBS safety assessment with structured data
         trbsAssessment: {
-          selectedHazards: permit.selectedHazards || [],
-          hazardNotes: (() => {
-            try {
-              return permit.hazardNotes ? JSON.parse(permit.hazardNotes) : {};
-            } catch (error) {
-              console.warn('Invalid JSON in hazardNotes for permit', permit.permitId, ':', permit.hazardNotes);
-              return {};
-            }
-          })(),
+          // Basic safety fields
+          identifiedHazards: permit.identifiedHazards,
+          additionalComments: permit.additionalComments,
+          immediateActions: permit.immediateActions,
+          beforeWorkStarts: permit.beforeWorkStarts,
+          complianceNotes: permit.complianceNotes,
+          overallRisk: permit.overallRisk,
           completedMeasures: permit.completedMeasures || [],
-          // Parse and structure hazard categories for AI analysis
+          
+          // Structured TRBS hazard assessment with detailed analysis
           hazardCategories: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
         },
         
