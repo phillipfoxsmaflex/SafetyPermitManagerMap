@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Eye, Edit, Printer, Trash2, CheckCircle, Play, XCircle, Send } from "lucide-react";
+import { Eye, Edit, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
@@ -49,36 +49,13 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const workflowMutation = useMutation({
-    mutationFn: async ({ permitId, action, nextStatus }: { permitId: number; action: string; nextStatus: string }) => {
-      return apiRequest(`/api/permits/${permitId}/workflow`, {
-        method: 'POST',
-        body: { action, nextStatus }
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
-      toast({
-        title: "Status aktualisiert",
-        description: "Der Genehmigungsstatus wurde erfolgreich geändert.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Fehler",
-        description: `Fehler beim Ändern des Status: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  });
+
 
   const handleView = (permit: Permit) => {
     setLocation(`/permits/${permit.id}`);
   };
 
-  const handleWorkflowAction = (permit: Permit, action: string, newStatus: string) => {
-    workflowMutation.mutate({ permitId: permit.id, action, nextStatus: newStatus });
-  };
+
 
   const handleEdit = (permit: Permit) => {
     console.log('Editing permit:', permit.permitId);
@@ -205,75 +182,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
                           </Button>
                         )}
                       </div>
-                      
-                      {/* Workflow-Buttons */}
-                      <div className="flex gap-1">
-                        {permit.status === 'approved' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="default"
-                              className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
-                              onClick={() => handleWorkflowAction(permit, 'activate', 'active')}
-                              disabled={workflowMutation.isPending}
-                              title="Genehmigung aktivieren"
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              Aktivieren
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-3 text-xs border-red-300 text-red-600 hover:bg-red-50 font-medium"
-                              onClick={() => handleWorkflowAction(permit, 'withdraw', 'draft')}
-                              disabled={workflowMutation.isPending}
-                              title="Genehmigung zurückziehen"
-                            >
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Zurückziehen
-                            </Button>
-                          </>
-                        )}
-                        {permit.status === 'active' && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                            onClick={() => handleWorkflowAction(permit, 'complete', 'completed')}
-                            disabled={workflowMutation.isPending}
-                            title="Arbeiten abschließen"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Abschließen
-                          </Button>
-                        )}
-                        {permit.status === 'submitted' && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
-                            onClick={() => handleWorkflowAction(permit, 'approve', 'approved')}
-                            disabled={workflowMutation.isPending}
-                            title="Genehmigung erteilen"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Genehmigen
-                          </Button>
-                        )}
-                        {permit.status === 'draft' && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                            onClick={() => handleWorkflowAction(permit, 'submit', 'submitted')}
-                            disabled={workflowMutation.isPending}
-                            title="Zur Genehmigung einreichen"
-                          >
-                            <Send className="h-3 w-3 mr-1" />
-                            Einreichen
-                          </Button>
-                        )}
-                      </div>
+
                     </div>
                   </TableCell>
                 </TableRow>

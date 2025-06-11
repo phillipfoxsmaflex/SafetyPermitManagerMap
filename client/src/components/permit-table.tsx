@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Edit, Printer, Trash2, Play, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { Eye, Edit, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -43,130 +43,9 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Workflow mutation for status changes
-  const workflowMutation = useMutation({
-    mutationFn: async ({ permitId, actionId, nextStatus }: { permitId: number; actionId: string; nextStatus: string }) => {
-      return apiRequest(`/api/permits/${permitId}/workflow`, 'POST', { action: actionId, nextStatus });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
-      toast({
-        title: "Workflow-Aktion erfolgreich",
-        description: "Der Status wurde erfolgreich geändert.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Fehler",
-        description: error.message || "Workflow-Aktion fehlgeschlagen",
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Simple workflow buttons based only on status
-  const getWorkflowButtons = (permit: Permit) => {
-    if (!currentUser) return [];
 
-    const buttons = [];
-    
-    switch (permit.status) {
-      case 'approved':
-        buttons.push(
-          <Button
-            key="activate"
-            size="sm"
-            variant="default"
-            onClick={() => workflowMutation.mutate({ 
-              permitId: permit.id, 
-              actionId: 'activate', 
-              nextStatus: 'active' 
-            })}
-            disabled={workflowMutation.isPending}
-            className="mr-1"
-          >
-            <Play className="h-3 w-3 mr-1" />
-            Aktivieren
-          </Button>
-        );
-        
-        buttons.push(
-          <Button
-            key="withdraw"
-            size="sm"
-            variant="outline"
-            onClick={() => workflowMutation.mutate({ 
-              permitId: permit.id, 
-              actionId: 'withdraw', 
-              nextStatus: 'draft' 
-            })}
-            disabled={workflowMutation.isPending}
-          >
-            <ArrowLeft className="h-3 w-3 mr-1" />
-            Zurückziehen
-          </Button>
-        );
-        break;
-        
-      case 'active':
-        buttons.push(
-          <Button
-            key="complete"
-            size="sm"
-            variant="default"
-            onClick={() => workflowMutation.mutate({ 
-              permitId: permit.id, 
-              actionId: 'complete', 
-              nextStatus: 'completed' 
-            })}
-            disabled={workflowMutation.isPending}
-            className="mr-1"
-          >
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Abschließen
-          </Button>
-        );
-        
-        buttons.push(
-          <Button
-            key="suspend"
-            size="sm"
-            variant="outline"
-            onClick={() => workflowMutation.mutate({ 
-              permitId: permit.id, 
-              actionId: 'suspend', 
-              nextStatus: 'suspended' 
-            })}
-            disabled={workflowMutation.isPending}
-          >
-            <XCircle className="h-3 w-3 mr-1" />
-            Pausieren
-          </Button>
-        );
-        break;
-        
-      case 'suspended':
-        buttons.push(
-          <Button
-            key="resume"
-            size="sm"
-            variant="default"
-            onClick={() => workflowMutation.mutate({ 
-              permitId: permit.id, 
-              actionId: 'resume', 
-              nextStatus: 'active' 
-            })}
-            disabled={workflowMutation.isPending}
-          >
-            <Play className="h-3 w-3 mr-1" />
-            Fortsetzen
-          </Button>
-        );
-        break;
-    }
-    
-    return buttons;
-  };
+
 
   const formatDateTime = (date: Date | string | null) => {
     if (!date) return 'Nicht angegeben';
