@@ -452,7 +452,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if all required approvals are received
         const updatedPermit = await storage.getPermit(permitId);
-        const allApproved = updatedPermit?.departmentHeadApproval && updatedPermit?.maintenanceApproval;
+        const requiredApprovals = updatedPermit?.departmentHeadApproval && updatedPermit?.maintenanceApproval;
+        const optionalSafetyApproval = !updatedPermit?.safetyOfficer || updatedPermit?.safetyOfficerApproval;
+        const allApproved = requiredApprovals && optionalSafetyApproval;
         
         if (allApproved) {
           // Move to approved status

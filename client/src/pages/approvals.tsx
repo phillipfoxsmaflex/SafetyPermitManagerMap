@@ -109,27 +109,26 @@ export default function Approvals() {
     },
   });
 
-  // Filter permits based on user role and approval requirements
+  // Filter permits based on specific user assignment
   const getPendingPermits = () => {
     if (!currentUser) return [];
     
     return permits.filter((permit: Permit) => {
-      // Department head approvals
-      if (currentUser.role === 'department_head' || currentUser.role === 'admin') {
-        return permit.status === 'pending' && !permit.departmentHeadApproval;
-      }
+      if (permit.status !== 'pending') return false;
       
-      // Maintenance/Engineering approvals
-      if (currentUser.role === 'maintenance' || currentUser.role === 'admin') {
-        return permit.status === 'pending' && !permit.maintenanceApproval;
-      }
+      // Check if current user is specifically assigned to this permit
+      const isAssignedDepartmentHead = permit.departmentHead === currentUser.username && !permit.departmentHeadApproval;
+      const isAssignedSafetyOfficer = permit.safetyOfficer === currentUser.username && !permit.safetyOfficerApproval;
+      const isAssignedMaintenanceApprover = permit.maintenanceApprover === currentUser.username && !permit.maintenanceApproval;
       
-      // Safety officer approvals (optional)
-      if (currentUser.role === 'safety_officer' || currentUser.role === 'admin') {
-        return permit.status === 'pending' && !permit.safetyOfficerApproval;
-      }
+      // Admin can see all pending approvals
+      const isAdminPending = currentUser.role === 'admin' && (
+        !permit.departmentHeadApproval || 
+        !permit.maintenanceApproval || 
+        (permit.safetyOfficer && !permit.safetyOfficerApproval)
+      );
       
-      return false;
+      return isAssignedDepartmentHead || isAssignedSafetyOfficer || isAssignedMaintenanceApprover || isAdminPending;
     });
   };
 
@@ -141,16 +140,19 @@ export default function Approvals() {
     if (!currentUser) return [];
     
     return permits.filter((permit: Permit) => {
-      if (currentUser.role === 'department_head' || currentUser.role === 'admin') {
-        return permit.departmentHeadApproval;
-      }
-      if (currentUser.role === 'maintenance' || currentUser.role === 'admin') {
-        return permit.maintenanceApproval;
-      }
-      if (currentUser.role === 'safety_officer' || currentUser.role === 'admin') {
-        return permit.safetyOfficerApproval;
-      }
-      return false;
+      // Check if current user specifically approved this permit
+      const approvedAsDepartmentHead = permit.departmentHead === currentUser.username && permit.departmentHeadApproval;
+      const approvedAsSafetyOfficer = permit.safetyOfficer === currentUser.username && permit.safetyOfficerApproval;
+      const approvedAsMaintenanceApprover = permit.maintenanceApprover === currentUser.username && permit.maintenanceApproval;
+      
+      // Admin can see all approved permits
+      const isAdminApproved = currentUser.role === 'admin' && (
+        permit.departmentHeadApproval || 
+        permit.maintenanceApproval || 
+        permit.safetyOfficerApproval
+      );
+      
+      return approvedAsDepartmentHead || approvedAsSafetyOfficer || approvedAsMaintenanceApprover || isAdminApproved;
     });
   };
 
@@ -238,7 +240,7 @@ export default function Approvals() {
 
         <div className="space-y-2">
           <p className="font-medium text-industrial-gray text-sm">Genehmigungs-Status:</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             <div className={`flex items-center gap-2 p-2 rounded ${permit.departmentHeadApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
               {permit.departmentHeadApproval ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -259,6 +261,18 @@ export default function Approvals() {
                 Instandhaltung/Engineering: {permit.maintenanceApproval ? 'Genehmigt' : 'Ausstehend'}
               </span>
             </div>
+            {permit.safetyOfficer && (
+              <div className={`flex items-center gap-2 p-2 rounded ${permit.safetyOfficerApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
+                {permit.safetyOfficerApproval ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Clock className="h-4 w-4 text-orange-600" />
+                )}
+                <span className="text-sm">
+                  Sicherheitsbeauftragte: {permit.safetyOfficerApproval ? 'Genehmigt' : 'Ausstehend'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
