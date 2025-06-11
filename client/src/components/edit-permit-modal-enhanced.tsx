@@ -1173,37 +1173,40 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 Abbrechen
               </Button>
               <Button
-                onClick={async () => {
-                  try {
-                    // Save permit data directly via API
-                    const response = await fetch(`/api/permits/${permit.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify({ status: "draft" }),
-                    });
-                    
-                    if (response.ok) {
-                      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                      toast({
-                        title: "Erfolg",
-                        description: "Genehmigung als Entwurf gespeichert.",
+                onClick={() => {
+                  const handleSaveDraft = async () => {
+                    try {
+                      const response = await fetch(`/api/permits/${permit.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ status: "draft" }),
                       });
-                    } else {
+                      
+                      if (response.ok) {
+                        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        toast({
+                          title: "Erfolg",
+                          description: "Genehmigung als Entwurf gespeichert.",
+                        });
+                      } else {
+                        toast({
+                          title: "Fehler",
+                          description: "Speichern fehlgeschlagen.",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Save draft error:", error);
                       toast({
                         title: "Fehler",
-                        description: "Speichern fehlgeschlagen.",
+                        description: "Verbindungsfehler beim Speichern.",
                         variant: "destructive",
                       });
                     }
-                  } catch (error) {
-                    toast({
-                      title: "Fehler",
-                      description: "Verbindungsfehler beim Speichern.",
-                      variant: "destructive",
-                    });
-                  }
+                  };
+                  handleSaveDraft();
                 }}
                 disabled={updateMutation.isPending || workflowMutation.isPending}
                 className="bg-industrial-gray hover:bg-industrial-gray/90"
@@ -1212,42 +1215,45 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 Als Entwurf speichern
               </Button>
               <Button
-                onClick={async () => {
-                  try {
-                    // Submit for approval via workflow API
-                    const response = await fetch(`/api/permits/${permit.id}/workflow`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify({ 
-                        action: "submit", 
-                        nextStatus: "pending" 
-                      }),
-                    });
-                    
-                    if (response.ok) {
-                      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                      toast({
-                        title: "Erfolg",
-                        description: "Genehmigung zur Prüfung übermittelt.",
+                onClick={() => {
+                  const handleSubmitApproval = async () => {
+                    try {
+                      const response = await fetch(`/api/permits/${permit.id}/workflow`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ 
+                          action: "submit", 
+                          nextStatus: "pending" 
+                        }),
                       });
-                      onOpenChange(false);
-                    } else {
-                      const errorData = await response.json();
+                      
+                      if (response.ok) {
+                        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        toast({
+                          title: "Erfolg",
+                          description: "Genehmigung zur Prüfung übermittelt.",
+                        });
+                        onOpenChange(false);
+                      } else {
+                        const errorData = await response.json();
+                        toast({
+                          title: "Fehler",
+                          description: errorData.message || "Übermittlung fehlgeschlagen.",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Submit approval error:", error);
                       toast({
                         title: "Fehler",
-                        description: errorData.message || "Übermittlung fehlgeschlagen.",
+                        description: "Verbindungsfehler bei der Übermittlung.",
                         variant: "destructive",
                       });
                     }
-                  } catch (error) {
-                    toast({
-                      title: "Fehler",
-                      description: "Verbindungsfehler bei der Übermittlung.",
-                      variant: "destructive",
-                    });
-                  }
+                  };
+                  handleSubmitApproval();
                 }}
                 disabled={updateMutation.isPending || workflowMutation.isPending}
                 className="bg-safety-blue hover:bg-safety-blue/90"
