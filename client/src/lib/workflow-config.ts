@@ -93,7 +93,7 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
         nextStatus: 'draft',
         requiresConfirmation: true,
         confirmationMessage: 'Möchten Sie diese Genehmigung zurückziehen? Sie wird wieder als Entwurf gespeichert.',
-        permissions: ['admin']
+        permissions: ['any']
       },
       {
         id: 'activate',
@@ -103,7 +103,7 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
         nextStatus: 'active',
         requiresConfirmation: true,
         confirmationMessage: 'Möchten Sie diese Genehmigung aktivieren? Die Arbeiten können dann beginnen.',
-        permissions: ['supervisor', 'admin']
+        permissions: ['any']
       }
     ]
   },

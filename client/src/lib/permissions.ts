@@ -1,6 +1,11 @@
 import type { User, Permit } from "@shared/schema";
 
 export function hasPermission(user: User, permit: Permit, requiredPermissions: string[]): boolean {
+  // If 'any' is in required permissions, always allow
+  if (requiredPermissions.includes('any')) {
+    return true;
+  }
+  
   const userPermissions = getUserPermissions(user, permit);
   return requiredPermissions.some(permission => userPermissions.includes(permission));
 }
