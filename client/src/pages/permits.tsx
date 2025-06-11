@@ -4,7 +4,7 @@ import { Plus, Search, Filter, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { EditPermitModalWorkflow } from "@/components/edit-permit-modal-workflow";
-import { PermitTable } from "@/components/permit-table";
+import { PermitTable } from "@/components/permit-table-clean";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
