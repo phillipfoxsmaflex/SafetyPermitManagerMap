@@ -1175,93 +1175,102 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
               
               {/* Draft/Withdraw Button */}
               <Button
-                onClick={() => {
-                  const handleAction = async () => {
-                    try {
-                      if (currentPermit?.status === "pending") {
-                        // Withdraw from pending back to draft
-                        const response = await fetch(`/api/permits/${permit.id}/workflow`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          credentials: "include",
-                          body: JSON.stringify({ 
-                            action: "withdraw", 
-                            nextStatus: "draft" 
-                          }),
+                onClick={async () => {
+                  try {
+                    if (currentPermit?.status === "pending") {
+                      // Withdraw from pending back to draft
+                      const response = await fetch(`/api/permits/${permit.id}/workflow`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ 
+                          action: "withdraw", 
+                          nextStatus: "draft" 
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        await queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        toast({
+                          title: "Erfolg",
+                          description: "Genehmigung zurückgezogen.",
                         });
-                        
-                        if (response.ok) {
-                          queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                          queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                          toast({
-                            title: "Erfolg",
-                            description: "Genehmigung zurückgezogen.",
-                          });
-                        } else {
-                          // Check if status actually changed despite error response
-                          try {
-                            const permitCheck = await fetch(`/api/permits/${permit.id}`, {
-                              credentials: "include"
+                      } else {
+                        // Check if status actually changed despite error response
+                        const permitCheck = await fetch(`/api/permits/${permit.id}`, {
+                          credentials: "include"
+                        });
+                        if (permitCheck.ok) {
+                          const updatedPermit = await permitCheck.json();
+                          if (updatedPermit.status === "draft") {
+                            // Status changed successfully despite error response
+                            await queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                            await queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                            toast({
+                              title: "Erfolg",
+                              description: "Genehmigung zurückgezogen.",
                             });
-                            if (permitCheck.ok) {
-                              const updatedPermit = await permitCheck.json();
-                              if (updatedPermit.status === "draft") {
-                                // Status changed successfully despite error response
-                                queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                                queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                                toast({
-                                  title: "Erfolg",
-                                  description: "Genehmigung zurückgezogen.",
-                                });
-                                return;
-                              }
-                            }
-                          } catch (checkError) {
-                            console.log("Status check failed:", checkError);
+                            return;
                           }
-                          
+                        }
+                        
+                        try {
                           const errorData = await response.json();
                           toast({
                             title: "Fehler", 
                             description: errorData.message || "Zurückziehen fehlgeschlagen.",
                             variant: "destructive",
                           });
-                        }
-                      } else {
-                        // Save as draft
-                        const response = await fetch(`/api/permits/${permit.id}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          credentials: "include",
-                          body: JSON.stringify({ status: "draft" }),
-                        });
-                        
-                        if (response.ok) {
-                          queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                          queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        } catch {
                           toast({
-                            title: "Erfolg",
-                            description: "Genehmigung als Entwurf gespeichert.",
+                            title: "Fehler",
+                            description: "Zurückziehen fehlgeschlagen.",
+                            variant: "destructive",
                           });
-                        } else {
+                        }
+                      }
+                    } else {
+                      // Save as draft
+                      const response = await fetch(`/api/permits/${permit.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ status: "draft" }),
+                      });
+                      
+                      if (response.ok) {
+                        await queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        toast({
+                          title: "Erfolg",
+                          description: "Genehmigung als Entwurf gespeichert.",
+                        });
+                      } else {
+                        try {
                           const errorData = await response.json();
                           toast({
                             title: "Fehler",
                             description: errorData.message || "Speichern fehlgeschlagen.",
                             variant: "destructive",
                           });
+                        } catch {
+                          toast({
+                            title: "Fehler",
+                            description: "Speichern fehlgeschlagen.",
+                            variant: "destructive",
+                          });
                         }
                       }
-                    } catch (error) {
-                      console.error("Action error:", error);
-                      toast({
-                        title: "Fehler",
-                        description: "Verbindungsfehler.",
-                        variant: "destructive",
-                      });
                     }
-                  };
-                  handleAction();
+                  } catch (error) {
+                    console.error("Action error:", error);
+                    toast({
+                      title: "Fehler",
+                      description: "Verbindungsfehler.",
+                      variant: "destructive",
+                    });
+                  }
                 }}
                 disabled={updateMutation.isPending || workflowMutation.isPending}
                 className="bg-industrial-gray hover:bg-industrial-gray/90"
@@ -1273,68 +1282,69 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
               {/* Submit for Approval Button - only show if not pending */}
               {currentPermit?.status !== "pending" && (
                 <Button
-                  onClick={() => {
-                    const handleSubmitApproval = async () => {
-                      try {
-                        const response = await fetch(`/api/permits/${permit.id}/workflow`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          credentials: "include",
-                          body: JSON.stringify({ 
-                            action: "submit", 
-                            nextStatus: "pending" 
-                          }),
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/permits/${permit.id}/workflow`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ 
+                          action: "submit", 
+                          nextStatus: "pending" 
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        await queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                        toast({
+                          title: "Erfolg",
+                          description: "Genehmigung zur Prüfung übermittelt.",
                         });
-                        
-                        if (response.ok) {
-                          queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                          queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                          toast({
-                            title: "Erfolg",
-                            description: "Genehmigung zur Prüfung übermittelt.",
-                          });
-                          onOpenChange(false);
-                        } else {
-                          // Check if status actually changed despite error response
-                          try {
-                            const permitCheck = await fetch(`/api/permits/${permit.id}`, {
-                              credentials: "include"
+                        onOpenChange(false);
+                      } else {
+                        // Check if status actually changed despite error response
+                        const permitCheck = await fetch(`/api/permits/${permit.id}`, {
+                          credentials: "include"
+                        });
+                        if (permitCheck.ok) {
+                          const updatedPermit = await permitCheck.json();
+                          if (updatedPermit.status === "pending") {
+                            // Status changed successfully despite error response
+                            await queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                            await queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                            toast({
+                              title: "Erfolg",
+                              description: "Genehmigung zur Prüfung übermittelt.",
                             });
-                            if (permitCheck.ok) {
-                              const updatedPermit = await permitCheck.json();
-                              if (updatedPermit.status === "pending") {
-                                // Status changed successfully despite error response
-                                queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                                queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                                toast({
-                                  title: "Erfolg",
-                                  description: "Genehmigung zur Prüfung übermittelt.",
-                                });
-                                onOpenChange(false);
-                                return;
-                              }
-                            }
-                          } catch (checkError) {
-                            console.log("Status check failed:", checkError);
+                            onOpenChange(false);
+                            return;
                           }
-                          
+                        }
+                        
+                        try {
                           const errorData = await response.json();
                           toast({
                             title: "Fehler",
                             description: errorData.message || "Übermittlung fehlgeschlagen.",
                             variant: "destructive",
                           });
+                        } catch {
+                          toast({
+                            title: "Fehler",
+                            description: "Übermittlung fehlgeschlagen.",
+                            variant: "destructive",
+                          });
                         }
-                      } catch (error) {
-                        console.error("Submit approval error:", error);
-                        toast({
-                          title: "Fehler",
-                          description: "Verbindungsfehler bei der Übermittlung.",
-                          variant: "destructive",
-                        });
                       }
-                    };
-                    handleSubmitApproval();
+                    } catch (error) {
+                      console.error("Submit approval error:", error);
+                      toast({
+                        title: "Fehler",
+                        description: "Verbindungsfehler bei der Übermittlung.",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                   disabled={updateMutation.isPending || workflowMutation.isPending}
                   className="bg-safety-blue hover:bg-safety-blue/90"
