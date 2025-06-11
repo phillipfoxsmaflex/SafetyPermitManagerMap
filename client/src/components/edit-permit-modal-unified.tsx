@@ -473,6 +473,54 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                     )}
                                   />
                                   
+                                  {/* Kleines Freitextfeld für jede TRBS-Gefährdung */}
+                                  {isSelected && (
+                                    <div className="ml-6 mt-2">
+                                      <FormField
+                                        control={form.control}
+                                        name="hazardNotes"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormControl>
+                                              <Textarea
+                                                placeholder="Zusätzliche Notizen zu dieser Gefährdung..."
+                                                className="min-h-[60px] text-sm"
+                                                value={(() => {
+                                                  const notes = field.value;
+                                                  if (typeof notes === 'string') {
+                                                    try {
+                                                      const parsed = JSON.parse(notes);
+                                                      return parsed[hazardId] || '';
+                                                    } catch {
+                                                      return '';
+                                                    }
+                                                  }
+                                                  return notes?.[hazardId] || '';
+                                                })()}
+                                                onChange={(e) => {
+                                                  const currentNotes = field.value;
+                                                  let notesObj = {};
+                                                  
+                                                  if (typeof currentNotes === 'string') {
+                                                    try {
+                                                      notesObj = JSON.parse(currentNotes);
+                                                    } catch {
+                                                      notesObj = {};
+                                                    }
+                                                  } else if (currentNotes) {
+                                                    notesObj = currentNotes;
+                                                  }
+                                                  
+                                                  notesObj[hazardId] = e.target.value;
+                                                  field.onChange(JSON.stringify(notesObj));
+                                                }}
+                                              />
+                                            </FormControl>
+                                          </FormItem>
+                                        )}
+                                      />
+                                    </div>
+                                  )}
 
                                 </div>
                               );
