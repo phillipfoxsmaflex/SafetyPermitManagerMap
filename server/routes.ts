@@ -438,20 +438,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (currentPermit.maintenanceApprover === user.username) {
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
-        } else if (user.role === 'department_head' && !currentPermit.departmentHeadApproval) {
-          // Department head can approve based on role if not specifically assigned
+        } else if (user.role === 'department_head' && 
+                   currentPermit.departmentHead !== user.username && 
+                   !currentPermit.departmentHeadApproval) {
+          // Department head can approve based on role if not specifically assigned to someone else
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
-        } else if (user.role === 'maintenance' && !currentPermit.maintenanceApproval) {
-          // Maintenance user can approve based on role if not specifically assigned
+        } else if (user.role === 'maintenance' && 
+                   currentPermit.maintenanceApprover !== user.username && 
+                   !currentPermit.maintenanceApproval) {
+          // Maintenance user can approve based on role if not specifically assigned to someone else
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
-        } else if (user.role === 'safety_officer' && currentPermit.safetyOfficer && !currentPermit.safetyOfficerApproval) {
-          // Safety officer can approve based on role if safety officer is required
+        } else if (user.role === 'safety_officer' && 
+                   currentPermit.safetyOfficer && 
+                   currentPermit.safetyOfficer !== user.username && 
+                   !currentPermit.safetyOfficerApproval) {
+          // Safety officer can approve based on role if safety officer is required but not specifically assigned to someone else
           updates.safetyOfficerApproval = true;
           updates.safetyOfficerApprovalDate = new Date();
         } else if (user.role === 'admin') {
-          // Admin can approve any role
+          // Admin can approve any role that hasn't been approved yet
           if (!currentPermit.departmentHeadApproval) {
             updates.departmentHeadApproval = true;
             updates.departmentHeadApprovalDate = new Date();
@@ -463,6 +470,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (currentPermit.safetyOfficer && !currentPermit.safetyOfficerApproval) {
             updates.safetyOfficerApproval = true;
             updates.safetyOfficerApprovalDate = new Date();
+          }
+          // If no specific approvals are needed, admin still gets access
+          if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ message: "All required approvals already granted" });
           }
         } else {
           return res.status(403).json({ message: "Not authorized to approve this permit" });
