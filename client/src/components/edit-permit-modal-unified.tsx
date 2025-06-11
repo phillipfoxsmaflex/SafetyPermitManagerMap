@@ -678,23 +678,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="departmentHeadApproval"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>Genehmigung erteilt</FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+
                       </div>
 
                       <div className="space-y-3">
@@ -726,23 +710,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="safetyOfficerApproval"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>Genehmigung erteilt</FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+
                       </div>
 
                       <div className="space-y-3">
@@ -774,23 +742,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="maintenanceApproval"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>Genehmigung erteilt</FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+
                       </div>
                     </div>
                   </CardContent>
