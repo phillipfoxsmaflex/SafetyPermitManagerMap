@@ -228,11 +228,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="basic">Grunddaten</TabsTrigger>
                 <TabsTrigger value="hazards">Gefährdungen</TabsTrigger>
                 <TabsTrigger value="approvals">Genehmigungen</TabsTrigger>
                 <TabsTrigger value="execution">Durchführung</TabsTrigger>
+                <TabsTrigger value="ai-suggestions">KI-Vorschläge</TabsTrigger>
                 <TabsTrigger value="workflow">Status</TabsTrigger>
               </TabsList>
 
@@ -571,6 +572,20 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                 </Card>
               </TabsContent>
 
+              <TabsContent value="ai-suggestions" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      KI-Verbesserungsvorschläge
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AiSuggestions permitId={permit.id} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="workflow" className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -590,7 +605,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                         <h4 className="font-semibold mb-3">Verfügbare Aktionen</h4>
                         <WorkflowButtons 
                           permit={currentPermit || permit} 
-                          user={user} 
+                          currentUser={user} 
+                          onAction={async (actionId: string, nextStatus: string) => {
+                            workflowMutation.mutate({ permitId: permit.id, action: actionId, nextStatus });
+                          }}
+                          isLoading={workflowMutation.isPending}
                         />
                       </div>
                     </div>
