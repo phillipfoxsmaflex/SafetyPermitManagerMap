@@ -281,19 +281,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationErrors.push("Das Enddatum darf nicht vor dem Startdatum liegen");
       }
       
-      if (!updates.location?.trim()) {
+      if (!updates.location?.trim() && updates.status !== 'draft') {
         validationErrors.push("Arbeitsort ist erforderlich");
       }
       
-      if (!updates.description?.trim()) {
+      if (!updates.description?.trim() && updates.status !== 'draft') {
         validationErrors.push("Beschreibung ist erforderlich");
       }
       
-      if (!updates.requestorName?.trim()) {
+      if (!updates.requestorName?.trim() && updates.status !== 'draft') {
         validationErrors.push("Name des Antragstellers ist erforderlich");
       }
       
-      if (!updates.department?.trim()) {
+      if (!updates.department?.trim() && updates.status !== 'draft') {
         validationErrors.push("Abteilung ist erforderlich");
       }
       

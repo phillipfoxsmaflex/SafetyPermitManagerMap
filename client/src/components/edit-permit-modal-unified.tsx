@@ -204,7 +204,15 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
   });
 
   const onSubmit = (data: EditPermitFormData) => {
-    updateMutation.mutate(data);
+    // Map frontend field names to backend field names
+    const mappedData = {
+      ...data,
+      description: data.workDescription, // Backend expects 'description'
+      requestorName: data.requestedBy, // Backend expects 'requestorName'
+      startDate: data.plannedStartDate, // Backend expects 'startDate'
+      endDate: data.plannedEndDate, // Backend expects 'endDate'
+    };
+    updateMutation.mutate(mappedData);
   };
 
   if (!permit) return null;
