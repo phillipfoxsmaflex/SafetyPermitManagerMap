@@ -55,18 +55,20 @@ interface EditPermitModalEnhancedProps {
 
 const editPermitSchema = z.object({
   type: z.string().min(1, "Genehmigungstyp ist erforderlich"),
-  location: z.string().min(1, "Arbeitsort ist erforderlich"),
-  description: z.string().min(1, "Beschreibung ist erforderlich"),
-  requestorName: z.string().min(1, "Antragsteller ist erforderlich"),
+  workDescription: z.string().min(1, "Arbeitsbeschreibung ist erforderlich"),
+  location: z.string().optional(),
+  workLocationId: z.number().optional(),
+  requestedBy: z.string().min(1, "Beantragt von ist erforderlich"),
   department: z.string().min(1, "Abteilung ist erforderlich"),
-  contactNumber: z.string().min(1, "Kontaktnummer ist erforderlich"),
-  emergencyContact: z.string().min(1, "Notfallkontakt ist erforderlich"),
-  startDate: z.string().min(1, "Startdatum ist erforderlich"),
-  endDate: z.string().min(1, "Enddatum ist erforderlich"),
-  riskLevel: z.string().optional(),
-  safetyOfficer: z.string().optional(),
-  departmentHead: z.string().min(1, "Abteilungsleiter ist erforderlich"),
-  maintenanceApprover: z.string().min(1, "Instandhaltungsgenehmiger ist erforderlich"),
+  plannedStartDate: z.string().min(1, "Geplantes Startdatum ist erforderlich"),
+  plannedEndDate: z.string().min(1, "Geplantes Enddatum ist erforderlich"),
+  emergencyContact: z.string().optional(),
+  departmentHeadApproval: z.boolean().optional(),
+  safetyOfficerApproval: z.boolean().optional(),
+  maintenanceApproval: z.boolean().optional(),
+  departmentHeadId: z.number().optional(),
+  safetyOfficerId: z.number().optional(),
+  maintenanceApproverId: z.number().optional(),
   identifiedHazards: z.string().optional(),
   selectedHazards: z.array(z.string()).optional(),
   hazardNotes: z.string().optional(),
@@ -76,12 +78,10 @@ const editPermitSchema = z.object({
   performerSignature: z.string().optional(),
   workStartedAt: z.string().optional(),
   workCompletedAt: z.string().optional(),
-  // Safety assessment fields
   additionalComments: z.string().optional(),
   immediateActions: z.string().optional(),
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
-  // Risk assessment fields
   overallRisk: z.string().optional(),
 });
 
@@ -478,15 +478,28 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
   const onSubmit = (data: EditPermitFormData) => {
     console.log("Saving as draft:", data);
     console.log("Form errors:", form.formState.errors);
-    updateMutation.mutate({ ...data, status: "draft" });
+    console.log("Form is valid:", form.formState.isValid);
+    
+    // Clean the data to remove null values
+    const cleanData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, value === null ? "" : value])
+    );
+    
+    updateMutation.mutate({ ...cleanData, status: "draft" });
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
     console.log("Submitting for approval:", data);
     console.log("Form errors:", form.formState.errors);
+    console.log("Form is valid:", form.formState.isValid);
+    
+    // Clean the data to remove null values
+    const cleanData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, value === null ? "" : value])
+    );
     
     // First update the permit data, then change status
-    updateMutation.mutate({ ...data, status: "draft" }, {
+    updateMutation.mutate({ ...cleanData, status: "draft" }, {
       onSuccess: () => {
         // After successful update, transition to pending status
         workflowMutation.mutate({ permitId: permit!.id, action: "submit", nextStatus: "pending" });
@@ -1160,20 +1173,87 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                 Abbrechen
               </Button>
               <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={updateMutation.isPending}
+                onClick={async () => {
+                  try {
+                    // Save permit data directly via API
+                    const response = await fetch(`/api/permits/${permit.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ status: "draft" }),
+                    });
+                    
+                    if (response.ok) {
+                      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                      toast({
+                        title: "Erfolg",
+                        description: "Genehmigung als Entwurf gespeichert.",
+                      });
+                    } else {
+                      toast({
+                        title: "Fehler",
+                        description: "Speichern fehlgeschlagen.",
+                        variant: "destructive",
+                      });
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Fehler",
+                      description: "Verbindungsfehler beim Speichern.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                disabled={updateMutation.isPending || workflowMutation.isPending}
                 className="bg-industrial-gray hover:bg-industrial-gray/90"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {updateMutation.isPending ? "Speichern..." : "Als Entwurf speichern"}
+                Als Entwurf speichern
               </Button>
               <Button
-                onClick={form.handleSubmit(onSubmitForApproval)}
-                disabled={updateMutation.isPending}
+                onClick={async () => {
+                  try {
+                    // Submit for approval via workflow API
+                    const response = await fetch(`/api/permits/${permit.id}/workflow`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ 
+                        action: "submit", 
+                        nextStatus: "pending" 
+                      }),
+                    });
+                    
+                    if (response.ok) {
+                      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                      toast({
+                        title: "Erfolg",
+                        description: "Genehmigung zur Prüfung übermittelt.",
+                      });
+                      onOpenChange(false);
+                    } else {
+                      const errorData = await response.json();
+                      toast({
+                        title: "Fehler",
+                        description: errorData.message || "Übermittlung fehlgeschlagen.",
+                        variant: "destructive",
+                      });
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Fehler",
+                      description: "Verbindungsfehler bei der Übermittlung.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                disabled={updateMutation.isPending || workflowMutation.isPending}
                 className="bg-safety-blue hover:bg-safety-blue/90"
               >
                 <Send className="h-4 w-4 mr-2" />
-                {updateMutation.isPending ? "Übermitteln..." : "Zur Genehmigung übermitteln"}
+                Zur Genehmigung übermitteln
               </Button>
             </div>
           </form>
