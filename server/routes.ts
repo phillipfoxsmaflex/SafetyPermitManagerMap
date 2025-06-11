@@ -1255,7 +1255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Receive AI suggestions from webhook
+  // Receive AI suggestions from webhook - supports both formats
   app.post("/api/webhooks/suggestions", async (req, res) => {
     try {
       console.log('Received AI analysis response:', JSON.stringify(req.body, null, 2));
@@ -1267,7 +1267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         riskAssessment, 
         recommendations,
         compliance_notes,
-        error 
+        error,
+        improvedPermit // New: Complete permit object with AI improvements
       } = req.body;
       
       if (!permitId) {
@@ -1283,11 +1284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (!suggestions || !Array.isArray(suggestions)) {
-        console.log('No suggestions provided for permit:', permitId);
-        return res.status(200).json({ message: "No suggestions to process" });
-      }
-
       // Find permit by permitId (string)
       const permit = await storage.getPermitByPermitId(permitId);
       if (!permit) {
@@ -1295,22 +1291,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
 
-      console.log(`Processing ${suggestions.length} AI suggestions for permit ${permitId}`);
-
-      // Create AI suggestions with enhanced data
       const createdSuggestions = [];
-      for (const suggestion of suggestions) {
-        const aiSuggestion = await storage.createAiSuggestion({
-          permitId: permit.id,
-          suggestionType: suggestion.type || 'improvement',
-          fieldName: suggestion.fieldName || null,
-          originalValue: suggestion.originalValue || null,
-          suggestedValue: suggestion.suggestedValue || suggestion.title,
-          reasoning: suggestion.reasoning || suggestion.impact || 'AI analysis recommendation',
-          priority: suggestion.priority || 'medium',
-          status: 'pending'
+
+      // NEW: Process complete improved permit object if provided
+      if (improvedPermit) {
+        console.log(`Processing complete improved permit for ${permitId}`);
+        console.log('Original permit data sample:', {
+          description: permit.description,
+          emergencyContact: permit.emergencyContact,
+          performerName: permit.performerName
         });
-        createdSuggestions.push(aiSuggestion);
+        
+        // Compare original vs improved permit and create suggestions for differences
+        const fieldMappings = {
+          // Basic fields
+          type: 'Permit-Typ',
+          location: 'Arbeitsort',
+          description: 'Arbeitsbeschreibung', 
+          department: 'Abteilung',
+          requestorName: 'Antragsteller',
+          contactNumber: 'Kontaktnummer',
+          emergencyContact: 'Notfallkontakt',
+          performerName: 'Ausführende Person',
+          
+          // Safety fields
+          identifiedHazards: 'Identifizierte Gefährdungen',
+          additionalComments: 'Zusätzliche Kommentare',
+          immediateActions: 'Sofortmaßnahmen',
+          beforeWorkStarts: 'Vor Arbeitsbeginn',
+          complianceNotes: 'Compliance-Hinweise',
+          overallRisk: 'Gesamtrisiko',
+          
+          // TRBS fields
+          selectedHazards: 'TRBS-Gefährdungen',
+          hazardNotes: 'Gefährdungsnotizen'
+        };
+
+        // Compare each field and create suggestions for differences
+        for (const [fieldName, displayName] of Object.entries(fieldMappings)) {
+          const originalValue = permit[fieldName as keyof typeof permit];
+          const improvedValue = improvedPermit[fieldName];
+          
+          // Handle different data types
+          let originalStr = '';
+          let improvedStr = '';
+          
+          if (fieldName === 'selectedHazards') {
+            originalStr = Array.isArray(originalValue) ? JSON.stringify(originalValue) : '[]';
+            improvedStr = Array.isArray(improvedValue) ? JSON.stringify(improvedValue) : '[]';
+          } else if (fieldName === 'hazardNotes') {
+            originalStr = typeof originalValue === 'string' ? originalValue : '{}';
+            improvedStr = typeof improvedValue === 'string' ? improvedValue : JSON.stringify(improvedValue || {});
+          } else {
+            originalStr = String(originalValue || '');
+            improvedStr = String(improvedValue || '');
+          }
+          
+          console.log(`Field ${fieldName}: "${originalStr}" vs "${improvedStr}" (different: ${originalStr !== improvedStr})`);
+          
+          // Create suggestion if values differ
+          if (originalStr !== improvedStr && improvedStr.trim() !== '') {
+            console.log(`Creating suggestion for ${fieldName}: ${originalStr} -> ${improvedStr}`);
+            const suggestion = await storage.createAiSuggestion({
+              permitId: permit.id,
+              suggestionType: 'ai_improvement',
+              fieldName: fieldName,
+              originalValue: originalStr,
+              suggestedValue: improvedStr,
+              reasoning: `KI-Verbesserung für ${displayName}`,
+              priority: ['emergencyContact', 'selectedHazards', 'immediateActions'].includes(fieldName) ? 'high' : 'medium',
+              status: 'pending'
+            });
+            createdSuggestions.push(suggestion);
+          }
+        }
+        
+        console.log(`Created ${createdSuggestions.length} field-based suggestions from improved permit`);
+      }
+
+      // LEGACY: Process individual suggestions array (backwards compatibility)
+      if (suggestions && Array.isArray(suggestions)) {
+        console.log(`Processing ${suggestions.length} individual AI suggestions for permit ${permitId}`);
+
+        for (const suggestion of suggestions) {
+          const aiSuggestion = await storage.createAiSuggestion({
+            permitId: permit.id,
+            suggestionType: suggestion.type || 'improvement',
+            fieldName: suggestion.fieldName || null,
+            originalValue: suggestion.originalValue || null,
+            suggestedValue: suggestion.suggestedValue || suggestion.title,
+            reasoning: suggestion.reasoning || suggestion.impact || 'AI analysis recommendation',
+            priority: suggestion.priority || 'medium',
+            status: 'pending'
+          });
+          createdSuggestions.push(aiSuggestion);
+        }
       }
 
       // Log additional analysis data for monitoring
@@ -1322,11 +1397,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create safety assessment suggestions instead of auto-updating
+      // LEGACY: Create safety assessment suggestions from recommendations
       if (recommendations) {
         console.log('Creating safety assessment suggestions for permit', permitId);
         
-        // Create suggestions for safety assessment fields
         if (recommendations.immediate_actions) {
           const immediateActionsText = Array.isArray(recommendations.immediate_actions) 
             ? recommendations.immediate_actions.join('\n• ')
@@ -1381,17 +1455,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           createdSuggestions.push(suggestion);
         }
-
-        console.log('Created safety assessment suggestions:', {
-          immediateActions: !!recommendations.immediate_actions,
-          beforeWorkStarts: !!recommendations.before_work_starts,
-          complianceNotes: !!(recommendations.compliance_requirements || compliance_notes)
-        });
       }
 
       res.json({ 
         message: "AI suggestions received successfully",
-        suggestionsCount: createdSuggestions.length
+        suggestionsCount: createdSuggestions.length,
+        processingMethod: improvedPermit ? 'complete_permit_comparison' : 'individual_suggestions'
       });
     } catch (error) {
       console.error("Error receiving AI suggestions:", error);

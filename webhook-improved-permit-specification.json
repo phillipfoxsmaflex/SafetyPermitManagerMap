@@ -1,0 +1,113 @@
+{
+  "description": "Neue vereinfachte Webhook-Payload mit kompletten Permit-Objekt",
+  "endpoint": "POST /api/webhooks/suggestions",
+  "advantages": [
+    "Automatisches Mapping aller Felder durch Vergleich",
+    "Keine manuellen fieldName-Zuordnungen erforderlich",
+    "Vollständige Vorher/Nachher-Ansicht",
+    "Einfachere KI-Integration",
+    "Robusteres Fehlerhandling"
+  ],
+  
+  "new_format": {
+    "permitId": "string - PFLICHT - Die Permit-ID (z.B. 'GN-2025-002')",
+    "analysisComplete": "boolean - PFLICHT - true wenn Analyse erfolgreich",
+    "improvedPermit": {
+      "description": "Komplettes Permit-Objekt mit KI-Verbesserungen",
+      "type": "string - Permit-Typ",
+      "location": "string - Arbeitsort",
+      "description": "string - Arbeitsbeschreibung", 
+      "department": "string - Abteilung",
+      "requestorName": "string - Antragsteller",
+      "contactNumber": "string - Kontaktnummer",
+      "emergencyContact": "string - Notfallkontakt",
+      "performerName": "string - Ausführende Person",
+      "identifiedHazards": "string - Identifizierte Gefährdungen",
+      "additionalComments": "string - Zusätzliche Kommentare",
+      "immediateActions": "string - Sofortmaßnahmen",
+      "beforeWorkStarts": "string - Vor Arbeitsbeginn",
+      "complianceNotes": "string - Compliance-Hinweise",
+      "overallRisk": "string - high/medium/low",
+      "selectedHazards": ["array", "von", "TRBS-IDs"],
+      "hazardNotes": "string - JSON mit Gefährdungsnotizen"
+    },
+    "riskAssessment": {
+      "overallRisk": "string - high/medium/low",
+      "riskFactors": ["array", "of", "risk", "factors"],
+      "complianceScore": "number - 0-100"
+    }
+  },
+
+  "example_payload": {
+    "permitId": "GN-2025-002",
+    "analysisComplete": true,
+    "improvedPermit": {
+      "type": "general_permit",
+      "location": "Tankfarm Nord",
+      "description": "Austausch der defekten Pumpe für Tank 3 mit Ethanol unter Ex-Schutz-Bedingungen",
+      "department": "Engineering",
+      "requestorName": "Phillip Weber",
+      "contactNumber": "585",
+      "emergencyContact": "Werksfeuerwehr: +49-123-456789 (24h), Rettungsdienst: 112",
+      "performerName": "Max Mustermann (befähigte Person gem. TRBS 1203)",
+      "identifiedHazards": "Ethanol-Dämpfe, Ex-Zone 1, Inhalationsrisiko, Hautkontakt, elektrostatische Aufladung",
+      "additionalComments": "ATEX-Zertifizierung Zone 1 erforderlich, Freimessung <10% UEG vor Arbeitsbeginn, befähigte Person gem. TRBS 1203 erforderlich, Gaswarnanlagen permanent aktiv",
+      "immediateActions": "Freimessung <10% UEG durchführen, Gaswarnanlagen prüfen und aktivieren, Ex-geschützte Werkzeuge bereitstellen, Potentialausgleich herstellen",
+      "beforeWorkStarts": "PSA anlegen (Atemschutz, Schutzanzug), Arbeitsbereich absperren, Zündquellen eliminieren, Fluchtweg festlegen, Rettungsmannschaft in Bereitschaft",
+      "complianceNotes": "TRBS 2152-2 (Ex-Schutz), TRGS 509 (Lagertanks), TRBS 1203 (befähigte Personen) vollständig umsetzen",
+      "overallRisk": "high",
+      "selectedHazards": ["5-0", "5-1", "4-0", "4-1", "3-1", "2-0"],
+      "hazardNotes": "{\"5-0\": \"Ethanol brennbare Flüssigkeit - Ex-Schutz Zone 1\", \"5-1\": \"Ethanol-Dämpfe explosionsfähig\", \"4-0\": \"Hautkontakt mit Ethanol vermeiden\", \"4-1\": \"Inhalation von Ethanol-Dämpfen gefährlich\", \"3-1\": \"Elektrostatische Aufladung bei Pumpenwechsel\", \"2-0\": \"Bewegte Pumpenteile während Demontage\"}"
+    },
+    "riskAssessment": {
+      "overallRisk": "high",
+      "riskFactors": ["Ethanol-Ex-Gefahr", "ATEX-Zone-1", "Inhalationsrisiko", "Hautreizung"],
+      "complianceScore": 85
+    }
+  },
+
+  "system_processing": {
+    "automatic_comparison": [
+      "System vergleicht Original-Permit mit improvedPermit",
+      "Unterschiede werden automatisch als Vorschläge erstellt",
+      "Jeder Unterschied wird als separater Verbesserungsvorschlag angezeigt",
+      "Benutzer kann jeden Vorschlag einzeln annehmen/ablehnen"
+    ],
+    "field_prioritization": {
+      "high_priority": ["emergencyContact", "selectedHazards", "immediateActions"],
+      "medium_priority": ["beforeWorkStarts", "complianceNotes", "performerName"],
+      "low_priority": ["description", "additionalComments", "identifiedHazards"]
+    },
+    "special_handling": {
+      "selectedHazards": "Array wird als JSON verglichen",
+      "hazardNotes": "JSON-String wird intelligent verglichen",
+      "dates": "ISO-Strings werden normalisiert verglichen"
+    }
+  },
+
+  "backwards_compatibility": {
+    "description": "System unterstützt beide Formate gleichzeitig",
+    "legacy_suggestions": "Alte 'suggestions' Array wird weiterhin verarbeitet",
+    "recommendations": "Alte 'recommendations' Struktur funktioniert weiterhin",
+    "migration_path": "KI kann schrittweise auf neues Format umgestellt werden"
+  },
+
+  "implementation_benefits": {
+    "for_ai": [
+      "Einfacher - KI muss nur komplettes Objekt zurücksenden",
+      "Flexibler - KI kann beliebige Felder ändern",
+      "Robuster - Keine fieldName-Mapping-Fehler"
+    ],
+    "for_system": [
+      "Automatisches Mapping aller Änderungen",
+      "Konsistente Vorher/Nachher-Darstellung", 
+      "Einfachere Fehlerbehandlung",
+      "Bessere Testbarkeit"
+    ],
+    "for_users": [
+      "Klarere Übersicht über alle Änderungen",
+      "Bessere Vorher/Nachher-Vergleiche",
+      "Granulare Kontrolle über jede Änderung"
+    ]
+  }
+}
