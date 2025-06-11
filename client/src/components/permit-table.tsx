@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Edit, Printer, Trash2 } from "lucide-react";
+import { Eye, Edit, Printer, Trash2, Play, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -22,8 +22,11 @@ import {
 } from "@/components/ui/table";
 import { PermitStatusBadge } from "./permit-status-badge";
 import { PermitPrintView } from "./permit-print-view";
-import type { Permit } from "@shared/schema";
+import type { Permit, User } from "@shared/schema";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface PermitTableProps {
   permits: Permit[];
@@ -31,11 +34,142 @@ interface PermitTableProps {
   onEdit?: (permit: Permit) => void;
   onDelete?: (permitId: number) => void;
   isAdmin?: boolean;
+  currentUser?: User;
 }
 
-export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: PermitTableProps) {
+export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, currentUser }: PermitTableProps) {
   const [, setLocation] = useLocation();
   const [printPermit, setPrintPermit] = useState<Permit | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Workflow mutation for status changes
+  const workflowMutation = useMutation({
+    mutationFn: async ({ permitId, actionId, nextStatus }: { permitId: number; actionId: string; nextStatus: string }) => {
+      return apiRequest(`/api/permits/${permitId}/workflow`, {
+        method: 'POST',
+        body: { actionId, nextStatus }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
+      toast({
+        title: "Workflow-Aktion erfolgreich",
+        description: "Der Status wurde erfolgreich geändert.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fehler",
+        description: error.message || "Workflow-Aktion fehlgeschlagen",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Simple workflow buttons based only on status
+  const getWorkflowButtons = (permit: Permit) => {
+    if (!currentUser) return [];
+
+    const buttons = [];
+    
+    switch (permit.status) {
+      case 'approved':
+        buttons.push(
+          <Button
+            key="activate"
+            size="sm"
+            variant="default"
+            onClick={() => workflowMutation.mutate({ 
+              permitId: permit.id, 
+              actionId: 'activate', 
+              nextStatus: 'active' 
+            })}
+            disabled={workflowMutation.isPending}
+            className="mr-1"
+          >
+            <Play className="h-3 w-3 mr-1" />
+            Aktivieren
+          </Button>
+        );
+        
+        buttons.push(
+          <Button
+            key="withdraw"
+            size="sm"
+            variant="outline"
+            onClick={() => workflowMutation.mutate({ 
+              permitId: permit.id, 
+              actionId: 'withdraw', 
+              nextStatus: 'withdrawn' 
+            })}
+            disabled={workflowMutation.isPending}
+          >
+            <ArrowLeft className="h-3 w-3 mr-1" />
+            Zurückziehen
+          </Button>
+        );
+        break;
+        
+      case 'active':
+        buttons.push(
+          <Button
+            key="complete"
+            size="sm"
+            variant="default"
+            onClick={() => workflowMutation.mutate({ 
+              permitId: permit.id, 
+              actionId: 'complete', 
+              nextStatus: 'completed' 
+            })}
+            disabled={workflowMutation.isPending}
+            className="mr-1"
+          >
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Abschließen
+          </Button>
+        );
+        
+        buttons.push(
+          <Button
+            key="suspend"
+            size="sm"
+            variant="outline"
+            onClick={() => workflowMutation.mutate({ 
+              permitId: permit.id, 
+              actionId: 'suspend', 
+              nextStatus: 'suspended' 
+            })}
+            disabled={workflowMutation.isPending}
+          >
+            <XCircle className="h-3 w-3 mr-1" />
+            Pausieren
+          </Button>
+        );
+        break;
+        
+      case 'suspended':
+        buttons.push(
+          <Button
+            key="resume"
+            size="sm"
+            variant="default"
+            onClick={() => workflowMutation.mutate({ 
+              permitId: permit.id, 
+              actionId: 'resume', 
+              nextStatus: 'active' 
+            })}
+            disabled={workflowMutation.isPending}
+          >
+            <Play className="h-3 w-3 mr-1" />
+            Fortsetzen
+          </Button>
+        );
+        break;
+    }
+    
+    return buttons;
+  };
 
   const formatDateTime = (date: Date | string | null) => {
     if (!date) return 'Nicht angegeben';
@@ -113,6 +247,9 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: P
                 Status
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
+                Workflow
+              </TableHead>
+              <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
                 Gültig bis
               </TableHead>
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
@@ -123,7 +260,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin }: P
           <TableBody>
             {permits.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-secondary-gray">
+                <TableCell colSpan={8} className="text-center py-8 text-secondary-gray">
                   Keine Genehmigungen gefunden. Erstellen Sie Ihre erste Genehmigung, um zu beginnen.
                 </TableCell>
               </TableRow>
