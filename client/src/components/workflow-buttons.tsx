@@ -1,18 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { WORKFLOW_CONFIG, type WorkflowAction } from "@/lib/workflow-config";
-import { hasPermission } from "@/lib/permissions";
-import type { User, Permit } from "@shared/schema";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Play, ArrowLeft, CheckCircle, XCircle, Pause } from "lucide-react";
+import type { Permit, User } from "@shared/schema";
 
 interface WorkflowButtonsProps {
   permit: Permit;
@@ -26,105 +16,148 @@ export function WorkflowButtons({
   permit, 
   currentUser, 
   onAction, 
-  isLoading = false,
+  isLoading = false, 
   className 
 }: WorkflowButtonsProps) {
-  const [confirmAction, setConfirmAction] = useState<WorkflowAction | null>(null);
-  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<any>(null);
 
-  const workflowState = WORKFLOW_CONFIG[permit.status];
-  
-  if (!workflowState) {
-    return null;
-  }
-
-  const getAvailableActions = () => {
-    console.log('WorkflowButtons Debug:', {
-      permitStatus: permit.status,
-      workflowState: workflowState,
-      availableActions: workflowState.availableActions,
-      currentUser: currentUser.username
-    });
+  // Direkte Status-basierte Buttons ohne komplexe Konfiguration
+  const getButtonsForStatus = () => {
+    console.log('WorkflowButtons - Status:', permit.status);
     
-    const filtered = workflowState.availableActions.filter(action => {
-      const hasPerms = hasPermission(currentUser, permit, action.permissions);
-      console.log(`Action ${action.id}: permissions ${action.permissions} -> ${hasPerms}`);
-      return hasPerms;
-    });
-    
-    console.log('Filtered actions:', filtered);
-    return filtered;
+    switch (permit.status) {
+      case 'draft':
+        return [
+          {
+            id: 'submit',
+            label: 'Zur Genehmigung einreichen',
+            icon: CheckCircle,
+            variant: 'default' as const,
+            nextStatus: 'submitted'
+          }
+        ];
+      
+      case 'submitted':
+        return [
+          {
+            id: 'approve',
+            label: 'Genehmigen',
+            icon: CheckCircle,
+            variant: 'default' as const,
+            nextStatus: 'approved'
+          },
+          {
+            id: 'reject',
+            label: 'Ablehnen',
+            icon: XCircle,
+            variant: 'destructive' as const,
+            nextStatus: 'rejected'
+          }
+        ];
+      
+      case 'approved':
+        return [
+          {
+            id: 'activate',
+            label: 'Aktivieren',
+            icon: Play,
+            variant: 'default' as const,
+            nextStatus: 'active'
+          },
+          {
+            id: 'withdraw',
+            label: 'Zurückziehen',
+            icon: ArrowLeft,
+            variant: 'outline' as const,
+            nextStatus: 'draft'
+          }
+        ];
+      
+      case 'active':
+        return [
+          {
+            id: 'complete',
+            label: 'Abschließen',
+            icon: CheckCircle,
+            variant: 'default' as const,
+            nextStatus: 'completed'
+          },
+          {
+            id: 'suspend',
+            label: 'Pausieren',
+            icon: Pause,
+            variant: 'outline' as const,
+            nextStatus: 'suspended'
+          }
+        ];
+      
+      default:
+        return [];
+    }
   };
 
-  const handleAction = async (action: WorkflowAction) => {
-    if (action.requiresConfirmation) {
+  const handleAction = async (action: any) => {
+    console.log('Executing action:', action);
+    try {
+      await onAction(action.id, action.nextStatus);
+      setConfirmAction(null);
+    } catch (error) {
+      console.error('Action failed:', error);
+    }
+  };
+
+  const executeAction = async (action: any) => {
+    // Für wichtige Aktionen Bestätigung anfordern
+    if (['approve', 'reject', 'activate', 'complete'].includes(action.id)) {
       setConfirmAction(action);
     } else {
-      await executeAction(action);
+      await handleAction(action);
     }
   };
 
-  const executeAction = async (action: WorkflowAction) => {
-    try {
-      setIsActionLoading(true);
-      await onAction(action.id, action.nextStatus);
-    } catch (error) {
-      console.error('Workflow action failed:', error);
-    } finally {
-      setIsActionLoading(false);
-      setConfirmAction(null);
-    }
-  };
+  const availableButtons = getButtonsForStatus();
+  console.log('Available buttons:', availableButtons);
 
-  const availableActions = getAvailableActions();
-
-  if (availableActions.length === 0) {
+  if (availableButtons.length === 0) {
     return null;
   }
 
   return (
-    <>
-      <div className={`flex gap-2 ${className}`}>
-        {availableActions.map(action => {
-          const Icon = action.icon;
-          
-          return (
-            <Button
-              key={action.id}
-              variant={action.variant}
-              onClick={() => handleAction(action)}
-              disabled={isLoading || isActionLoading}
-              className="flex items-center gap-2"
-            >
-              <Icon className="h-4 w-4" />
-              {action.label}
-            </Button>
-          );
-        })}
-      </div>
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {availableButtons.map((action) => {
+        const Icon = action.icon;
+        return (
+          <Button
+            key={action.id}
+            variant={action.variant}
+            onClick={() => executeAction(action)}
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            <Icon className="w-4 h-4" />
+            {action.label}
+          </Button>
+        );
+      })}
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Aktion bestätigen</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction?.confirmationMessage}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isActionLoading}>
-              Abbrechen
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => confirmAction && executeAction(confirmAction)}
-              disabled={isActionLoading}
-            >
-              {isActionLoading ? "Wird ausgeführt..." : "Bestätigen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      {confirmAction && (
+        <AlertDialog open={true} onOpenChange={() => setConfirmAction(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Aktion bestätigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie diese Aktion wirklich ausführen: {confirmAction.label}?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleAction(confirmAction)}>
+                Bestätigen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
   );
 }
