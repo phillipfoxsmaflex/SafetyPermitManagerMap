@@ -1198,6 +1198,28 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                             description: "Genehmigung zurückgezogen.",
                           });
                         } else {
+                          // Check if status actually changed despite error response
+                          try {
+                            const permitCheck = await fetch(`/api/permits/${permit.id}`, {
+                              credentials: "include"
+                            });
+                            if (permitCheck.ok) {
+                              const updatedPermit = await permitCheck.json();
+                              if (updatedPermit.status === "draft") {
+                                // Status changed successfully despite error response
+                                queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                                queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                                toast({
+                                  title: "Erfolg",
+                                  description: "Genehmigung zurückgezogen.",
+                                });
+                                return;
+                              }
+                            }
+                          } catch (checkError) {
+                            console.log("Status check failed:", checkError);
+                          }
+                          
                           const errorData = await response.json();
                           toast({
                             title: "Fehler", 
@@ -1273,23 +1295,27 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
                           });
                           onOpenChange(false);
                         } else {
-                          // Don't show error if status changed successfully
-                          const permitCheck = await fetch(`/api/permits/${permit.id}`, {
-                            credentials: "include"
-                          });
-                          if (permitCheck.ok) {
-                            const updatedPermit = await permitCheck.json();
-                            if (updatedPermit.status === "pending") {
-                              // Status changed successfully, just refresh and close
-                              queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
-                              queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-                              toast({
-                                title: "Erfolg",
-                                description: "Genehmigung zur Prüfung übermittelt.",
-                              });
-                              onOpenChange(false);
-                              return;
+                          // Check if status actually changed despite error response
+                          try {
+                            const permitCheck = await fetch(`/api/permits/${permit.id}`, {
+                              credentials: "include"
+                            });
+                            if (permitCheck.ok) {
+                              const updatedPermit = await permitCheck.json();
+                              if (updatedPermit.status === "pending") {
+                                // Status changed successfully despite error response
+                                queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+                                queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+                                toast({
+                                  title: "Erfolg",
+                                  description: "Genehmigung zur Prüfung übermittelt.",
+                                });
+                                onOpenChange(false);
+                                return;
+                              }
                             }
+                          } catch (checkError) {
+                            console.log("Status check failed:", checkError);
                           }
                           
                           const errorData = await response.json();
