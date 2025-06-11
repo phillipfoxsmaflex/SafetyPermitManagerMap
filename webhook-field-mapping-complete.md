@@ -167,30 +167,152 @@ Die KI sendet Verbesserungsvorschläge zurück:
 - Fehlerbenachrichtigung
 - Retry-Mechanismus
 
+## Beispiel: Vollständige TRBS-Webhook-Kommunikation
+
+### Outbound Webhook (System → KI)
+```json
+{
+  "permitId": "HT-2025-001",
+  "type": "hot_work",
+  "location": "Produktionshalle A",
+  "description": "Schweißarbeiten an Rohrleitungen",
+  "department": "Instandhaltung",
+  "status": "pending",
+  "requestorName": "Max Mustermann",
+  "contactNumber": "+49 123 456789",
+  "emergencyContact": "Werkschutz: +49 123 999",
+  "startDate": "2025-06-11T08:00:00Z",
+  "endDate": "2025-06-11T16:00:00Z",
+  "selectedHazards": ["2-0", "7-2"],
+  "hazardNotes": "{}",
+  "completedMeasures": ["ppe_basic"],
+  "identifiedHazards": "Schweißfunken, Hitze",
+  "additionalComments": "Routinearbeiten",
+  "immediateActions": "",
+  "beforeWorkStarts": "",
+  "complianceNotes": "",
+  "overallRisk": "medium",
+  "trbsAssessment": {
+    "selectedHazards": ["2-0", "7-2"],
+    "hazardNotes": {},
+    "completedMeasures": ["ppe_basic"],
+    "hazardCategories": [
+      {
+        "categoryId": 2,
+        "categoryName": "Mechanische Gefährdungen",
+        "selectedHazards": [
+          {
+            "id": "2-0",
+            "hazardDescription": "kontrolliert bewegte ungeschützte Teile",
+            "protectiveMeasures": "größtmögliche Einschränkung des Zugangs zur Gefahrenstelle",
+            "isSelected": true,
+            "notes": "",
+            "category": "Mechanische Gefährdungen"
+          }
+        ],
+        "totalHazards": 11,
+        "selectedCount": 1
+      },
+      {
+        "categoryId": 7,
+        "categoryName": "Physikalische Einwirkungen",
+        "selectedHazards": [
+          {
+            "id": "7-2",
+            "hazardDescription": "optische Strahlung (UV, IR, Laser)",
+            "protectiveMeasures": "Augenschutz, Hautschutz bei UV-Strahlung",
+            "isSelected": true,
+            "notes": "",
+            "category": "Physikalische Einwirkungen"
+          }
+        ],
+        "totalHazards": 8,
+        "selectedCount": 1
+      }
+    ]
+  }
+}
+```
+
+### Inbound Webhook (KI → System) - Erweiterte TRBS-Analyse
+```json
+{
+  "permitId": "HT-2025-001",
+  "analysisComplete": true,
+  "suggestions": [
+    {
+      "fieldName": "selectedHazards",
+      "originalValue": ["2-0", "7-2"],
+      "suggestedValue": ["1-0", "2-0", "2-1", "5-2", "7-0", "7-2"],
+      "reasoning": "Vollständige TRBS-Kategorien für Schweißarbeiten: 1-0 (Mechanische Gefährdungen durch bewegte Teile), 2-1 (Explosion durch Gas-Luft-Gemische), 5-2 (Inhalation von Metallrauch), 7-0 (Lärm durch Schleifarbeiten)",
+      "priority": "high",
+      "type": "trbs_completion"
+    },
+    {
+      "fieldName": "hazardNotes",
+      "originalValue": "{}",
+      "suggestedValue": "{\"1-0\": \"Rotierende Schleifscheiben absichern, Schutzverkleidungen prüfen\", \"2-0\": \"Schweißfunken können brennbare Materialien entzünden - Arbeitsbereich von brennbaren Stoffen freihalten\", \"2-1\": \"Gas-Luft-Gemische in geschlossenen Räumen vermeiden, ausreichende Belüftung sicherstellen\", \"5-2\": \"Metallrauch und Schweißgase durch lokale Absaugung entfernen\", \"7-0\": \"Gehörschutz bei Schleif- und Trennarbeiten obligatorisch\", \"7-2\": \"UV-Schutzbrille und Schweißhelm mit entsprechender Schutzstufe verwenden\"}",
+      "reasoning": "Detaillierte Sicherheitsnotizen für jede TRBS-Kategorie mit spezifischen Schutzmaßnahmen nach DGUV Vorschriften",
+      "priority": "critical",
+      "type": "safety_documentation"
+    },
+    {
+      "fieldName": "completedMeasures",
+      "originalValue": ["ppe_basic"],
+      "suggestedValue": ["ppe_welding_complete", "fire_watch_mandatory", "ventilation_local", "area_clearance_5m", "emergency_equipment_ready", "hearing_protection", "respiratory_protection"],
+      "reasoning": "Vollständige Schutzmaßnahmen entsprechend TRBS 2101 für alle identifizierten Gefährdungen",
+      "priority": "critical",
+      "type": "protective_measures"
+    },
+    {
+      "fieldName": "immediateActions",
+      "originalValue": "",
+      "suggestedValue": "1. Arbeitsbereich 5m Radius absperren und kennzeichnen\n2. Feuerlöscher und Löschdecke bereitstellen\n3. Schweißschutzwände aufstellen\n4. Lokale Absaugung installieren und testen\n5. Brandwache einteilen\n6. Notfallkommunikation sicherstellen",
+      "reasoning": "Systematische Sofortmaßnahmen nach DGUV Regel 100-500 für Heißarbeiten",
+      "priority": "critical",
+      "type": "immediate_safety"
+    },
+    {
+      "fieldName": "beforeWorkStarts",
+      "originalValue": "",
+      "suggestedValue": "1. PSA-Kontrolle: Schweißhelm, Schutzkleidung, Sicherheitsschuhe\n2. Funktionsprüfung Absauganlage\n3. Freimessung der Atemluft\n4. Prüfung elektrischer Schweißgeräte\n5. Brandwache-Briefing\n6. Kommunikationsmittel testen",
+      "reasoning": "Checkliste vor Arbeitsbeginn zur Sicherstellung aller Schutzmaßnahmen",
+      "priority": "high",
+      "type": "pre_work_checklist"
+    },
+    {
+      "fieldName": "overallRisk",
+      "originalValue": "medium",
+      "suggestedValue": "high",
+      "reasoning": "Schweißarbeiten mit multiplen TRBS-Gefährdungen erfordern Einstufung als hohes Risiko",
+      "priority": "medium",
+      "type": "risk_assessment"
+    }
+  ]
+}
+```
+
 ## Test-Szenarien
 
-### Vollständige Feldabdeckung
+### TRBS-Vollständigkeitstest
 ```bash
-curl -X POST /api/webhooks/suggestions \
+curl -X POST http://localhost:5000/api/webhooks/suggestions \
   -H "Content-Type: application/json" \
   -d '{
     "permitId": "TEST-2025-001",
     "analysisComplete": true,
     "suggestions": [
       {
-        "fieldName": "description",
-        "suggestedValue": "Erweiterte Arbeitsbeschreibung mit Sicherheitsdetails"
-      },
-      {
         "fieldName": "selectedHazards",
-        "suggestedValue": ["1-0", "2-0", "5-2"]
+        "suggestedValue": ["1-0", "2-0", "3-0", "4-0", "5-0", "6-0", "7-0", "8-0", "9-0"],
+        "reasoning": "Vollständige TRBS-Kategorienabdeckung für umfassende Gefährdungsbeurteilung"
       },
       {
-        "fieldName": "immediateActions",
-        "suggestedValue": "Arbeitsbereich sichern und PSA anlegen"
+        "fieldName": "hazardNotes",
+        "suggestedValue": "{\"1-0\": \"Allgemeine Sicherheitshinweise\", \"2-0\": \"Mechanische Schutzmaßnahmen\", \"3-0\": \"Absturzsicherung\", \"4-0\": \"Elektrische Sicherheit\", \"5-0\": \"Medienschutz\", \"6-0\": \"Brandschutz\", \"7-0\": \"Physikalischer Schutz\", \"8-0\": \"Ergonomische Maßnahmen\", \"9-0\": \"Arbeitsorganisation\"}"
       }
     ]
   }'
 ```
 
-Das System ist vollständig für umfassende KI-Integration optimiert.
+Das System unterstützt jetzt vollständige TRBS-Gefährdungsbeurteilungen mit detaillierten Kategorie-Informationen und spezifischen Notizen für optimale KI-Analyse.
