@@ -372,6 +372,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Workflow action endpoint
+  app.post("/api/permits/:id/workflow", requireAuth, async (req, res) => {
+    try {
+      const permitId = parseInt(req.params.id);
+      const { action, nextStatus, comment } = req.body;
+      const userId = req.session.userId;
+
+      if (isNaN(permitId)) {
+        return res.status(400).json({ message: "Invalid permit ID" });
+      }
+
+      if (!action || !nextStatus) {
+        return res.status(400).json({ message: "Action and nextStatus are required" });
+      }
+
+      // Get current permit to validate transition
+      const currentPermit = await storage.getPermit(permitId);
+      if (!currentPermit) {
+        return res.status(404).json({ message: "Permit not found" });
+      }
+
+      // Validate status transition based on action
+      const validTransitions: Record<string, string[]> = {
+        submit: ['draft'],
+        withdraw: ['pending', 'approved'],
+        approve: ['pending'],
+        activate: ['approved'],
+        complete: ['active']
+      };
+
+      if (!validTransitions[action] || !validTransitions[action].includes(currentPermit.status)) {
+        return res.status(400).json({ 
+          message: `Invalid transition: cannot ${action} from status ${currentPermit.status}` 
+        });
+      }
+
+      // For approve action, handle individual approvals
+      if (action === 'approve') {
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(400).json({ message: "User not found" });
+        }
+
+        // Update specific approval based on user role/assignment
+        const updates: Partial<any> = {};
+        
+        if (currentPermit.departmentHead === user.username) {
+          updates.departmentHeadApproval = true;
+          updates.departmentHeadApprovalDate = new Date();
+        } else if (currentPermit.safetyOfficer === user.username) {
+          updates.safetyOfficerApproval = true;
+          updates.safetyOfficerApprovalDate = new Date();
+        } else if (currentPermit.maintenanceApprover === user.username) {
+          updates.maintenanceApproval = true;
+          updates.maintenanceApprovalDate = new Date();
+        } else if (user.role === 'admin') {
+          // Admin can approve any role
+          updates.departmentHeadApproval = true;
+          updates.departmentHeadApprovalDate = new Date();
+          updates.maintenanceApproval = true;
+          updates.maintenanceApprovalDate = new Date();
+        } else {
+          return res.status(403).json({ message: "Not authorized to approve this permit" });
+        }
+
+        // Update individual approvals first
+        await storage.updatePermit(permitId, updates);
+        
+        // Check if all required approvals are received
+        const updatedPermit = await storage.getPermit(permitId);
+        const allApproved = updatedPermit?.departmentHeadApproval && updatedPermit?.maintenanceApproval;
+        
+        if (allApproved) {
+          // Move to approved status
+          const finalPermit = await storage.updatePermitStatus(permitId, 'approved', userId, comment);
+          res.json(finalPermit);
+        } else {
+          // Stay in pending, just record the individual approval
+          await storage.addStatusHistoryEntry(permitId, 'pending', userId, `Teilgenehmigung erteilt: ${Object.keys(updates).join(', ')}`);
+          const permit = await storage.getPermit(permitId);
+          res.json(permit);
+        }
+      } else {
+        // Handle other workflow actions
+        const updatedPermit = await storage.updatePermitStatus(permitId, nextStatus, userId, comment);
+        res.json(updatedPermit);
+      }
+    } catch (error) {
+      console.error("Error processing workflow action:", error);
+      res.status(500).json({ message: "Failed to process workflow action" });
+    }
+  });
+
   // Approve permit
   app.post("/api/permits/:id/approve", requireAuth, async (req, res) => {
     try {

@@ -85,6 +85,10 @@ export interface IStorage {
   // AI Suggestions cleanup operations
   cleanupOldSuggestions(): Promise<number>;
   cleanupSuggestionsForUser(userId: number): Promise<number>;
+  
+  // Workflow operations
+  updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined>;
+  addStatusHistoryEntry(permitId: number, status: string, userId: number, comment?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -970,6 +974,75 @@ export class DatabaseStorage implements IStorage {
     }
 
     return totalDeleted;
+  }
+
+  async updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined> {
+    // First add to status history
+    await this.addStatusHistoryEntry(id, status, userId, comment);
+    
+    // Prepare update object with status-specific timestamps
+    const updateData: Partial<Permit> = {
+      status,
+      updatedAt: new Date()
+    };
+    
+    // Set specific timestamps based on status
+    switch (status) {
+      case 'pending':
+        updateData.submittedAt = new Date();
+        updateData.submittedBy = userId;
+        break;
+      case 'approved':
+        updateData.approvedAt = new Date();
+        break;
+      case 'active':
+        updateData.activatedAt = new Date();
+        break;
+      case 'completed':
+        updateData.completedAt = new Date();
+        break;
+    }
+    
+    const [updatedPermit] = await db
+      .update(permits)
+      .set(updateData)
+      .where(eq(permits.id, id))
+      .returning();
+    
+    return updatedPermit;
+  }
+
+  async addStatusHistoryEntry(permitId: number, status: string, userId: number, comment?: string): Promise<void> {
+    // Get current permit to read existing history
+    const permit = await this.getPermit(permitId);
+    if (!permit) return;
+    
+    // Get user name for history entry
+    const user = await this.getUser(userId);
+    const userName = user?.username || 'Unknown';
+    
+    // Parse existing history
+    const existingHistory = permit.statusHistory ? JSON.parse(permit.statusHistory) : [];
+    
+    // Add new entry
+    const newEntry = {
+      status,
+      timestamp: new Date().toISOString(),
+      userId,
+      userName,
+      comment
+    };
+    
+    const updatedHistory = [...existingHistory, newEntry];
+    
+    // Update permit with new history
+    await db
+      .update(permits)
+      .set({ 
+        statusHistory: JSON.stringify(updatedHistory),
+        updatedAt: new Date()
+      })
+      .where(eq(permits.id, permitId));
   }
 }
 
