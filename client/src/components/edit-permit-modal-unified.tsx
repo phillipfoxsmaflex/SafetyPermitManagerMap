@@ -365,19 +365,49 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Arbeitsort</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Spezifischer Arbeitsort" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="workLocationId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Arbeitsort</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
+                              value={field.value?.toString() || ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Arbeitsort auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {workLocations.map((location) => (
+                                  <SelectItem key={location.id} value={location.id.toString()}>
+                                    {location.name} - {location.description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Spezifischer Ort (optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Detaillierte Ortsangabe..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
