@@ -282,6 +282,11 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
                   <TableCell>
                     <PermitStatusBadge status={permit.status} />
                   </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {getWorkflowButtons(permit)}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-industrial-gray">
                     {formatDateTime(permit.endDate)}
                   </TableCell>

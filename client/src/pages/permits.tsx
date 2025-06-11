@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Permit } from "@shared/schema";
+import type { Permit, User } from "@shared/schema";
 import { isAfter, isBefore, isSameDay, startOfDay, endOfDay } from "date-fns";
 
 export default function Permits() {
@@ -33,6 +33,10 @@ export default function Permits() {
 
   const { data: permits = [], isLoading } = useQuery<Permit[]>({
     queryKey: ["/api/permits"],
+  });
+
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
   });
 
   // Filter permits based on search query and filters
@@ -213,6 +217,7 @@ export default function Permits() {
             setSelectedPermit(permit);
             setEditModalOpen(true);
           }}
+          currentUser={currentUser}
         />
 
         {/* Pagination Controls */}
