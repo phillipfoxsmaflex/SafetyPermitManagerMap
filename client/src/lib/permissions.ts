@@ -30,8 +30,8 @@ export function getUserPermissions(user: User, permit: Permit): string[] {
     permissions.push('approver');
   }
   
-  // Supervisor-Rechte
-  if (user.role === 'supervisor') {
+  // Supervisor-Rechte - Department Heads und Safety Officers können als Supervisors agieren
+  if (user.role === 'supervisor' || user.role === 'department_head' || user.role === 'safety_officer') {
     permissions.push('supervisor');
   }
   
