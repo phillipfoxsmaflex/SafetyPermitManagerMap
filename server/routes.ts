@@ -1065,8 +1065,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           overallRisk: permit.overallRisk,
           completedMeasures: permit.completedMeasures || [],
           
-          // Structured TRBS hazard assessment with detailed analysis
-          hazardCategories: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
+          // Consolidated hazard assessment with true/false for each hazard
+          selectedHazards: {
+            hazards: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
+          }
         },
         
         // Work execution tracking
