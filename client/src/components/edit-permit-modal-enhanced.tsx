@@ -440,16 +440,58 @@ export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPerm
     },
   });
 
+  // Workflow status mutation
+  const workflowMutation = useMutation({
+    mutationFn: async ({ permitId, action, nextStatus }: { permitId: number; action: string; nextStatus: string }) => {
+      const response = await apiRequest(`/api/permits/${permitId}/workflow`, "POST", { action, nextStatus });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      toast({
+        title: "Status aktualisiert",
+        description: "Der Genehmigungsstatus wurde erfolgreich geändert.",
+      });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      let errorMessage = "Der Status konnte nicht geändert werden.";
+      try {
+        const errorData = JSON.parse(error.message);
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // Use default error message
+      }
+      toast({
+        title: "Fehler",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: EditPermitFormData) => {
     console.log("Saving as draft:", data);
     console.log("Form errors:", form.formState.errors);
-    updateMutation.mutate(data);
+    updateMutation.mutate({ ...data, status: "draft" });
   };
 
   const onSubmitForApproval = (data: EditPermitFormData) => {
     console.log("Submitting for approval:", data);
     console.log("Form errors:", form.formState.errors);
-    updateMutation.mutate({ ...data, status: "pending" });
+    
+    // First update the permit data, then change status
+    updateMutation.mutate({ ...data, status: "draft" }, {
+      onSuccess: () => {
+        // After successful update, transition to pending status
+        workflowMutation.mutate({ permitId: permit!.id, action: "submit", nextStatus: "pending" });
+      }
+    });
   };
 
   if (!permit) return null;
