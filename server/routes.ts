@@ -377,7 +377,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const permitId = parseInt(req.params.id);
       const { action, nextStatus, comment } = req.body;
-      const userId = req.session.userId;
+      const sessionId = req.cookies?.sessionId;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const session = await storage.getSessionBySessionId(sessionId);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid session" });
+      }
+      
+      const userId = session.userId;
 
       if (isNaN(permitId)) {
         return res.status(400).json({ message: "Invalid permit ID" });
