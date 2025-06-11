@@ -1,0 +1,134 @@
+{
+  "description": "Spezifikation für KI-Webhook-Payload - Verbesserungsvorschläge",
+  "endpoint": "POST /api/webhooks/suggestions",
+  "required_structure": {
+    "permitId": "string - PFLICHT - Die Permit-ID (z.B. 'GN-2025-002')",
+    "analysisComplete": "boolean - PFLICHT - true wenn Analyse erfolgreich, false bei Fehlern",
+    "error": "string - OPTIONAL - Fehlermeldung wenn analysisComplete=false",
+    "suggestions": [
+      {
+        "type": "string - Art des Vorschlags (hazard_identification, safety_measure, emergency_contact, etc.)",
+        "fieldName": "string - EXAKTES Datenbankfeld das geändert werden soll",
+        "originalValue": "string - Aktueller Wert des Feldes",
+        "suggestedValue": "string - Vorgeschlagener neuer Wert",
+        "reasoning": "string - Begründung für den Vorschlag",
+        "priority": "string - high/medium/low"
+      }
+    ],
+    "riskAssessment": {
+      "overallRisk": "string - high/medium/low",
+      "riskFactors": ["array", "of", "risk", "factors"],
+      "complianceScore": "number - 0-100"
+    },
+    "recommendations": {
+      "immediate_actions": ["array", "of", "immediate", "actions"],
+      "before_work_starts": ["array", "of", "preparation", "steps"],
+      "compliance_requirements": ["array", "of", "compliance", "notes"]
+    },
+    "compliance_notes": "string - Alternative zu recommendations.compliance_requirements"
+  },
+  
+  "field_mapping": {
+    "description": "Verfügbare fieldName-Werte für Mapping zu Datenbankfeldern",
+    "basic_fields": {
+      "type": "Typ des Permits",
+      "location": "Arbeitsort", 
+      "description": "Arbeitsbeschreibung",
+      "department": "Abteilung",
+      "requestorName": "Antragsteller",
+      "contactNumber": "Kontaktnummer",
+      "emergencyContact": "Notfallkontakt",
+      "performerName": "Ausführende Person"
+    },
+    "safety_fields": {
+      "identifiedHazards": "Identifizierte Gefährdungen (Freitext)",
+      "additionalComments": "Zusätzliche Kommentare", 
+      "immediateActions": "Sofortmaßnahmen",
+      "beforeWorkStarts": "Vor Arbeitsbeginn",
+      "complianceNotes": "Compliance-Hinweise",
+      "overallRisk": "Gesamtrisiko (high/medium/low)"
+    },
+    "trbs_fields": {
+      "selectedHazards": "Array von TRBS-Gefährdungs-IDs (z.B. ['2-0', '5-1'])",
+      "hazardNotes": "JSON-String mit Notizen pro Gefährdung {\"2-0\": \"Notiz\"}"
+    },
+    "approval_fields": {
+      "departmentHeadApproval": "boolean - Abteilungsleiter-Genehmigung",
+      "maintenanceApproval": "boolean - Instandhaltungs-Genehmigung", 
+      "safetyOfficerApproval": "boolean - Sicherheitsbeauftragte-Genehmigung"
+    }
+  },
+
+  "example_payload": {
+    "permitId": "GN-2025-002",
+    "analysisComplete": true,
+    "suggestions": [
+      {
+        "type": "hazard_identification",
+        "fieldName": "selectedHazards", 
+        "originalValue": "[]",
+        "suggestedValue": "[\"5-0\", \"5-1\", \"4-0\", \"3-1\"]",
+        "reasoning": "Ethanol erfordert Brand-/Explosionsschutz und Gefahrstoffschutz",
+        "priority": "high"
+      },
+      {
+        "type": "safety_measure",
+        "fieldName": "immediateActions",
+        "originalValue": "",
+        "suggestedValue": "Freimessung <10% UEG, Gaswarnanlagen prüfen, Ex-Schutz-Werkzeuge",
+        "reasoning": "TRBS 2152 fordert Ex-Schutzmaßnahmen vor Arbeitsbeginn",
+        "priority": "high"
+      },
+      {
+        "type": "emergency_contact",
+        "fieldName": "emergencyContact", 
+        "originalValue": "Konkrete Telefonnummer muss angegeben werden",
+        "suggestedValue": "Werksfeuerwehr: +49-XXX-XXXX (24h)",
+        "reasoning": "Konkrete Notfallkontakte bei Gefahrstoffarbeiten erforderlich",
+        "priority": "medium"
+      }
+    ],
+    "riskAssessment": {
+      "overallRisk": "high",
+      "riskFactors": ["Ethanol-Dämpfe", "Ex-Zone 1", "Inhalationsrisiko"],
+      "complianceScore": 45
+    },
+    "recommendations": {
+      "immediate_actions": [
+        "Freimessung durchführen",
+        "Ex-Schutz Ausrüstung bereitstellen"
+      ],
+      "before_work_starts": [
+        "PSA anlegen", 
+        "Potentialausgleich herstellen"
+      ],
+      "compliance_requirements": [
+        "TRBS 2152 Ex-Schutz beachten",
+        "TRGS 509 Lagertanks einhalten"
+      ]
+    }
+  },
+
+  "special_handling": {
+    "selectedHazards_format": {
+      "description": "Für TRBS-Gefährdungen Array von IDs verwenden",
+      "example": "[\"2-0\", \"5-1\", \"4-0\"]",
+      "mapping": {
+        "2-0": "Ungeschützt bewegte Maschinenteile",
+        "3-0": "Elektrischer Strom", 
+        "4-0": "Hautkontakt mit Gefahrstoffen",
+        "5-0": "Brennbare Flüssigkeiten"
+      }
+    },
+    "hazardNotes_format": {
+      "description": "JSON-String mit Notizen pro Gefährdung",
+      "example": "{\"2-0\": \"Pumpe läuft - Abschaltung erforderlich\", \"5-0\": \"Ethanol-Dämpfe beachten\"}"
+    },
+    "recommendations_auto_mapping": {
+      "description": "recommendations werden automatisch zu separaten Vorschlägen gemappt",
+      "immediate_actions": "→ fieldName: 'immediateActions'",
+      "before_work_starts": "→ fieldName: 'beforeWorkStarts'", 
+      "compliance_requirements": "→ fieldName: 'complianceNotes'"
+    }
+  }
+}
