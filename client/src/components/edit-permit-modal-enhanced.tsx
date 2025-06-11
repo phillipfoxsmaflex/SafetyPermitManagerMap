@@ -35,9 +35,16 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { SignaturePad } from "@/components/signature-pad";
 import { PermitAttachments } from "@/components/permit-attachments";
+import { StatusIndicator } from "@/components/status-indicator";
+import { WorkflowButtons } from "@/components/workflow-buttons";
+import { StatusTimeline } from "@/components/status-timeline";
+import { WorkflowVisualization } from "@/components/workflow-visualization";
+import { WORKFLOW_CONFIG } from "@/lib/workflow-config";
+import { canEditPermit } from "@/lib/permissions";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle } from "lucide-react";
 
 interface EditPermitModalEnhancedProps {
@@ -82,6 +89,7 @@ type EditPermitFormData = z.infer<typeof editPermitSchema>;
 
 export function EditPermitModalEnhanced({ permit, open, onOpenChange }: EditPermitModalEnhancedProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
