@@ -11,10 +11,60 @@ import { z } from "zod";
 // Helper function to format TRBS data for webhook
 function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes: string | null) {
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
-    const trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
+    // Hardcoded fallback - use attached TRBS data from attached_assets
+    const trbsDataFallback = {
+      "categories": [
+        {
+          "id": "2",
+          "category": "Mechanische Gefährdungen",
+          "hazards": [
+            {"hazard": "Ungeschützt bewegte Maschinenteile"},
+            {"hazard": "Teile mit gefährlichen Oberflächen"},
+            {"hazard": "Bewegte Transportmittel, bewegte Arbeitsmittel"},
+            {"hazard": "Unkontrolliert bewegte Teile"},
+            {"hazard": "Sturz auf der Ebene, Ausrutschen, Umknicken, Fehltreten, Stolpern"}
+          ]
+        },
+        {
+          "id": "3", 
+          "category": "Elektrische Gefährdungen",
+          "hazards": [
+            {"hazard": "Elektrischer Strom"},
+            {"hazard": "Elektrostatische Aufladungen"}
+          ]
+        },
+        {
+          "id": "4",
+          "category": "Gefahrstoffe",
+          "hazards": [
+            {"hazard": "Hautkontakt mit Gefahrstoffen"},
+            {"hazard": "Einatmen von Gefahrstoffen"},
+            {"hazard": "Verschlucken von Gefahrstoffen"},
+            {"hazard": "Physikalisch-chemische Gefährdungen durch Gefahrstoffe"}
+          ]
+        },
+        {
+          "id": "5",
+          "category": "Brand- und Explosionsgefährdungen", 
+          "hazards": [
+            {"hazard": "Brennbare Flüssigkeiten"},
+            {"hazard": "Brennbare Gase"},
+            {"hazard": "Brennbare Stäube"},
+            {"hazard": "Heiße Oberflächen"},
+            {"hazard": "Flammen"}
+          ]
+        }
+      ]
+    };
+
+    let trbsData;
+    try {
+      const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
+      trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
+    } catch (fileError) {
+      console.warn('Could not load TRBS data file, using fallback data');
+      trbsData = trbsDataFallback;
+    }
     
     let hazardNotesObj: Record<string, string> = {};
     try {
@@ -25,62 +75,30 @@ function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes:
     }
     
     const selectedHazardsList = selectedHazards || [];
-    const formattedCategories: any[] = [];
+    const allHazards: any[] = [];
     
-    // Process all TRBS categories with complete hazard information
+    // Process all TRBS categories and flatten to a single array
     trbsData.categories.forEach((category: any) => {
-      const categoryHazards = category.hazards.map((hazard: any, hazardIndex: number) => {
+      category.hazards.forEach((hazard: any, hazardIndex: number) => {
         const hazardId = `${category.id}-${hazardIndex}`;
         const isSelected = selectedHazardsList.includes(hazardId);
         
-        return {
+        allHazards.push({
           hazardId: hazardId,
           hazardDescription: hazard.hazard,
-          protectiveMeasures: hazard.protectiveMeasures,
           isSelected: isSelected,
-          notes: hazardNotesObj[hazardId] || '',
-          riskLevel: hazard.riskLevel || 'medium'
-        };
-      });
-      
-      const selectedCount = categoryHazards.filter(h => h.isSelected).length;
-      
-      // Only include categories that have at least one selected hazard or contain relevant data
-      if (selectedCount > 0 || Object.keys(hazardNotesObj).some(key => key.startsWith(`${category.id}-`))) {
-        formattedCategories.push({
-          categoryId: category.id,
-          categoryName: category.category,
-          categoryDescription: category.description || '',
-          hazards: categoryHazards,
-          totalHazards: category.hazards.length,
-          selectedCount: selectedCount,
-          completionPercentage: Math.round((selectedCount / category.hazards.length) * 100)
+          notes: hazardNotesObj[hazardId] || ''
         });
-      }
+      });
     });
     
-    // Add summary of non-TRBS hazards (legacy format)
-    const legacyHazards = selectedHazardsList.filter(hazard => !hazard.includes('-'));
-    if (legacyHazards.length > 0) {
-      formattedCategories.push({
-        categoryId: 'legacy',
-        categoryName: 'Weitere identifizierte Gefährdungen',
-        categoryDescription: 'Zusätzliche Gefährdungen im Freitextformat',
-        hazards: legacyHazards.map(hazard => ({
-          hazardId: hazard,
-          hazardDescription: hazard,
-          protectiveMeasures: 'Spezifische Schutzmaßnahmen erforderlich',
-          isSelected: true,
-          notes: '',
-          riskLevel: 'medium'
-        })),
-        totalHazards: legacyHazards.length,
-        selectedCount: legacyHazards.length,
-        completionPercentage: 100
-      });
-    }
+    console.log('Formatted TRBS hazards for webhook:', {
+      totalHazards: allHazards.length,
+      selectedCount: allHazards.filter((h: any) => h.isSelected).length,
+      sampleHazards: allHazards.slice(0, 3)
+    });
     
-    return formattedCategories;
+    return allHazards;
   } catch (error) {
     console.error('Error formatting TRBS data for webhook:', error);
     return [];
