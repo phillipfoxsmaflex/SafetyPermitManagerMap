@@ -404,7 +404,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold">AI-Verbesserungsvorschläge</h3>
         </div>
         <Button
           onClick={() => analyzeMutation.mutate()}

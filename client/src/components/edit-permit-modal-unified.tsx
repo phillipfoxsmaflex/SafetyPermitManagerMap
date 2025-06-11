@@ -72,6 +72,8 @@ const editPermitSchema = z.object({
   identifiedHazards: z.string().optional(),
   selectedHazards: z.array(z.string()).optional(),
   hazardNotes: z.string().optional(),
+  immediateMeasures: z.string().optional(),
+  preventiveMeasures: z.string().optional(),
   completedMeasures: z.array(z.string()).optional(),
   status: z.string().optional(),
   performerName: z.string().optional(),
@@ -582,6 +584,34 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                       <div className="space-y-3">
                         <FormField
                           control={form.control}
+                          name="departmentHeadId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Abteilungsleitung</FormLabel>
+                              <Select 
+                                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
+                                value={field.value?.toString() || ""}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Abteilungsleitung auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {departmentHeads.map((head) => (
+                                    <SelectItem key={head.id} value={head.id.toString()}>
+                                      {head.username} - {head.role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="departmentHeadApproval"
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -592,7 +622,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel>Abteilungsleitung Genehmigung</FormLabel>
+                                <FormLabel>Genehmigung erteilt</FormLabel>
                               </div>
                             </FormItem>
                           )}
@@ -600,6 +630,34 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                       </div>
 
                       <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="safetyOfficerId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sicherheitsbeauftragter</FormLabel>
+                              <Select 
+                                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
+                                value={field.value?.toString() || ""}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {safetyOfficers.map((officer) => (
+                                    <SelectItem key={officer.id} value={officer.id.toString()}>
+                                      {officer.username} - {officer.role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField
                           control={form.control}
                           name="safetyOfficerApproval"
@@ -612,7 +670,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel>Sicherheitsbeauftragter Genehmigung</FormLabel>
+                                <FormLabel>Genehmigung erteilt</FormLabel>
                               </div>
                             </FormItem>
                           )}
@@ -620,6 +678,34 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                       </div>
 
                       <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="maintenanceApproverId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Technik/Wartung</FormLabel>
+                              <Select 
+                                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
+                                value={field.value?.toString() || ""}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Technik/Wartung auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {maintenanceApprovers.map((approver) => (
+                                    <SelectItem key={approver.id} value={approver.id.toString()}>
+                                      {approver.username} - {approver.role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField
                           control={form.control}
                           name="maintenanceApproval"
@@ -632,7 +718,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel>Technik Genehmigung</FormLabel>
+                                <FormLabel>Genehmigung erteilt</FormLabel>
                               </div>
                             </FormItem>
                           )}
