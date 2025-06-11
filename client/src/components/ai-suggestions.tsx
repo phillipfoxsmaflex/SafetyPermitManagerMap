@@ -400,73 +400,72 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-blue-600" />
-            AI-Verbesserungsvorschläge
-          </CardTitle>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold">AI-Verbesserungsvorschläge</h3>
+        </div>
+        <Button
+          onClick={() => analyzeMutation.mutate()}
+          disabled={analyzeMutation.isPending || isAnalyzing}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {analyzeMutation.isPending || isAnalyzing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4 mr-2" />
+          )}
+          {isAnalyzing ? 'Analysiert...' : 'AI-Analyse starten'}
+        </Button>
+      </div>
+      
+      {suggestions.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => analyzeMutation.mutate()}
-            disabled={analyzeMutation.isPending || isAnalyzing}
+            onClick={handleApplyAll}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
+            variant="outline"
+            className="text-green-600 border-green-600 hover:bg-green-50"
           >
-            {analyzeMutation.isPending || isAnalyzing ? (
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Alle übernehmen
+          </Button>
+          
+          <Button
+            onClick={() => rejectAllMutation.mutate()}
+            disabled={rejectAllMutation.isPending}
+            size="sm"
+            variant="outline"
+            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+          >
+            {rejectAllMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 mr-2" />
+              <XCircle className="h-4 w-4 mr-2" />
             )}
-            {isAnalyzing ? 'Analysiert...' : 'AI-Analyse starten'}
+            Alle ablehnen
+          </Button>
+          
+          <Button
+            onClick={() => deleteAllMutation.mutate()}
+            disabled={deleteAllMutation.isPending}
+            size="sm"
+            variant="outline"
+            className="text-red-600 border-red-600 hover:bg-red-50"
+          >
+            {deleteAllMutation.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            Alle löschen
           </Button>
         </div>
-        
-        {suggestions.length > 0 && (
-          <div className="mt-4 flex gap-2 flex-wrap">
-            <Button
-              onClick={handleApplyAll}
-              size="sm"
-              variant="outline"
-              className="text-green-600 border-green-600 hover:bg-green-50"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Alle übernehmen
-            </Button>
-            
-            <Button
-              onClick={() => rejectAllMutation.mutate()}
-              disabled={rejectAllMutation.isPending}
-              size="sm"
-              variant="outline"
-              className="text-orange-600 border-orange-600 hover:bg-orange-50"
-            >
-              {rejectAllMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-2" />
-              )}
-              Alle ablehnen
-            </Button>
-            
-            <Button
-              onClick={() => deleteAllMutation.mutate()}
-              disabled={deleteAllMutation.isPending}
-              size="sm"
-              variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50"
-            >
-              {deleteAllMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
-              )}
-              Alle löschen
-            </Button>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent>
+      )}
+      
+      <div>
         {isLoading ? (
           <div className="text-center py-8">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
@@ -575,7 +574,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
 
       {/* Analysis Progress Dialog */}
       <Dialog open={analysisDialogOpen} onOpenChange={setAnalysisDialogOpen}>
@@ -643,6 +642,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           </div>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }
