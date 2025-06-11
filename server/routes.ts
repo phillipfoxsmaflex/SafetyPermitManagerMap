@@ -428,14 +428,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update specific approval based on user role and assignment
         const updates: Partial<any> = {};
         
+        console.log(`Approval check for permit ${permitId}:`);
+        console.log(`User: ${user.username}, Role: ${user.role}`);
+        console.log(`Department Head: ${currentPermit.departmentHead}`);
+        console.log(`Safety Officer: ${currentPermit.safetyOfficer}`);
+        console.log(`Maintenance Approver: ${currentPermit.maintenanceApprover}`);
+        
         // Check specific assignment first, then fall back to role-based approval
         if (currentPermit.departmentHead === user.username) {
+          console.log('Setting department head approval');
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
         } else if (currentPermit.safetyOfficer === user.username) {
+          console.log('Setting safety officer approval');
           updates.safetyOfficerApproval = true;
           updates.safetyOfficerApprovalDate = new Date();
         } else if (currentPermit.maintenanceApprover === user.username) {
+          console.log('Setting maintenance approval');
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
         } else if (user.role === 'department_head' && 
@@ -480,7 +489,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Update individual approvals first
-        await storage.updatePermit(permitId, updates);
+        console.log('Updates to apply:', updates);
+        const updateResult = await storage.updatePermit(permitId, updates);
+        console.log('Update result:', updateResult);
         
         // Check if all required approvals are received
         const updatedPermit = await storage.getPermit(permitId);
