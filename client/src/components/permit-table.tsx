@@ -46,10 +46,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
   // Workflow mutation for status changes
   const workflowMutation = useMutation({
     mutationFn: async ({ permitId, actionId, nextStatus }: { permitId: number; actionId: string; nextStatus: string }) => {
-      return apiRequest(`/api/permits/${permitId}/workflow`, {
-        method: 'POST',
-        body: { action: actionId, nextStatus }
-      });
+      return apiRequest(`/api/permits/${permitId}/workflow`, 'POST', { action: actionId, nextStatus });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
