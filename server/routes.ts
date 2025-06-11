@@ -10,10 +10,18 @@ import { z } from "zod";
 
 // Helper function to format TRBS data for webhook
 function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes: string | null) {
-  const trbsData = require('../client/src/data/trbs_hazards.json');
-  const hazardNotesObj = hazardNotes ? JSON.parse(hazardNotes) : {};
-  
-  const formattedCategories: any[] = [];
+  try {
+    const trbsData = require('../client/src/data/trbs_hazards.json');
+    
+    let hazardNotesObj: Record<string, string> = {};
+    try {
+      hazardNotesObj = hazardNotes ? JSON.parse(hazardNotes) : {};
+    } catch (noteParseError) {
+      console.warn('Invalid JSON in hazardNotes during TRBS formatting:', hazardNotes);
+      hazardNotesObj = {};
+    }
+    
+    const formattedCategories: any[] = [];
   
   if (!selectedHazards || selectedHazards.length === 0) {
     return formattedCategories;
@@ -60,7 +68,11 @@ function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes:
     }
   });
   
-  return formattedCategories;
+    return formattedCategories;
+  } catch (error) {
+    console.error('Error formatting TRBS data for webhook:', error);
+    return [];
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1044,7 +1056,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Detailed TRBS hazard assessment data
         trbsAssessment: {
           selectedHazards: permit.selectedHazards || [],
-          hazardNotes: permit.hazardNotes ? JSON.parse(permit.hazardNotes) : {},
+          hazardNotes: (() => {
+            try {
+              return permit.hazardNotes ? JSON.parse(permit.hazardNotes) : {};
+            } catch (error) {
+              console.warn('Invalid JSON in hazardNotes for permit', permit.permitId, ':', permit.hazardNotes);
+              return {};
+            }
+          })(),
           completedMeasures: permit.completedMeasures || [],
           // Parse and structure hazard categories for AI analysis
           hazardCategories: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
