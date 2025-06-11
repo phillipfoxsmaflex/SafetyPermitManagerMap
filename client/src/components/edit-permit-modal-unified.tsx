@@ -158,10 +158,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
   // Update form
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
-      return apiRequest(`/api/permits/${permit!.id}`, {
-        method: "PATCH",
-        body: data,
-      });
+      if (!permit?.id) throw new Error("Permit ID fehlt");
+      return apiRequest(`/api/permits/${permit.id}`, "PATCH", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit!.id}`] });
@@ -184,10 +182,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
   // Workflow mutation
   const workflowMutation = useMutation({
     mutationFn: async ({ permitId, action, nextStatus }: { permitId: number; action: string; nextStatus: string }) => {
-      return apiRequest(`/api/permits/${permitId}/workflow`, {
-        method: "POST",
-        body: { action, nextStatus },
-      });
+      return apiRequest(`/api/permits/${permitId}/workflow`, "POST", { action, nextStatus });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit!.id}`] });
