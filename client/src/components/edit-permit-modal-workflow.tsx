@@ -216,12 +216,12 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
     },
   });
 
-  const onSubmit = (data: EditPermitFormData) => {
-    updateMutation.mutate(data);
+  const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
+    workflowMutation.mutate({ actionId, nextStatus });
   };
 
-  const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
-    await workflowMutation.mutateAsync({ actionId, nextStatus });
+  const onSubmit = (data: EditPermitFormData) => {
+    updateMutation.mutate(data);
   };
 
   if (!currentPermit) {
@@ -489,6 +489,23 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
             </Card>
 
             {currentPermit && <AiSuggestions permitId={currentPermit.id} />}
+            
+            {/* Workflow Buttons */}
+            {currentPermit && user && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Workflow-Aktionen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <WorkflowButtons
+                    permit={currentPermit}
+                    currentUser={user}
+                    onAction={handleWorkflowAction}
+                    isLoading={workflowMutation.isPending}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="status" className="space-y-6">
