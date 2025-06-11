@@ -346,12 +346,28 @@ export default function Dashboard() {
           </h3>
         </div>
         <PermitTable 
-          permits={recentPermits} 
+          permits={paginatedPermits} 
           isLoading={permitsLoading} 
           onEdit={handleEditPermit} 
           onDelete={handleDeletePermit}
           isAdmin={isAdmin}
         />
+
+        {/* Pagination Controls */}
+        {filteredPermits.length > 0 && (
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <PaginationInfo
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredPermits.length}
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </main>
 
       {/* Mobile Floating Action Button */}
