@@ -211,10 +211,6 @@ export default function Permits() {
         <PermitTable 
           permits={paginatedPermits} 
           isLoading={isLoading}
-          onEdit={(permit) => {
-            setSelectedPermit(permit);
-            setEditModalOpen(true);
-          }}
           currentUser={currentUser}
         />
 
