@@ -1066,9 +1066,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completedMeasures: permit.completedMeasures || [],
           
           // Consolidated hazard assessment with true/false for each hazard
-          selectedHazards: {
-            hazards: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
-          }
+          selectedHazards: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
         },
         
         // Work execution tracking
