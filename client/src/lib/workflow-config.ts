@@ -35,7 +35,7 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
     availableActions: [
       {
         id: 'submit',
-        label: 'Zur Genehmigung senden',
+        label: 'Zur Genehmigung einreichen',
         icon: Send,
         variant: 'default',
         nextStatus: 'pending',
