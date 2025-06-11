@@ -109,7 +109,7 @@ export default function Approvals() {
     },
   });
 
-  // Filter permits based on specific user assignment
+  // Filter permits based on specific user assignment and role
   const getPendingPermits = () => {
     if (!currentUser) return [];
     
@@ -121,6 +121,11 @@ export default function Approvals() {
       const isAssignedSafetyOfficer = permit.safetyOfficer === currentUser.username && !permit.safetyOfficerApproval;
       const isAssignedMaintenanceApprover = permit.maintenanceApprover === currentUser.username && !permit.maintenanceApproval;
       
+      // Check role-based approval rights when not specifically assigned
+      const canApproveDepartmentByRole = currentUser.role === 'department_head' && !permit.departmentHeadApproval;
+      const canApproveMaintenanceByRole = currentUser.role === 'maintenance' && !permit.maintenanceApproval;
+      const canApproveSafetyByRole = currentUser.role === 'safety_officer' && permit.safetyOfficer && !permit.safetyOfficerApproval;
+      
       // Admin can see all pending approvals
       const isAdminPending = currentUser.role === 'admin' && (
         !permit.departmentHeadApproval || 
@@ -128,7 +133,9 @@ export default function Approvals() {
         (permit.safetyOfficer && !permit.safetyOfficerApproval)
       );
       
-      return isAssignedDepartmentHead || isAssignedSafetyOfficer || isAssignedMaintenanceApprover || isAdminPending;
+      return isAssignedDepartmentHead || isAssignedSafetyOfficer || isAssignedMaintenanceApprover || 
+             canApproveDepartmentByRole || canApproveMaintenanceByRole || canApproveSafetyByRole || 
+             isAdminPending;
     });
   };
 

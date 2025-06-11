@@ -425,9 +425,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "User not found" });
         }
 
-        // Update specific approval based on user role/assignment
+        // Update specific approval based on user role and assignment
         const updates: Partial<any> = {};
         
+        // Check specific assignment first, then fall back to role-based approval
         if (currentPermit.departmentHead === user.username) {
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
@@ -437,12 +438,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (currentPermit.maintenanceApprover === user.username) {
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
-        } else if (user.role === 'admin') {
-          // Admin can approve any role
+        } else if (user.role === 'department_head' && !currentPermit.departmentHeadApproval) {
+          // Department head can approve based on role if not specifically assigned
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
+        } else if (user.role === 'maintenance' && !currentPermit.maintenanceApproval) {
+          // Maintenance user can approve based on role if not specifically assigned
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
+        } else if (user.role === 'safety_officer' && currentPermit.safetyOfficer && !currentPermit.safetyOfficerApproval) {
+          // Safety officer can approve based on role if safety officer is required
+          updates.safetyOfficerApproval = true;
+          updates.safetyOfficerApprovalDate = new Date();
+        } else if (user.role === 'admin') {
+          // Admin can approve any role
+          if (!currentPermit.departmentHeadApproval) {
+            updates.departmentHeadApproval = true;
+            updates.departmentHeadApprovalDate = new Date();
+          }
+          if (!currentPermit.maintenanceApproval) {
+            updates.maintenanceApproval = true;
+            updates.maintenanceApprovalDate = new Date();
+          }
+          if (currentPermit.safetyOfficer && !currentPermit.safetyOfficerApproval) {
+            updates.safetyOfficerApproval = true;
+            updates.safetyOfficerApprovalDate = new Date();
+          }
         } else {
           return res.status(403).json({ message: "Not authorized to approve this permit" });
         }
