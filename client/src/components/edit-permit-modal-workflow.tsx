@@ -30,6 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusIndicator } from "@/components/status-indicator";
+import { Play, ArrowLeft, CheckCircle, Send } from "lucide-react";
 import { WorkflowButtons } from "@/components/workflow-buttons";
 import { StatusTimeline } from "@/components/status-timeline";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
@@ -528,13 +529,50 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
           <div className="px-6 py-4 border-t bg-gray-50">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900">Workflow-Aktionen</h3>
+              <div className="text-sm text-gray-600">Status: {currentPermit.status}</div>
               <div className="flex gap-2">
-                <WorkflowButtons
-                  permit={currentPermit}
-                  currentUser={user}
-                  onAction={handleWorkflowAction}
-                  isLoading={workflowMutation.isPending}
-                />
+                {/* Direkte Buttons basierend auf Status */}
+                {currentPermit.status === 'approved' && (
+                  <>
+                    <Button
+                      onClick={() => handleWorkflowAction('activate', 'active')}
+                      disabled={workflowMutation.isPending}
+                    >
+                      Aktivieren
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleWorkflowAction('withdraw', 'draft')}
+                      disabled={workflowMutation.isPending}
+                    >
+                      Zurückziehen
+                    </Button>
+                  </>
+                )}
+                {currentPermit.status === 'active' && (
+                  <Button
+                    onClick={() => handleWorkflowAction('complete', 'completed')}
+                    disabled={workflowMutation.isPending}
+                  >
+                    Abschließen
+                  </Button>
+                )}
+                {currentPermit.status === 'submitted' && (
+                  <Button
+                    onClick={() => handleWorkflowAction('approve', 'approved')}
+                    disabled={workflowMutation.isPending}
+                  >
+                    Genehmigen
+                  </Button>
+                )}
+                {currentPermit.status === 'draft' && (
+                  <Button
+                    onClick={() => handleWorkflowAction('submit', 'submitted')}
+                    disabled={workflowMutation.isPending}
+                  >
+                    Zur Genehmigung einreichen
+                  </Button>
+                )}
               </div>
             </div>
           </div>
