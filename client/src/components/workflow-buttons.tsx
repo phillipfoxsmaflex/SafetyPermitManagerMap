@@ -39,9 +39,21 @@ export function WorkflowButtons({
   }
 
   const getAvailableActions = () => {
-    return workflowState.availableActions.filter(action => {
-      return hasPermission(currentUser, permit, action.permissions);
+    console.log('WorkflowButtons Debug:', {
+      permitStatus: permit.status,
+      workflowState: workflowState,
+      availableActions: workflowState.availableActions,
+      currentUser: currentUser.username
     });
+    
+    const filtered = workflowState.availableActions.filter(action => {
+      const hasPerms = hasPermission(currentUser, permit, action.permissions);
+      console.log(`Action ${action.id}: permissions ${action.permissions} -> ${hasPerms}`);
+      return hasPerms;
+    });
+    
+    console.log('Filtered actions:', filtered);
+    return filtered;
   };
 
   const handleAction = async (action: WorkflowAction) => {
