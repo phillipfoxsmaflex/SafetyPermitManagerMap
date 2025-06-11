@@ -69,6 +69,14 @@ export const permits = pgTable("permits", {
   // Risk assessment fields
   overallRisk: text("overall_risk"), // low, medium, high, critical
   
+  // Workflow tracking fields
+  statusHistory: text("status_history"), // JSON array of status changes
+  submittedAt: timestamp("submitted_at"),
+  approvedAt: timestamp("approved_at"),
+  activatedAt: timestamp("activated_at"),
+  completedAt: timestamp("completed_at"),
+  submittedBy: integer("submitted_by").references(() => users.id),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
