@@ -33,11 +33,11 @@ export function WorkflowButtons({
             label: 'Zur Genehmigung einreichen',
             icon: CheckCircle,
             variant: 'default' as const,
-            nextStatus: 'submitted'
+            nextStatus: 'pending'
           }
         ];
       
-      case 'submitted':
+      case 'pending':
         return [
           {
             id: 'approve',
