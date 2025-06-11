@@ -473,126 +473,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                     )}
                                   />
                                   
-                                  {isSelected && (
-                                    <div className="ml-6 space-y-3 p-4 bg-gray-50 rounded-lg">
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                          Notizen und Bewertung
-                                        </label>
-                                        <Textarea
-                                          placeholder="Zusätzliche Notizen zur Gefährdung..."
-                                          value={(() => {
-                                            const notes = form.watch('hazardNotes');
-                                            if (typeof notes === 'string') {
-                                              try {
-                                                const parsed = JSON.parse(notes);
-                                                return parsed[hazardId] || '';
-                                              } catch {
-                                                return '';
-                                              }
-                                            }
-                                            return notes?.[hazardId] || '';
-                                          })()}
-                                          onChange={(e) => {
-                                            const currentNotes = form.watch('hazardNotes');
-                                            let notesObj = {};
-                                            
-                                            if (typeof currentNotes === 'string') {
-                                              try {
-                                                notesObj = JSON.parse(currentNotes);
-                                              } catch {
-                                                notesObj = {};
-                                              }
-                                            } else if (currentNotes) {
-                                              notesObj = currentNotes;
-                                            }
-                                            
-                                            notesObj[hazardId] = e.target.value;
-                                            form.setValue('hazardNotes', JSON.stringify(notesObj));
-                                          }}
-                                          className="min-h-[80px]"
-                                        />
-                                      </div>
-                                      
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                          Sofortmaßnahmen
-                                        </label>
-                                        <Textarea
-                                          placeholder="Sofortmaßnahmen zur Gefährdungsminimierung..."
-                                          value={(() => {
-                                            const measures = form.watch('immediateMeasures');
-                                            if (typeof measures === 'string') {
-                                              try {
-                                                const parsed = JSON.parse(measures);
-                                                return parsed[hazardId] || '';
-                                              } catch {
-                                                return '';
-                                              }
-                                            }
-                                            return measures?.[hazardId] || '';
-                                          })()}
-                                          onChange={(e) => {
-                                            const currentMeasures = form.watch('immediateMeasures');
-                                            let measuresObj = {};
-                                            
-                                            if (typeof currentMeasures === 'string') {
-                                              try {
-                                                measuresObj = JSON.parse(currentMeasures);
-                                              } catch {
-                                                measuresObj = {};
-                                              }
-                                            } else if (currentMeasures) {
-                                              measuresObj = currentMeasures;
-                                            }
-                                            
-                                            measuresObj[hazardId] = e.target.value;
-                                            form.setValue('immediateMeasures', JSON.stringify(measuresObj));
-                                          }}
-                                          className="min-h-[80px]"
-                                        />
-                                      </div>
-                                      
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                          Maßnahmen vor Arbeitsbeginn
-                                        </label>
-                                        <Textarea
-                                          placeholder="Erforderliche Maßnahmen vor Arbeitsbeginn..."
-                                          value={(() => {
-                                            const measures = form.watch('preventiveMeasures');
-                                            if (typeof measures === 'string') {
-                                              try {
-                                                const parsed = JSON.parse(measures);
-                                                return parsed[hazardId] || '';
-                                              } catch {
-                                                return '';
-                                              }
-                                            }
-                                            return measures?.[hazardId] || '';
-                                          })()}
-                                          onChange={(e) => {
-                                            const currentMeasures = form.watch('preventiveMeasures');
-                                            let measuresObj = {};
-                                            
-                                            if (typeof currentMeasures === 'string') {
-                                              try {
-                                                measuresObj = JSON.parse(currentMeasures);
-                                              } catch {
-                                                measuresObj = {};
-                                              }
-                                            } else if (currentMeasures) {
-                                              measuresObj = currentMeasures;
-                                            }
-                                            
-                                            measuresObj[hazardId] = e.target.value;
-                                            form.setValue('preventiveMeasures', JSON.stringify(measuresObj));
-                                          }}
-                                          className="min-h-[80px]"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
+
                                 </div>
                               );
                             })}
@@ -600,6 +481,115 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                         </CardContent>
                       </Card>
                     ))}
+                    
+                    {/* Allgemeine Maßnahmen */}
+                    <div className="space-y-4 mt-6">
+                      <h4 className="text-lg font-semibold text-gray-900">Allgemeine Sicherheitsmaßnahmen</h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="immediateMeasures"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Allgemeine Maßnahmen</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Beschreiben Sie allgemeine Sicherheitsmaßnahmen für diese Arbeitserlaubnis..."
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="preventiveMeasures"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Beschreiben Sie spezifische Maßnahmen, die vor Arbeitsbeginn durchzuführen sind..."
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Risikobewertung und zusätzliche Informationen */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Risikobewertung und zusätzliche Informationen</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="overallRisk"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Risikokategorie</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Risikokategorie auswählen..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="niedrig">Niedrig - Routine-Arbeiten mit geringem Gefährdungspotential</SelectItem>
+                              <SelectItem value="mittel">Mittel - Arbeiten mit moderatem Risiko, erhöhte Aufmerksamkeit erforderlich</SelectItem>
+                              <SelectItem value="hoch">Hoch - Arbeiten mit erheblichem Risiko, besondere Schutzmaßnahmen erforderlich</SelectItem>
+                              <SelectItem value="kritisch">Kritisch - Arbeiten mit sehr hohem Risiko, umfassende Sicherheitsvorkehrungen</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="identifiedHazards"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zusätzliche Gefahren und Kommentare</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Beschreiben Sie weitere identifizierte Gefahren, spezielle Bedingungen oder wichtige Kommentare..."
+                              className="min-h-[120px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="additionalComments"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Weitere Anmerkungen</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Zusätzliche Anmerkungen, besondere Hinweise oder Auflagen..."
+                              className="min-h-[100px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
