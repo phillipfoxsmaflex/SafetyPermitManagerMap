@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Filter, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
-import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
+
 import { PermitTable } from "@/components/permit-table-clean";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,6 @@ import { isAfter, isBefore, isSameDay, startOfDay, endOfDay } from "date-fns";
 
 export default function Permits() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -251,11 +249,7 @@ export default function Permits() {
         onOpenChange={setCreateModalOpen} 
       />
 
-      <EditPermitModalUnified
-        permit={selectedPermit}
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-      />
+
     </div>
   );
 }

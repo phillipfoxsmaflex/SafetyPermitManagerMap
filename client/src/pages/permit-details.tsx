@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Printer, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
-import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
+import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { Permit } from "@shared/schema";
 
@@ -555,7 +555,7 @@ export default function PermitDetails() {
         {isEditModalOpen && <AiSuggestions permitId={permit.id} />}
       </div>
 
-      <EditPermitModalEnhanced
+      <EditPermitModalUnified
         permit={permit}
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}

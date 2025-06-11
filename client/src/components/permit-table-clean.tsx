@@ -59,9 +59,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
 
   const handleEdit = (permit: Permit) => {
     console.log('Editing permit:', permit.permitId);
-    if (onEdit) {
-      onEdit(permit);
-    }
+    setLocation(`/permit/${permit.id}`);
   };
 
   const handlePrint = (permit: Permit) => {
