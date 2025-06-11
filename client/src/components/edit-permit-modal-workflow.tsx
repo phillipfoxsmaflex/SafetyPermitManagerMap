@@ -524,12 +524,15 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
           </TabsContent>
         </Tabs>
         
+        
         {/* Workflow-Buttons im Footer */}
         {currentPermit && user && (
           <div className="px-6 py-4 border-t bg-gray-50">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Workflow-Aktionen</h3>
-              <div className="text-sm text-gray-600">Status: {currentPermit.status}</div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Workflow-Aktionen</h3>
+                <div className="text-sm text-gray-600">Status: {currentPermit.status}</div>
+              </div>
               <div className="flex gap-2">
                 {/* Direkte Buttons basierend auf Status */}
                 {currentPermit.status === 'approved' && (
@@ -537,6 +540,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
                     <Button
                       onClick={() => handleWorkflowAction('activate', 'active')}
                       disabled={workflowMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       Aktivieren
                     </Button>
@@ -544,6 +548,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
                       variant="outline"
                       onClick={() => handleWorkflowAction('withdraw', 'draft')}
                       disabled={workflowMutation.isPending}
+                      className="border-red-300 text-red-600 hover:bg-red-50"
                     >
                       Zurückziehen
                     </Button>
@@ -553,6 +558,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
                   <Button
                     onClick={() => handleWorkflowAction('complete', 'completed')}
                     disabled={workflowMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Abschließen
                   </Button>
@@ -561,6 +567,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
                   <Button
                     onClick={() => handleWorkflowAction('approve', 'approved')}
                     disabled={workflowMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     Genehmigen
                   </Button>
@@ -569,6 +576,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
                   <Button
                     onClick={() => handleWorkflowAction('submit', 'submitted')}
                     disabled={workflowMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Zur Genehmigung einreichen
                   </Button>
