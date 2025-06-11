@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
+import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
@@ -8,6 +8,8 @@ import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Pagination, PaginationInfo } from "@/components/ui/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,12 +26,17 @@ import type { Permit } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { isAfter, isBefore, isSameDay, startOfDay, endOfDay } from "date-fns";
 
 export default function Dashboard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -72,19 +79,51 @@ export default function Dashboard() {
   });
 
   const filteredPermits = useMemo(() => {
-    if (!searchTerm) return permits;
+    let filtered = permits;
     
-    const term = searchTerm.toLowerCase();
-    return permits.filter(permit => 
-      permit.permitId.toLowerCase().includes(term) ||
-      permit.location.toLowerCase().includes(term) ||
-      permit.requestorName.toLowerCase().includes(term) ||
-      permit.department.toLowerCase().includes(term) ||
-      permit.description.toLowerCase().includes(term)
-    );
-  }, [permits, searchTerm]);
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(permit => 
+        permit.permitId.toLowerCase().includes(term) ||
+        permit.location.toLowerCase().includes(term) ||
+        permit.requestorName.toLowerCase().includes(term) ||
+        permit.department.toLowerCase().includes(term) ||
+        permit.description.toLowerCase().includes(term)
+      );
+    }
+    
+    // Apply date filters
+    if (dateFrom || dateTo) {
+      filtered = filtered.filter(permit => {
+        if (!permit.createdAt) return false;
+        const permitDate = new Date(permit.createdAt);
+        let includePermit = true;
+        
+        if (dateFrom) {
+          includePermit = includePermit && (isSameDay(permitDate, dateFrom) || isAfter(permitDate, startOfDay(dateFrom)));
+        }
+        
+        if (dateTo) {
+          includePermit = includePermit && (isSameDay(permitDate, dateTo) || isBefore(permitDate, endOfDay(dateTo)));
+        }
+        
+        return includePermit;
+      });
+    }
+    
+    return filtered;
+  }, [permits, searchTerm, dateFrom, dateTo]);
 
-  const recentPermits = filteredPermits.slice(0, 10);
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPermits.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPermits = filteredPermits.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, dateFrom, dateTo]);
 
   const handleEditPermit = (permit: Permit) => {
     setSelectedPermit(permit);
@@ -173,31 +212,62 @@ export default function Dashboard() {
                 Überwachung und Verwaltung von Permit to work für enge Räume und chemische Umgebungen
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
-                <Input
-                  placeholder="Genehmigung suchen..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+                  <Input
+                    placeholder="Genehmigung suchen..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <DatePicker
+                    date={dateFrom}
+                    onDateChange={setDateFrom}
+                    placeholder="Von Datum"
+                    className="w-40"
+                  />
+                  <DatePicker
+                    date={dateTo}
+                    onDateChange={setDateTo}
+                    placeholder="Bis Datum"
+                    className="w-40"
+                  />
+                  {(dateFrom || dateTo) && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setDateFrom(undefined);
+                        setDateTo(undefined);
+                      }}
+                      className="h-10 w-10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <Button 
-                onClick={handleExportReport}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Bericht exportieren
-              </Button>
-              <Button 
-                onClick={() => setCreateModalOpen(true)}
-                className="bg-safety-blue text-white hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Neue Genehmigung
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleExportReport}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Bericht exportieren
+                </Button>
+                <Button 
+                  onClick={() => setCreateModalOpen(true)}
+                  className="bg-safety-blue text-white hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Neue Genehmigung
+                </Button>
+              </div>
             </div>
           </div>
         </div>
