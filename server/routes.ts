@@ -8,6 +8,61 @@ import { storage } from "./storage";
 import { insertPermitSchema, insertDraftPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Helper function to format TRBS data for webhook
+function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes: string | null) {
+  const trbsData = require('../client/src/data/trbs_hazards.json');
+  const hazardNotesObj = hazardNotes ? JSON.parse(hazardNotes) : {};
+  
+  const formattedCategories: any[] = [];
+  
+  if (!selectedHazards || selectedHazards.length === 0) {
+    return formattedCategories;
+  }
+  
+  // Group selected hazards by category
+  const hazardsByCategory: Record<string, string[]> = {};
+  
+  selectedHazards.forEach(hazardId => {
+    const [categoryId] = hazardId.split('-');
+    if (!hazardsByCategory[categoryId]) {
+      hazardsByCategory[categoryId] = [];
+    }
+    hazardsByCategory[categoryId].push(hazardId);
+  });
+  
+  // Format each category with detailed information
+  Object.keys(hazardsByCategory).forEach(categoryId => {
+    const categoryIndex = parseInt(categoryId) - 1;
+    const category = trbsData.categories[categoryIndex];
+    
+    if (category) {
+      const categoryHazards = hazardsByCategory[categoryId].map(hazardId => {
+        const [, hazardIndex] = hazardId.split('-');
+        const hazard = category.hazards[parseInt(hazardIndex)];
+        
+        return {
+          id: hazardId,
+          hazardDescription: hazard?.hazard || '',
+          protectiveMeasures: hazard?.protectiveMeasures || '',
+          isSelected: true,
+          notes: hazardNotesObj[hazardId] || '',
+          category: category.category
+        };
+      });
+      
+      formattedCategories.push({
+        categoryId: category.id,
+        categoryName: category.category,
+        selectedHazards: categoryHazards,
+        totalHazards: category.hazards.length,
+        selectedCount: categoryHazards.length
+      });
+    }
+  });
+  
+  return formattedCategories;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Authentication middleware (unified)
@@ -981,11 +1036,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedMeasures: permit.completedMeasures,
         identifiedHazards: permit.identifiedHazards,
         additionalComments: permit.additionalComments,
-        // Note: immediateMeasures and preventiveMeasures not in current schema
         immediateActions: permit.immediateActions,
         beforeWorkStarts: permit.beforeWorkStarts,
         complianceNotes: permit.complianceNotes,
         overallRisk: permit.overallRisk,
+        
+        // Detailed TRBS hazard assessment data
+        trbsAssessment: {
+          selectedHazards: permit.selectedHazards || [],
+          hazardNotes: permit.hazardNotes ? JSON.parse(permit.hazardNotes) : {},
+          completedMeasures: permit.completedMeasures || [],
+          // Parse and structure hazard categories for AI analysis
+          hazardCategories: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
+        },
         
         // Work execution tracking
         performerSignature: permit.performerSignature,

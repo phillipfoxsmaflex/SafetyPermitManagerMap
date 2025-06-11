@@ -25,11 +25,29 @@ Das System sendet alle Permit-Felder zur KI-Analyse:
 - `workCompletedAt` (ISO string): Tatsächlicher Arbeitsabschluss
 
 ### Sicherheitsbewertung
-- `selectedHazards` (string[]): Array der TRBS-Gefährdungskategorien
-- `hazardNotes` (JSON string): Strukturierte Gefährdungsnotizen
+- `selectedHazards` (string[]): Array der TRBS-Gefährdungskategorien (Format: "categoryId-hazardIndex")
+- `hazardNotes` (JSON string): Strukturierte Gefährdungsnotizen pro Kategorie
 - `completedMeasures` (string[]): Array durchgeführter Schutzmaßnahmen
 - `identifiedHazards` (string): Identifizierte Gefährdungen
 - `additionalComments` (string): Zusätzliche Kommentare
+
+### Detaillierte TRBS-Gefährdungsbeurteilung
+- `trbsAssessment` (object): Vollständige TRBS-Analyse
+  - `selectedHazards` (string[]): Ausgewählte Gefährdungskategorien
+  - `hazardNotes` (object): Notizen-Objekt mit Schlüssel-Wert-Paaren
+  - `completedMeasures` (string[]): Durchgeführte Schutzmaßnahmen
+  - `hazardCategories` (array): Strukturierte Kategorie-Details
+    - `categoryId` (number): TRBS-Kategorie-ID (1-10)
+    - `categoryName` (string): Name der Gefährdungskategorie
+    - `selectedHazards` (array): Details zu ausgewählten Gefährdungen
+      - `id` (string): Gefährdungs-ID (z.B. "2-0")
+      - `hazardDescription` (string): Beschreibung der Gefährdung
+      - `protectiveMeasures` (string): Empfohlene Schutzmaßnahmen
+      - `isSelected` (boolean): Ist ausgewählt
+      - `notes` (string): Spezifische Notizen zu dieser Gefährdung
+      - `category` (string): Kategorienname
+    - `totalHazards` (number): Gesamtanzahl Gefährdungen in Kategorie
+    - `selectedCount` (number): Anzahl ausgewählter Gefährdungen
 
 ### Compliance & Sicherheit
 - `immediateActions` (string): Sofortmaßnahmen
