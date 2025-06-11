@@ -439,22 +439,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
         } else if (user.role === 'department_head' && 
-                   currentPermit.departmentHead !== user.username && 
+                   (!currentPermit.departmentHead || currentPermit.departmentHead === '') && 
                    !currentPermit.departmentHeadApproval) {
-          // Department head can approve based on role if not specifically assigned to someone else
+          // Department head can approve based on role if no specific department head is assigned
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
         } else if (user.role === 'maintenance' && 
-                   currentPermit.maintenanceApprover !== user.username && 
+                   (!currentPermit.maintenanceApprover || currentPermit.maintenanceApprover === '') && 
                    !currentPermit.maintenanceApproval) {
-          // Maintenance user can approve based on role if not specifically assigned to someone else
+          // Maintenance user can approve based on role if no specific maintenance approver is assigned
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
         } else if (user.role === 'safety_officer' && 
                    currentPermit.safetyOfficer && 
-                   currentPermit.safetyOfficer !== user.username && 
+                   (!currentPermit.safetyOfficer || currentPermit.safetyOfficer === '') && 
                    !currentPermit.safetyOfficerApproval) {
-          // Safety officer can approve based on role if safety officer is required but not specifically assigned to someone else
+          // Safety officer can approve based on role if safety officer is required but no specific one is assigned
           updates.safetyOfficerApproval = true;
           updates.safetyOfficerApprovalDate = new Date();
         } else if (user.role === 'admin') {
