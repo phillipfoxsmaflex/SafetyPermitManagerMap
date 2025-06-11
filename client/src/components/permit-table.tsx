@@ -98,7 +98,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
             onClick={() => workflowMutation.mutate({ 
               permitId: permit.id, 
               actionId: 'withdraw', 
-              nextStatus: 'withdrawn' 
+              nextStatus: 'draft' 
             })}
             disabled={workflowMutation.isPending}
           >
@@ -243,9 +243,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
                 Status
               </TableHead>
-              <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
-                Workflow
-              </TableHead>
+
               <TableHead className="text-xs font-medium text-secondary-gray uppercase tracking-wider">
                 Gültig bis
               </TableHead>
@@ -257,7 +255,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
           <TableBody>
             {permits.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-secondary-gray">
+                <TableCell colSpan={7} className="text-center py-8 text-secondary-gray">
                   Keine Genehmigungen gefunden. Erstellen Sie Ihre erste Genehmigung, um zu beginnen.
                 </TableCell>
               </TableRow>
@@ -278,11 +276,6 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
                   </TableCell>
                   <TableCell>
                     <PermitStatusBadge status={permit.status} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {getWorkflowButtons(permit)}
-                    </div>
                   </TableCell>
                   <TableCell className="text-industrial-gray">
                     {formatDateTime(permit.endDate)}
