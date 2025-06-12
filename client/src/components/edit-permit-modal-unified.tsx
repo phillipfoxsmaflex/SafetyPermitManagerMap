@@ -159,15 +159,23 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
   React.useEffect(() => {
     if (currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
+      
+      // Format dates properly
+      const formatDate = (date: string | Date | null): string => {
+        if (!date) return "";
+        if (typeof date === 'string') return date;
+        return date.toISOString().slice(0, 16); // Format for datetime-local input
+      };
+      
       form.reset({
         type: currentPermit.type || "",
         workDescription: currentPermit.description || "",
         location: currentPermit.location || "",
-        workLocationId: currentPermit.workLocationId || undefined,
+        workLocationId: undefined, // Not available in current schema
         requestedBy: currentPermit.requestorName || "",
         department: currentPermit.department || "",
-        plannedStartDate: currentPermit.startDate || "",
-        plannedEndDate: currentPermit.endDate || "",
+        plannedStartDate: formatDate(currentPermit.startDate),
+        plannedEndDate: formatDate(currentPermit.endDate),
         emergencyContact: currentPermit.emergencyContact || "",
         departmentHeadApproval: currentPermit.departmentHeadApproval || false,
         safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
@@ -182,8 +190,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
         status: currentPermit.status || "draft",
         performerName: currentPermit.performerName || "",
         performerSignature: currentPermit.performerSignature || "",
-        workStartedAt: currentPermit.workStartedAt || "",
-        workCompletedAt: currentPermit.workCompletedAt || "",
+        workStartedAt: formatDate(currentPermit.workStartedAt),
+        workCompletedAt: formatDate(currentPermit.workCompletedAt),
         additionalComments: currentPermit.additionalComments || "",
         immediateActions: currentPermit.immediateActions || "",
         beforeWorkStarts: currentPermit.beforeWorkStarts || "",
