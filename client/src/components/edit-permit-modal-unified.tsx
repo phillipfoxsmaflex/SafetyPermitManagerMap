@@ -52,6 +52,7 @@ interface EditPermitModalUnifiedProps {
   permit: Permit | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: 'edit' | 'create';
 }
 
 const editPermitSchema = z.object({
@@ -90,7 +91,7 @@ const editPermitSchema = z.object({
 
 type EditPermitFormData = z.infer<typeof editPermitSchema>;
 
-export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermitModalUnifiedProps) {
+export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edit' }: EditPermitModalUnifiedProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -228,22 +229,62 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
     }
   }, [currentPermit, open, form]);
 
-  // Update form
+  // Update/Create form mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
-      if (!permit?.id) throw new Error("Permit ID fehlt");
-      return apiRequest(`/api/permits/${permit.id}`, "PATCH", data);
+      if (mode === 'create') {
+        // Transform form data for creation
+        const createData = {
+          type: data.type,
+          description: data.workDescription,
+          location: data.location,
+          requestorName: data.requestedBy,
+          department: data.department,
+          startDate: data.plannedStartDate,
+          endDate: data.plannedEndDate,
+          emergencyContact: data.emergencyContact,
+          identifiedHazards: data.identifiedHazards,
+          additionalComments: data.additionalComments,
+          immediateActions: data.immediateActions,
+          beforeWorkStarts: data.beforeWorkStarts,
+          complianceNotes: data.complianceNotes,
+          overallRisk: data.overallRisk,
+          selectedHazards: data.selectedHazards || [],
+          hazardNotes: JSON.stringify(hazardNotes),
+          completedMeasures: data.completedMeasures || [],
+          performerName: data.performerName,
+          departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
+          safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
+          maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
+          status: "draft",
+        };
+        return apiRequest("/api/permits", "POST", createData);
+      } else {
+        if (!permit?.id) throw new Error("Permit ID fehlt");
+        return apiRequest(`/api/permits/${permit.id}`, "PATCH", data);
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit!.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      if (mode === 'edit' && permit?.id) {
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+      }
       toast({
         title: "Erfolg",
-        description: "Arbeitserlaubnis wurde erfolgreich aktualisiert.",
+        description: mode === 'create' 
+          ? "Arbeitserlaubnis wurde erfolgreich erstellt." 
+          : "Arbeitserlaubnis wurde erfolgreich aktualisiert.",
       });
+      onOpenChange(false);
+      if (mode === 'create') {
+        form.reset();
+        setHazardNotes({});
+      }
     },
     onError: (error: Error) => {
-      const errorMessage = error.message || "Unbekannter Fehler beim Aktualisieren der Arbeitserlaubnis.";
+      const errorMessage = error.message || (mode === 'create' 
+        ? "Unbekannter Fehler beim Erstellen der Arbeitserlaubnis."
+        : "Unbekannter Fehler beim Aktualisieren der Arbeitserlaubnis.");
       toast({
         title: "Fehler",
         description: errorMessage,
@@ -313,7 +354,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
     updateMutation.mutate(cleanedData);
   };
 
-  if (!permit) return null;
+  if (mode === 'edit' && !permit) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -321,10 +362,13 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
         <DialogHeader>
           <DialogTitle className="text-industrial-gray flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Arbeitserlaubnis bearbeiten - {permit.permitId}
+            {mode === 'create' ? 'Neue Arbeitserlaubnis erstellen' : `Arbeitserlaubnis bearbeiten - ${permit?.permitId}`}
           </DialogTitle>
           <DialogDescription>
-            Bearbeiten Sie die Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung und Status-Management.
+            {mode === 'create' 
+              ? 'Erstellen Sie eine neue Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung.'
+              : 'Bearbeiten Sie die Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung und Status-Management.'
+            }
           </DialogDescription>
         </DialogHeader>
 
