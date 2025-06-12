@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
-import { CreateEditModal } from "@/components/create-edit-modal";
+import { CreateEditModalComplete } from "@/components/create-edit-modal-complete";
 import { PermitTable } from "@/components/permit-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -378,14 +378,14 @@ export default function Dashboard() {
         <Plus className="h-6 w-6" />
       </Button>
 
-      <CreateEditModal
+      <CreateEditModalComplete
         permit={null}
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
         mode="create"
       />
       
-      <CreateEditModal
+      <CreateEditModalComplete
         permit={selectedPermit}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
