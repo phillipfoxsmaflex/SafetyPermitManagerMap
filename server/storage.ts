@@ -579,8 +579,8 @@ export class DatabaseStorage implements IStorage {
 
       let hasNewMapping = false;
 
-      // Handle structured hazard data from AI suggestions
-      if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes') {
+      // Handle structured hazard data from AI suggestions - this should take priority
+      if (fieldName === 'selectedHazards') {
         try {
           let hazardData: any = null;
           
@@ -596,7 +596,7 @@ export class DatabaseStorage implements IStorage {
             hazardData = suggestedValue;
           }
 
-          console.log('Processing hazard data from AI suggestion:', hazardData);
+          console.log('Processing structured hazard data from AI suggestion:', hazardData);
 
           // Handle array of hazard objects with specific notes
           if (Array.isArray(hazardData)) {
@@ -610,8 +610,27 @@ export class DatabaseStorage implements IStorage {
                 // Use the specific notes from the hazard item
                 currentHazardNotes[hazardId] = hazardItem.notes;
                 hasNewMapping = true;
-                console.log(`Mapped hazard ${hazardId} with note: ${hazardItem.notes}`);
+                console.log(`Mapped hazard ${hazardId} with specific note: ${hazardItem.notes}`);
               }
+            }
+            
+            // If we found structured data, return early to avoid generic mapping
+            if (hasNewMapping) {
+              console.log(`Updating permit ${permit.id} with structured TRBS mappings:`);
+              console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
+              console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
+              
+              await db
+                .update(permits)
+                .set({
+                  selectedHazards: currentSelectedHazards,
+                  hazardNotes: JSON.stringify(currentHazardNotes),
+                  updatedAt: new Date()
+                })
+                .where(eq(permits.id, permit.id));
+
+              console.log(`Successfully applied structured AI hazard mapping`);
+              return;
             }
           }
           // Handle object with hazard mappings
@@ -628,6 +647,25 @@ export class DatabaseStorage implements IStorage {
                 hasNewMapping = true;
                 console.log(`Mapped hazard ${hazardId} with note: ${value}`);
               }
+            }
+            
+            // If we found structured data, return early to avoid generic mapping
+            if (hasNewMapping) {
+              console.log(`Updating permit ${permit.id} with structured TRBS mappings:`);
+              console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
+              console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
+              
+              await db
+                .update(permits)
+                .set({
+                  selectedHazards: currentSelectedHazards,
+                  hazardNotes: JSON.stringify(currentHazardNotes),
+                  updatedAt: new Date()
+                })
+                .where(eq(permits.id, permit.id));
+
+              console.log(`Successfully applied structured AI hazard mapping`);
+              return;
             }
           }
         } catch (error) {
