@@ -165,11 +165,15 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
     if (currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
       
-      // Format dates properly
+      // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
         if (!date) return "";
-        if (typeof date === 'string') return date;
-        return date.toISOString().slice(0, 16); // Format for datetime-local input
+        if (typeof date === 'string') {
+          // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
+          const dateObj = new Date(date);
+          return dateObj.toISOString().slice(0, 16);
+        }
+        return date.toISOString().slice(0, 16);
       };
       
       form.reset({
