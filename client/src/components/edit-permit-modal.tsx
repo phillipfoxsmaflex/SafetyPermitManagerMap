@@ -1,4 +1,4 @@
-import { EditPermitModalEnhanced } from "./edit-permit-modal-enhanced";
+import { EditPermitModalUnified } from "./edit-permit-modal-unified";
 import type { Permit } from "@shared/schema";
 
 interface EditPermitModalProps {
@@ -9,7 +9,7 @@ interface EditPermitModalProps {
 
 export function EditPermitModal({ permit, open, onOpenChange }: EditPermitModalProps) {
   return (
-    <EditPermitModalEnhanced
+    <EditPermitModalUnified
       permit={permit}
       open={open}
       onOpenChange={onOpenChange}

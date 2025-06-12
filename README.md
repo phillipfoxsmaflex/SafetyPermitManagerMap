@@ -1,8 +1,8 @@
 # Biggs - Digital Permit Management System
 
-Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie mit AI-gestützter Sicherheitsanalyse und TRBS-konformer Gefährdungsbeurteilung.
+Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie mit AI-gestützter Sicherheitsanalyse und vollständiger TRBS-konformer Gefährdungsbeurteilung.
 
-## 🚀 Funktionen
+## 🚀 Hauptfunktionen
 
 ### Permit Management
 - **6 Permit-Typen**: Heißarbeiten, enge Räume, elektrische Arbeiten, Arbeiten in der Höhe, Chemikalienarbeiten, allgemeine Erlaubnisscheine
@@ -12,14 +12,14 @@ Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie 
 - **Druckansicht**: Professionelle Arbeitserlaubnis-Ausgabe
 
 ### TRBS-konforme Sicherheitsbewertung
-- **38 Gefährdungskategorien** nach TRBS 1112
-- **Strukturierte Risikoanalyse** (Low/Medium/High/Critical)
-- **Detaillierte Gefährdungsnotizen** mit strukturierter Speicherung
+- **Vollständige 11 TRBS-Kategorien** (Mechanische, Elektrische, Gefahrstoffe, Biologische, Brand/Explosion, Thermische, Physikalische, Arbeitsumgebung, Physische Belastung, Psychische Faktoren, Sonstige)
+- **48 spezifische Gefährdungen** mit strukturierter Risikoanalyse
+- **Detaillierte Gefährdungsnotizen** mit JSON-strukturierter Speicherung
 - **Schutzmaßnahmen-Tracking** mit vordefiniertem Katalog
-- **Sicherheitsbewertungs-Felder**: Sofortmaßnahmen, Vorbereitung, Compliance
+- **Compliance-Felder**: Sofortmaßnahmen, Vorbereitung, Compliance-Hinweise
 
 ### AI-gestützte Verbesserungsvorschläge
-- **Webhook-Integration** für externe AI-Services
+- **Webhook-Integration** für externe AI-Services mit vollständiger TRBS-Datenübertragung
 - **Feldspezifische Suggestions** mit Begründung und Priorität
 - **Manuelle Genehmigung** aller AI-Vorschläge
 - **TRBS-Mapping** für automatische Gefährdungserkennung
@@ -29,30 +29,26 @@ Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie 
 - **5 Benutzerrollen**: Admin, Anforderer, Sicherheitsbeauftragte, Abteilungsleiter, Technik
 - **Session-basierte Authentifizierung** mit sicherer Speicherung
 - **Rollenbasierte Berechtigungen** für alle Funktionen
-- **Benutzerauswahl** in Dropdown-Menüs
 
 ## 🛠 Technische Architektur
 
 ### Frontend
-- **React.js + TypeScript**
-- **Wouter** für Client-Side Routing
+- **React.js + TypeScript** mit Wouter Router
 - **Shadcn/ui** für UI-Komponenten
 - **TanStack Query** für State Management
 - **React Hook Form** mit Zod-Validierung
-- **Tailwind CSS** für Styling
+- **Tailwind CSS** für responsives Design
 
 ### Backend
 - **Express.js** mit TypeScript
-- **PostgreSQL** Datenbank
-- **Drizzle ORM** für Type-Safe Database Operations
-- **Multer** für Datei-Upload Handling
+- **PostgreSQL** Datenbank mit Drizzle ORM
 - **Session-Management** mit sicherer Speicherung
+- **Multer** für Datei-Upload Handling
 
 ### AI Integration
 - **Webhook-basiert** für flexible AI-Provider
-- **Strukturierte JSON-Responses**
-- **TRBS-Kategorien-Mapping**
-- **Error Handling** und Validierung
+- **Vollständige TRBS-Datenübertragung** aller 11 Kategorien
+- **Strukturierte JSON-Responses** mit Error Handling
 
 ## 📋 Installation & Setup
 
@@ -63,7 +59,7 @@ Ein umfassendes Arbeitserlaubnis-Management-System für die chemische Industrie 
 git clone <repository-url>
 cd biggs-permit-system
 
-# Vollständige Installation mit allen Abhängigkeiten
+# Vollständige Installation
 chmod +x install.sh
 ./install.sh
 ```
@@ -76,23 +72,29 @@ Das Installationsskript führt automatisch aus:
 - Initialisierung des Datenbankschemas
 - Erstellung der .env-Datei mit sicheren Standardwerten
 
-### Schnelle Entwicklungsumgebung
-
-```bash
-# Nur für bereits installierte Systeme
-chmod +x setup.sh
-./setup.sh
-```
-
 ### Manuelle Installation
 
 ```bash
-# Abhängigkeiten installieren
-npm install
+# System-Abhängigkeiten (Ubuntu/Debian)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs postgresql postgresql-contrib
 
-# Umgebung konfigurieren
+# Datenbank erstellen
+sudo -u postgres psql
+```
+```sql
+CREATE DATABASE biggs_permits;
+CREATE USER biggs_user WITH PASSWORD 'secure_password';
+GRANT ALL PRIVILEGES ON DATABASE biggs_permits TO biggs_user;
+ALTER USER biggs_user CREATEDB;
+\q
+```
+
+```bash
+# Projekt setup
+npm install
 cp .env.example .env
-# Bearbeiten Sie .env mit Ihren Einstellungen
+# .env bearbeiten mit Ihren Einstellungen
 
 # Datenbank initialisieren
 npm run db:push
@@ -115,8 +117,8 @@ MAX_FILE_SIZE=10485760
 
 ## 🔌 AI-Integration
 
-### Webhook-Konfiguration
-Das System sendet Permit-Daten zur Analyse an konfigurierte AI-Endpoints:
+### TRBS-Webhook-System
+Das System sendet vollständige TRBS-Gefährdungsdaten zur AI-Analyse:
 
 **Outbound (System → AI)**
 ```json
@@ -126,10 +128,24 @@ POST https://your-ai-service.com/analyze
   "permitData": {
     "permitId": "HT-2025-001",
     "type": "hot_work",
-    "selectedHazards": ["5-0", "4-0"],
-    "hazardNotes": "{\"5-0\": \"Schweißrauch\"}",
-    "completedMeasures": ["ppe_welding"],
-    "identifiedHazards": "Schweißfunken, Hitze"
+    "trbsAssessment": {
+      "selectedHazards": ["1-0", "2-0", "5-0"],
+      "hazardNotes": {
+        "1-0": "Quetschgefahr durch hydraulische Presse",
+        "2-0": "Lichtbogenschweißen erforderlich",
+        "5-0": "Tankinhalt explosionsfähig"
+      },
+      "completedMeasures": ["ppe_welding", "fire_watch"],
+      "hazardCategories": [
+        {
+          "categoryId": 1,
+          "categoryName": "Mechanische Gefährdungen",
+          "selectedHazards": [...],
+          "totalHazards": 4,
+          "selectedCount": 1
+        }
+      ]
+    }
   }
 }
 ```
@@ -146,25 +162,27 @@ POST https://your-domain.com/api/webhooks/suggestions
       "priority": "high",
       "fieldName": "selectedHazards",
       "originalValue": ["5-0"],
-      "suggestedValue": ["5-0", "5-1", "2-0"],
-      "reasoning": "Ergänzung um Hautkontakt und Brandgefahr"
+      "suggestedValue": ["5-0", "5-1", "2-0", "7-2"],
+      "reasoning": "Schweißarbeiten erfordern zusätzliche Kategorien: Hautkontakt (5-1), Brandgefahr (2-0), UV-Strahlung (7-2)"
     }
   ]
 }
 ```
 
-### TRBS-Gefährdungskategorien
-Das System implementiert alle 38 Kategorien nach TRBS 1112:
-- **0-x**: Mechanische Gefährdungen (4 Unterkategorien)
-- **1-x**: Sturz/Absturz (4 Unterkategorien) 
-- **2-x**: Brand/Explosion (4 Unterkategorien)
-- **3-x**: Explosionsgefährdungen (4 Unterkategorien)
-- **4-x**: Elektrische Gefährdungen (3 Unterkategorien)
-- **5-x**: Gefahrstoffe (4 Unterkategorien)
-- **6-x**: Biologische Gefährdungen (2 Unterkategorien)
-- **7-x**: Physikalische Einwirkungen (4 Unterkategorien)
-- **8-x**: Arbeitsumgebung (3 Unterkategorien)
-- **9-x**: Physische Belastungen (3 Unterkategorien)
+### Vollständige TRBS-Kategorien
+Das System implementiert alle 11 TRBS-Standardkategorien:
+
+1. **Mechanische Gefährdungen** (4 Unterkategorien)
+2. **Elektrische Gefährdungen** (4 Unterkategorien)
+3. **Gefahrstoffe** (4 Unterkategorien)
+4. **Biologische Arbeitsstoffe** (3 Unterkategorien)
+5. **Brand- und Explosionsgefährdungen** (3 Unterkategorien)
+6. **Thermische Gefährdungen** (3 Unterkategorien)
+7. **Spezielle physikalische Einwirkungen** (8 Unterkategorien)
+8. **Arbeitsumgebungsbedingungen** (6 Unterkategorien)
+9. **Physische Belastung/Arbeitsschwere** (5 Unterkategorien)
+10. **Psychische Faktoren** (4 Unterkategorien)
+11. **Sonstige Gefährdungen** (4 Unterkategorien)
 
 ## 📝 API-Endpunkte
 
@@ -178,13 +196,15 @@ Das System implementiert alle 38 Kategorien nach TRBS 1112:
 ### AI-Suggestions
 - `GET /api/permits/:id/suggestions` - Alle Suggestions eines Permits
 - `POST /api/webhooks/suggestions` - AI-Suggestions empfangen
-- `PATCH /api/suggestions/:id/apply` - Suggestion anwenden
+- `POST /api/permits/:id/apply-all-suggestions` - Alle Suggestions anwenden
+- `PATCH /api/suggestions/:id/apply` - Einzelne Suggestion anwenden
 - `DELETE /api/suggestions/:id` - Suggestion löschen
 
 ### Benutzer & Rollen
 - `GET /api/users/department-heads` - Abteilungsleiter
 - `GET /api/users/safety-officers` - Sicherheitsbeauftragte  
 - `GET /api/users/maintenance-approvers` - Technik-Genehmiger
+- `GET /api/work-locations/active` - Aktive Arbeitsorte
 
 ### Anhänge
 - `GET /api/permits/:id/attachments` - Permit-Anhänge
@@ -195,9 +215,8 @@ Das System implementiert alle 38 Kategorien nach TRBS 1112:
 
 ### Administrator
 - Vollzugriff auf alle Funktionen
-- Benutzerverwaltung
-- System-Konfiguration
-- Permit-Löschung
+- Benutzerverwaltung und System-Konfiguration
+- Permit-Löschung und Datenbank-Verwaltung
 
 ### Anforderer  
 - Permits erstellen und bearbeiten
@@ -206,8 +225,8 @@ Das System implementiert alle 38 Kategorien nach TRBS 1112:
 
 ### Sicherheitsbeauftragte
 - Permits genehmigen/ablehnen
-- Sicherheitsbewertungen durchführen
-- TRBS-konforme Prüfungen
+- TRBS-konforme Sicherheitsbewertungen
+- Gefährdungsbeurteilungen durchführen
 
 ### Abteilungsleiter
 - Departmental Permits genehmigen
@@ -216,73 +235,161 @@ Das System implementiert alle 38 Kategorien nach TRBS 1112:
 
 ### Technik
 - Technische Genehmigungen
-- Wartungs-Permits
-- Equipment-Freigaben
+- Wartungs-Permits und Equipment-Freigaben
 
-## 🔒 Sicherheit
-
-### Authentifizierung
-- Session-basiertes Login
-- Sichere Cookie-Speicherung
-- Automatische Session-Bereinigung
-
-### Autorisierung
-- Rollenbasierte Zugriffskontrolle
-- Permit-Level Berechtigungen
-- API-Endpoint Schutz
-
-### Datenvalidierung
-- Zod-Schema Validierung
-- SQL-Injection Schutz
-- File-Upload Beschränkungen
-
-## 🚀 Deployment
-
-### Produktionsbereitschaft
-Das System ist vollständig getestet und produktionsbereit:
-- Automatische Datenbankmigrationen
-- Error Handling und Logging
-- Session-Management
-- File-Upload Sicherheit
+## 🚀 Produktions-Deployment
 
 ### Umgebungskonfiguration
-```bash
-# Produktionsumgebung
+```env
 NODE_ENV=production
-DATABASE_URL=postgresql://...
-SESSION_SECRET=secure-random-string
+DATABASE_URL=postgresql://user:pass@prod-host:5432/biggs_prod
+SESSION_SECRET=your-very-secure-64-character-secret
+SECURE_COOKIES=true
+COOKIE_DOMAIN=.yourdomain.com
 ```
 
-## 📊 Monitoring & Logs
+### PM2 Prozess-Management
+```bash
+npm install -g pm2
 
-### Console Logging
-- Permit-Operationen
-- AI-Webhook Calls
-- Authentication Events
-- Error Tracking
+# PM2 Konfiguration
+cat > ecosystem.config.js << EOF
+module.exports = {
+  apps: [{
+    name: 'biggs-permits',
+    script: 'dist/index.js',
+    instances: 'max',
+    exec_mode: 'cluster',
+    env_production: {
+      NODE_ENV: 'production'
+    }
+  }]
+}
+EOF
 
-### Database Monitoring
-- Session-Cleanup
-- Permit-Statistics
-- User-Activity Tracking
+# Starten
+pm2 start ecosystem.config.js --env production
+pm2 save && pm2 startup
+```
 
-## 🤝 Contributing
+### Nginx Konfiguration
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
 
-### Code-Stil
-- TypeScript für Type Safety
-- ESLint/Prettier Konfiguration
-- Conventional Commits
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
 
-### Testing
-- Unit Tests für Business Logic
-- Integration Tests für API
-- E2E Tests für kritische Workflows
+    client_max_body_size 10M;
+}
+```
 
-### Pull Requests
-1. Feature Branch erstellen
-2. Tests hinzufügen/aktualisieren
-3. Code Review anfordern
-4. Dokumentation aktualisieren
+### SSL mit Certbot
+```bash
+sudo apt-get install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+
+# Auto-renewal
+echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
+```
+
+## 📊 Datenbank-Management
+
+### Backup & Restore
+```bash
+# Backup erstellen
+pg_dump -h localhost -U biggs_user -d biggs_permits > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Automatisches tägliches Backup
+echo "0 2 * * * pg_dump -h localhost -U biggs_user -d biggs_permits > /backup/biggs_$(date +\%Y\%m\%d).sql" | crontab -
+
+# Restore
+psql -h localhost -U biggs_user -d biggs_permits < backup_file.sql
+```
+
+### Schema-Updates
+```bash
+# Migration generieren
+npm run db:generate
+
+# Migration anwenden
+npm run db:push
+```
+
+## 🔒 Sicherheits-Checkliste
+
+### Pre-Production
+- [ ] Starke Datenbank-Passwörter (20+ Zeichen)
+- [ ] Sicheres Session-Secret (64+ Zeichen)
+- [ ] HTTPS mit gültigen Zertifikaten
+- [ ] Sichere Cookies aktiviert
+- [ ] Datenbank-Firewall konfiguriert
+- [ ] Regelmäßige Backups geplant
+- [ ] Log-Monitoring aktiviert
+- [ ] File-Upload-Limits konfiguriert
+
+### Post-Deployment
+- [ ] Standard Admin-Passwort geändert
+- [ ] Test-Benutzerkonten entfernt
+- [ ] Security-Header konfiguriert
+- [ ] Datenbank-Zugriff geprüft
+- [ ] Backup-Restore getestet
+- [ ] Monitoring-Alerts konfiguriert
+- [ ] SSL-Zertifikat Auto-Renewal getestet
+
+## 🔧 Troubleshooting
+
+### Häufige Probleme
+1. **Datenbankverbindung fehlgeschlagen**
+   - DATABASE_URL Format prüfen
+   - PostgreSQL-Status: `sudo systemctl status postgresql`
+   - Verbindung testen: `psql $DATABASE_URL`
+
+2. **Session-Fehler**
+   - SESSION_SECRET gesetzt prüfen
+   - Cookie-Domain-Konfiguration prüfen
+   - Browser-Cookies löschen
+
+3. **File-Upload-Fehler**
+   - uploads/ Verzeichnis-Berechtigungen prüfen
+   - MAX_FILE_SIZE Einstellung prüfen
+   - Festplattenspeicher prüfen
+
+4. **Build-Fehler**
+   - `rm -rf node_modules && npm install`
+   - Node.js Version: `node --version`
+   - Dependencies aktualisieren: `npm update`
+
+### Log-Überwachung
+```bash
+# PM2 Logs
+pm2 logs biggs-permits
+
+# System-Logs
+sudo tail -f /var/log/postgresql/postgresql-14-main.log
+
+# Systemressourcen
+htop
+```
+
+### Health Check
+```bash
+# Service-Check
+curl -f http://localhost:5000/api/auth/user || echo "Service down"
+
+# Monitoring-Cron
+echo "*/5 * * * * curl -f http://localhost:5000/api/auth/user || echo 'Biggs service down' | mail admin@yourdomain.com" | crontab -
+```
 
 ## 📄 Lizenz
 
@@ -290,4 +397,4 @@ Proprietäre Software für industrielle Arbeitserlaubnis-Verwaltung.
 
 ## 📞 Support
 
-Für technischen Support und Fragen zur Implementierung kontaktieren Sie das Entwicklungsteam.
+Für technischen Support und Implementierungsfragen kontaktieren Sie das Entwicklungsteam.

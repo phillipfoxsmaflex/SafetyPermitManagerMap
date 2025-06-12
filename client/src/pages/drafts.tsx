@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { NavigationHeader } from "@/components/navigation-header";
-import { EditPermitModalEnhanced } from "@/components/edit-permit-modal-enhanced";
+import { EditPermitModal } from "@/components/edit-permit-modal";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { 
   FileText, 
@@ -356,7 +356,7 @@ export default function Drafts() {
         </div>
 
         {/* Edit Modal */}
-        <EditPermitModalEnhanced
+        <EditPermitModal
           permit={selectedPermit}
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
