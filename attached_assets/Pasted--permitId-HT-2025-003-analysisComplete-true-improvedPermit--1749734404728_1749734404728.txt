@@ -1,0 +1,63 @@
+[
+  {
+    "permitId": "HT-2025-003",
+    "analysisComplete": true,
+    "improvedPermit": {
+      "type": "height",
+      "location": "Labor - Dachbereich über Gebäudeteil XY",
+      "description": "Reparatur defekter Dachrinnenabschnitte mittels Gerüstarbeit in 4-6m Höhe, inkl. Materialwechsel und Abdichtung",
+      "department": "Engineering",
+      "requestorName": "Phillip Schmidt (Bauleiter, Gerüstbau-Qualifikation)",
+      "contactNumber": "1234",
+      "emergencyContact": "112 (Rettungsdienst), Betriebsarzt: 5678, Sicherheitsdienst: 9012",
+      "performerName": "Max Mustermann (Dachdecker, TRBS 2121-zertifiziert, Höhenrettung Grundkurs)",
+      "identifiedHazards": "Absturz >2m, Gerüstinstabilität, Wettereinflüsse, herabfallende Gegenstände, Stolperstellen",
+      "additionalComments": "Arbeiten nur bei Windstärke <4 Bft, trockenen Bedingungen. Zweite Person als Sicherungsposten erforderlich",
+      "immediateActions": "• Wetterprüfung durchführen\n• Gerüstprüfung durch befähigte Person\n• Absperrung 3m-Radius\n• Funkgeräte testen",
+      "beforeWorkStarts": "• PSA-Vollständigkeitsprüfung (Helm, Gurt, Handschuhe)\n• Gerüstprüfprotokoll vorlegen\n• Rettungsplan aushängen\n• Wetterbericht aktuell",
+      "complianceNotes": "TRBS 2121-1 (Gefährdungsbeurteilung), DGUV Regel 101-005 (Hochbau), ASR A2.1 (Schutz vor Absturz) vollständig beachten",
+      "overallRisk": "medium",
+      "selectedHazards": [
+        {
+          "hazardId": "1-0",
+          "hazardDescription": "Sturz, Absturz - Von Arbeitsplätzen/Verkehrswegen",
+          "isSelected": true,
+          "notes": "Hauptgefährdung bei Dachrinnenarbeit in 4-6m Höhe"
+        },
+        {
+          "hazardId": "2-4",
+          "hazardDescription": "Sturz auf der Ebene, Ausrutschen, Umknicken, Fehltreten, Stolpern",
+          "isSelected": true,
+          "notes": "Rutschgefahr auf Gerüstbohlen, besonders bei Nässe"
+        },
+        {
+          "hazardId": "0-1",
+          "hazardDescription": "Teile mit gefährlichen Oberflächen",
+          "isSelected": true,
+          "notes": "Scharfe Kanten an beschädigten Dachrinnenteilen"
+        },
+        {
+          "hazardId": "8-0",
+          "hazardDescription": "Arbeitsumgebungsbedingungen - Klima",
+          "isSelected": true,
+          "notes": "Wetterbedingungen (Wind, Regen) als kritischer Faktor"
+        }
+      ]
+    },
+    "riskAssessment": {
+      "overallRisk": "Medium - kontrollierbar bei Einhaltung aller Schutzmaßnahmen",
+      "riskFactors": [
+        "Absturz >2m",
+        "Wetterabhängigkeit",
+        "Gerüststabilität",
+        "Herabfallende Gegenstände"
+      ],
+      "complianceScore": 75
+    },
+    "_metadata": {
+      "processedAt": "2025-06-12T13:15:30.018Z",
+      "originalFormat": "object",
+      "processingSuccessful": true
+    }
+  }
+]
