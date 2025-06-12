@@ -434,6 +434,38 @@ export class DatabaseStorage implements IStorage {
       switch (fieldName) {
         // Array fields
         case 'selectedHazards':
+          if (Array.isArray(suggestedValue)) {
+            // Handle array of hazard objects with notes
+            if (suggestedValue.length > 0 && typeof suggestedValue[0] === 'object' && suggestedValue[0].hazardId) {
+              // Extract just the hazard IDs for selectedHazards field
+              return suggestedValue.map(item => item.hazardId);
+            }
+            return suggestedValue;
+          } else if (typeof suggestedValue === 'string') {
+            // Try to parse as JSON array first
+            try {
+              const parsed = JSON.parse(suggestedValue);
+              if (Array.isArray(parsed)) {
+                // Handle array of hazard objects
+                if (parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0].hazardId) {
+                  return parsed.map(item => item.hazardId);
+                }
+                return parsed;
+              }
+            } catch {
+              // Not valid JSON, continue with string parsing
+            }
+            
+            // Handle comma-separated string format like "1-0, 7-1, 8-0, 4-0"
+            if (suggestedValue.includes(',')) {
+              return suggestedValue.split(',').map(s => s.trim()).filter(s => s);
+            }
+            
+            // Single value or space-separated values
+            return suggestedValue.split(/[,\s]+/).map(s => s.trim()).filter(s => s);
+          }
+          return [];
+
         case 'completedMeasures':
           if (Array.isArray(suggestedValue)) {
             return suggestedValue;
