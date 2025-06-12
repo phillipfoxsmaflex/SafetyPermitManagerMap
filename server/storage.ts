@@ -414,10 +414,11 @@ export class DatabaseStorage implements IStorage {
         }
 
         // Map camelCase field names to Drizzle schema field names
-        const fieldMapping: Record<string, keyof typeof permits.$inferSelect> = {
+        const fieldMapping: Record<string, string> = {
           // Basic fields
           'immediateActions': 'immediateActions',
           'beforeWorkStarts': 'beforeWorkStarts',
+          'preventiveMeasures': 'beforeWorkStarts',  // KORREKTUR: Frontend preventiveMeasures → Backend beforeWorkStarts
           'complianceNotes': 'complianceNotes',
           'additionalComments': 'additionalComments',
           'identifiedHazards': 'identifiedHazards',
@@ -499,11 +500,13 @@ export class DatabaseStorage implements IStorage {
             
         } else {
           // Apply regular field updates using proper Drizzle syntax
-          const updateData: Partial<typeof permits.$inferSelect> = {
-            [schemaFieldName]: sanitizedValue
-          };
-
           console.log(`Updating permit ${permitId} with field ${schemaFieldName}:`, sanitizedValue);
+          
+          // Create update object with explicit field mapping
+          const updateData: any = {
+            updatedAt: new Date()
+          };
+          updateData[schemaFieldName] = sanitizedValue;
           
           const result = await db
             .update(permits)
