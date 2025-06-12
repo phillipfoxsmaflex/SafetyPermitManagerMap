@@ -7,34 +7,138 @@ import { v4 as uuidv4 } from "uuid";
 import { storage } from "./storage";
 import { insertPermitSchema, insertDraftPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
 import { z } from "zod";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Helper function to load and validate TRBS data from frontend source
+// Complete TRBS data matching frontend source - all 11 categories with 48 hazards
 function loadTRBSData() {
-  try {
-    // Use the same data source as frontend for consistency
-    const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_complete_hazards.json');
-    const trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
-    
-    // Validate data structure
-    if (!trbsData.categories || !Array.isArray(trbsData.categories)) {
-      throw new Error('Invalid TRBS data structure - missing categories array');
-    }
-    
-    // Validate all 11 categories are present
-    if (trbsData.categories.length !== 11) {
-      console.warn(`TRBS data incomplete: Expected 11 categories, found ${trbsData.categories.length}`);
-    }
-    
-    console.log('Successfully loaded TRBS data:', {
-      categories: trbsData.categories.length,
-      totalHazards: trbsData.categories.reduce((sum: number, cat: any) => sum + cat.hazards.length, 0)
-    });
-    
-    return trbsData;
-  } catch (error) {
-    console.error('Failed to load TRBS data from frontend source:', error);
-    throw new Error('TRBS data unavailable - webhook cannot function properly');
-  }
+  const trbsData = {
+    "title": "TRBS Gefährdungsbeurteilung - Vollständige Kategorien",
+    "version": "2025",
+    "categories": [
+      {
+        "id": "1",
+        "category": "Mechanische Gefährdungen",
+        "hazards": [
+          {"hazard": "Quetschung durch bewegte Teile"},
+          {"hazard": "Schneiden an scharfen Kanten"},
+          {"hazard": "Stoß durch herunterfallende Gegenstände"},
+          {"hazard": "Sturz durch ungesicherte Öffnungen"}
+        ]
+      },
+      {
+        "id": "2",
+        "category": "Elektrische Gefährdungen",
+        "hazards": [
+          {"hazard": "Stromschlag durch defekte Geräte"},
+          {"hazard": "Lichtbogen bei Schalthandlungen"},
+          {"hazard": "Statische Entladung"},
+          {"hazard": "Induktive Kopplung"}
+        ]
+      },
+      {
+        "id": "3",
+        "category": "Gefahrstoffe",
+        "hazards": [
+          {"hazard": "Hautkontakt mit Gefahrstoffen"},
+          {"hazard": "Einatmen von Gefahrstoffen"},
+          {"hazard": "Verschlucken von Gefahrstoffen"},
+          {"hazard": "Hautkontakt mit unter Druck stehenden Flüssigkeiten"}
+        ]
+      },
+      {
+        "id": "4",
+        "category": "Biologische Arbeitsstoffe",
+        "hazards": [
+          {"hazard": "Infektionsgefährdung"},
+          {"hazard": "sensibilisierende Wirkung"},
+          {"hazard": "toxische Wirkung"}
+        ]
+      },
+      {
+        "id": "5",
+        "category": "Brand- und Explosionsgefährdungen",
+        "hazards": [
+          {"hazard": "brennbare Feststoffe, Flüssigkeiten, Gase"},
+          {"hazard": "explosionsfähige Atmosphäre"},
+          {"hazard": "Explosivstoffe"}
+        ]
+      },
+      {
+        "id": "6",
+        "category": "Thermische Gefährdungen",
+        "hazards": [
+          {"hazard": "heiße Medien/Oberflächen"},
+          {"hazard": "kalte Medien/Oberflächen"},
+          {"hazard": "Brand, Explosion"}
+        ]
+      },
+      {
+        "id": "7",
+        "category": "Gefährdungen durch spezielle physikalische Einwirkungen",
+        "hazards": [
+          {"hazard": "Lärm"},
+          {"hazard": "Ultraschall, Infraschall"},
+          {"hazard": "Ganzkörpervibrationen"},
+          {"hazard": "Hand-Arm-Vibrationen"},
+          {"hazard": "optische Strahlung"},
+          {"hazard": "ionisierende Strahlung"},
+          {"hazard": "elektromagnetische Felder"},
+          {"hazard": "Unter- oder Überdruck"}
+        ]
+      },
+      {
+        "id": "8",
+        "category": "Gefährdungen durch Arbeitsumgebungsbedingungen",
+        "hazards": [
+          {"hazard": "Klima (Hitze, Kälte)"},
+          {"hazard": "unzureichende Beleuchtung"},
+          {"hazard": "Lärm"},
+          {"hazard": "unzureichende Verkehrswege"},
+          {"hazard": "Sturz, Ausgleiten"},
+          {"hazard": "unzureichende Flucht- und Rettungswege"}
+        ]
+      },
+      {
+        "id": "9",
+        "category": "Physische Belastung/Arbeitsschwere",
+        "hazards": [
+          {"hazard": "schwere dynamische Arbeit"},
+          {"hazard": "einseitige dynamische Arbeit"},
+          {"hazard": "Haltungsarbeit/Zwangshaltungen"},
+          {"hazard": "Fortbewegung/ungünstige Körperhaltung"},
+          {"hazard": "Kombination körperlicher Belastungsfaktoren"}
+        ]
+      },
+      {
+        "id": "10",
+        "category": "Psychische Faktoren",
+        "hazards": [
+          {"hazard": "unzureichend gestaltete Arbeitsaufgabe"},
+          {"hazard": "unzureichend gestaltete Arbeitsorganisation"},
+          {"hazard": "unzureichend gestaltete soziale Bedingungen"},
+          {"hazard": "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"}
+        ]
+      },
+      {
+        "id": "11",
+        "category": "Sonstige Gefährdungen",
+        "hazards": [
+          {"hazard": "durch Menschen (körperliche Gewalt)"},
+          {"hazard": "durch Tiere"},
+          {"hazard": "durch Pflanzen und pflanzliche Produkte"},
+          {"hazard": "Absturz in/durch Behälter, Becken, Gruben"}
+        ]
+      }
+    ]
+  };
+
+  console.log('Successfully loaded embedded TRBS data:', {
+    categories: trbsData.categories.length,
+    totalHazards: trbsData.categories.reduce((sum: number, cat: any) => sum + cat.hazards.length, 0)
+  });
+  
+  return trbsData;
 }
 
 // Enhanced function to format complete TRBS assessment for webhook
