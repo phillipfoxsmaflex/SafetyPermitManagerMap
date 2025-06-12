@@ -407,37 +407,37 @@ export class DatabaseStorage implements IStorage {
           return true; // Skip but don't fail
         }
 
-        // Map camelCase field names to snake_case database field names
-        const fieldMapping: Record<string, string> = {
+        // Map camelCase field names to Drizzle schema field names
+        const fieldMapping: Record<string, keyof typeof permits.$inferSelect> = {
           // Basic fields
-          'immediateActions': 'immediate_actions',
-          'beforeWorkStarts': 'before_work_starts',
-          'complianceNotes': 'compliance_notes',
-          'additionalComments': 'additional_comments',
-          'identifiedHazards': 'identified_hazards',
-          'overallRisk': 'overall_risk',
-          'selectedHazards': 'selected_hazards',
-          'hazardNotes': 'hazard_notes',
-          'completedMeasures': 'completed_measures',
-          'requestorName': 'requestor_name',
-          'contactNumber': 'contact_number',
-          'emergencyContact': 'emergency_contact',
-          'startDate': 'start_date',
-          'endDate': 'end_date',
-          'riskLevel': 'risk_level',
-          'safetyOfficer': 'safety_officer',
-          'departmentHead': 'department_head',
-          'maintenanceApprover': 'maintenance_approver',
-          'performerName': 'performer_name',
-          'performerSignature': 'performer_signature',
-          // Direct mapping for already snake_case fields
+          'immediateActions': 'immediateActions',
+          'beforeWorkStarts': 'beforeWorkStarts',
+          'complianceNotes': 'complianceNotes',
+          'additionalComments': 'additionalComments',
+          'identifiedHazards': 'identifiedHazards',
+          'overallRisk': 'overallRisk',
+          'selectedHazards': 'selectedHazards',
+          'hazardNotes': 'hazardNotes',
+          'completedMeasures': 'completedMeasures',
+          'requestorName': 'requestorName',
+          'contactNumber': 'contactNumber',
+          'emergencyContact': 'emergencyContact',
+          'startDate': 'startDate',
+          'endDate': 'endDate',
+          'riskLevel': 'riskLevel',
+          'safetyOfficer': 'safetyOfficer',
+          'departmentHead': 'departmentHead',
+          'maintenanceApprover': 'maintenanceApprover',
+          'performerName': 'performerName',
+          'performerSignature': 'performerSignature',
+          // Direct mapping
           'location': 'location',
           'description': 'description',
           'department': 'department',
           'status': 'status'
         };
 
-        const dbFieldName = fieldMapping[fieldName] || fieldName;
+        const schemaFieldName = fieldMapping[fieldName] || fieldName;
         console.log(`Mapped field ${fieldName} to database field ${dbFieldName}`);
 
         // Special handling for hazard-related fields
@@ -447,8 +447,7 @@ export class DatabaseStorage implements IStorage {
         } else {
           // Apply regular field updates
           const updateData: any = { 
-            [dbFieldName]: sanitizedValue,
-            updated_at: new Date() 
+            [dbFieldName]: sanitizedValue
           };
 
           console.log(`Updating permit ${permitId} with:`, updateData);
