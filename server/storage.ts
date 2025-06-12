@@ -533,6 +533,76 @@ export class DatabaseStorage implements IStorage {
     try {
       const { fieldName, suggestedValue, reasoning, suggestionType } = suggestion;
       
+      let currentSelectedHazards: string[] = [];
+      let currentHazardNotes: Record<string, string> = {};
+
+      try {
+        currentSelectedHazards = permit.selectedHazards ? 
+          (Array.isArray(permit.selectedHazards) ? permit.selectedHazards : JSON.parse(permit.selectedHazards)) : [];
+        currentHazardNotes = permit.hazardNotes ? 
+          (typeof permit.hazardNotes === 'object' ? permit.hazardNotes : JSON.parse(permit.hazardNotes)) : {};
+      } catch (e) {
+        console.error('Error parsing current hazard data:', e);
+      }
+
+      let hasNewMapping = false;
+
+      // Handle structured hazard data from AI suggestions
+      if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes') {
+        try {
+          let hazardData: any = null;
+          
+          // Try to parse suggested value as JSON if it's a string
+          if (typeof suggestedValue === 'string') {
+            try {
+              hazardData = JSON.parse(suggestedValue);
+            } catch {
+              // If not JSON, treat as simple text
+              hazardData = suggestedValue;
+            }
+          } else {
+            hazardData = suggestedValue;
+          }
+
+          console.log('Processing hazard data from AI suggestion:', hazardData);
+
+          // Handle array of hazard objects with specific notes
+          if (Array.isArray(hazardData)) {
+            for (const hazardItem of hazardData) {
+              if (hazardItem.hazardId && hazardItem.notes) {
+                const hazardId = hazardItem.hazardId;
+                if (!currentSelectedHazards.includes(hazardId)) {
+                  currentSelectedHazards.push(hazardId);
+                  hasNewMapping = true;
+                }
+                // Use the specific notes from the hazard item
+                currentHazardNotes[hazardId] = hazardItem.notes;
+                hasNewMapping = true;
+                console.log(`Mapped hazard ${hazardId} with note: ${hazardItem.notes}`);
+              }
+            }
+          }
+          // Handle object with hazard mappings
+          else if (typeof hazardData === 'object' && hazardData !== null) {
+            for (const [key, value] of Object.entries(hazardData)) {
+              if (key.match(/^\d+-\d+$/)) { // TRBS format like "4-3"
+                const hazardId = key;
+                if (!currentSelectedHazards.includes(hazardId)) {
+                  currentSelectedHazards.push(hazardId);
+                  hasNewMapping = true;
+                }
+                // Use the specific value as the note
+                currentHazardNotes[hazardId] = String(value);
+                hasNewMapping = true;
+                console.log(`Mapped hazard ${hazardId} with note: ${value}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing structured hazard data:', error);
+        }
+      }
+
       // Enhanced TRBS hazard category mappings with comprehensive keywords
       const trbsMapping: Record<string, string[]> = {
         // Mechanische Gefährdungen
@@ -574,22 +644,9 @@ export class DatabaseStorage implements IStorage {
         'haut|kontakt|absorption|skin|contact|dermal|gloves': ['5-1', '5-3']
       };
 
-      let currentSelectedHazards: string[] = [];
-      let currentHazardNotes: Record<string, string> = {};
-
-      try {
-        currentSelectedHazards = permit.selectedHazards ? 
-          (Array.isArray(permit.selectedHazards) ? permit.selectedHazards : JSON.parse(permit.selectedHazards)) : [];
-        currentHazardNotes = permit.hazardNotes ? 
-          (typeof permit.hazardNotes === 'object' ? permit.hazardNotes : JSON.parse(permit.hazardNotes)) : {};
-      } catch (e) {
-        console.error('Error parsing current hazard data:', e);
-      }
-
-      // Analyze suggestion content for TRBS category mapping
+      // Analyze suggestion content for TRBS category mapping (fallback)
       const suggestionText = `${suggestedValue} ${reasoning}`.toLowerCase();
       let mappedHazards: string[] = [];
-      let hasNewMapping = false;
 
       console.log(`Analyzing suggestion for TRBS mapping: "${suggestionText}"`);
 
@@ -609,14 +666,14 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Add or update hazard notes with generic AI suggestion marker
+          // Add or update hazard notes with actual suggestion content
           if (hazardIds.length > 0) {
             const primaryHazard = hazardIds[0];
-            if (!(primaryHazard in currentHazardNotes)) {
-              currentHazardNotes[primaryHazard] = `Von AI-Analyse erkannt`;
-              hasNewMapping = true;
-              console.log(`Added note for hazard ${primaryHazard}`);
-            }
+            // Use the actual suggestion content instead of generic text
+            const noteContent = reasoning || suggestedValue || 'Von AI-Analyse erkannt';
+            currentHazardNotes[primaryHazard] = noteContent;
+            hasNewMapping = true;
+            console.log(`Added note for hazard ${primaryHazard}: ${noteContent}`);
           }
         }
       }
@@ -642,7 +699,9 @@ export class DatabaseStorage implements IStorage {
             for (const hazardId of hazardIds) {
               if (!currentSelectedHazards.includes(hazardId)) {
                 currentSelectedHazards.push(hazardId);
-                currentHazardNotes[hazardId] = `Von AI-Analyse erkannt`;
+                // Use actual suggestion content instead of generic text
+                const noteContent = reasoning || suggestedValue || 'Von AI-Analyse erkannt';
+                currentHazardNotes[hazardId] = noteContent;
                 hasNewMapping = true;
               }
             }
