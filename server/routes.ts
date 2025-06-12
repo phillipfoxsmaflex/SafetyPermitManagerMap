@@ -1299,8 +1299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Original permit data sample:', {
           description: permit.description,
           emergencyContact: permit.emergencyContact,
-          performerName: permit.performerName
+          performerName: permit.performerName,
+          selectedHazards: permit.selectedHazards
         });
+        console.log('Improved permit selectedHazards:', improvedPermit.selectedHazards);
         
         // Compare original vs improved permit and create suggestions for differences
         const fieldMappings = {
@@ -1337,8 +1339,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let improvedStr = '';
           
           if (fieldName === 'selectedHazards') {
-            originalStr = Array.isArray(originalValue) ? JSON.stringify(originalValue) : '[]';
-            improvedStr = Array.isArray(improvedValue) ? JSON.stringify(improvedValue) : '[]';
+            // Handle selectedHazards with proper processing of complex objects
+            console.log(`selectedHazards check: isArray=${Array.isArray(improvedValue)}, length=${improvedValue?.length}, firstItemType=${typeof improvedValue?.[0]}, hasHazardId=${!!improvedValue?.[0]?.hazardId}`);
+            
+            if (Array.isArray(improvedValue) && improvedValue.length > 0 && 
+                typeof improvedValue[0] === 'object' && improvedValue[0].hazardId) {
+              // New format: array of objects with hazardId, description, notes
+              const selectedIds = improvedValue.filter(h => h.isSelected).map(h => h.hazardId);
+              const hazardNotesObj = {};
+              improvedValue.forEach(h => {
+                if (h.isSelected && h.notes) {
+                  hazardNotesObj[h.hazardId] = h.notes;
+                }
+              });
+              
+              // Create separate suggestions for selectedHazards (IDs only) and hazardNotes
+              originalStr = Array.isArray(originalValue) ? JSON.stringify(originalValue) : '[]';
+              improvedStr = JSON.stringify(selectedIds);
+              
+              console.log(`Processing selectedHazards: Original IDs: ${originalStr}, Improved IDs: ${improvedStr}`);
+              
+              // Also create a suggestion for hazardNotes if there are notes
+              if (Object.keys(hazardNotesObj).length > 0) {
+                const originalNotes = permit.hazardNotes || '{}';
+                const improvedNotes = JSON.stringify(hazardNotesObj);
+                
+                console.log(`Processing hazardNotes: Original: ${originalNotes}, Improved: ${improvedNotes}`);
+                
+                if (originalNotes !== improvedNotes) {
+                  const notesSuggestion = await storage.createAiSuggestion({
+                    permitId: permit.id,
+                    suggestionType: 'ai_improvement',
+                    fieldName: 'hazardNotes',
+                    originalValue: originalNotes,
+                    suggestedValue: improvedNotes,
+                    reasoning: 'KI-Verbesserung für Gefährdungsnotizen aus detaillierter Analyse',
+                    priority: 'medium',
+                    status: 'pending'
+                  });
+                  createdSuggestions.push(notesSuggestion);
+                  console.log(`Created hazardNotes suggestion with ${Object.keys(hazardNotesObj).length} notes`);
+                }
+              }
+            } else {
+              // Legacy format: simple array of IDs
+              originalStr = Array.isArray(originalValue) ? JSON.stringify(originalValue) : '[]';
+              improvedStr = Array.isArray(improvedValue) ? JSON.stringify(improvedValue) : '[]';
+            }
           } else if (fieldName === 'hazardNotes') {
             originalStr = typeof originalValue === 'string' ? originalValue : '{}';
             improvedStr = typeof improvedValue === 'string' ? improvedValue : JSON.stringify(improvedValue || {});
