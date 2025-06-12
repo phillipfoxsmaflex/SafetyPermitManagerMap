@@ -210,11 +210,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
       
-      // Force reload of the current page to ensure all components refresh
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
       toast({
         title: "Alle Vorschläge übernommen",
         description: "Alle AI-Vorschläge wurden erfolgreich übernommen.",
@@ -351,11 +346,6 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
-      
-      // Force reload of the current page to ensure all components refresh
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
       
       toast({
         title: "Vorschlag übernommen",

@@ -636,13 +636,13 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                       
                       <FormField
                         control={form.control}
-                        name="immediateMeasures"
+                        name="immediateActions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Allgemeine Maßnahmen</FormLabel>
+                            <FormLabel>Sofortmaßnahmen</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Beschreiben Sie allgemeine Sicherheitsmaßnahmen für diese Arbeitserlaubnis..."
+                                placeholder="Beschreiben Sie Sofortmaßnahmen, die bei Gefahr oder Notfall einzuleiten sind..."
                                 className="min-h-[100px]"
                                 {...field}
                               />
@@ -654,7 +654,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
 
                       <FormField
                         control={form.control}
-                        name="preventiveMeasures"
+                        name="beforeWorkStarts"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
