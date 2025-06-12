@@ -43,6 +43,7 @@ import { StatusIndicator } from "@/components/status-indicator";
 import { StatusTimeline } from "@/components/status-timeline";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
 import { WorkflowButtons } from "@/components/workflow-buttons";
+import trbsData from "@/data/trbs_complete_hazards.json";
 import { WORKFLOW_CONFIG } from "@/lib/workflow-config";
 import { canEditPermit } from "@/lib/permissions";
 import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle, Activity } from "lucide-react";
@@ -505,19 +506,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* TRBS Hazard Categories */}
-                    {[
-                      { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
-                      { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
-                      { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
-                      { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
-                      { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
-                      { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
-                      { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
-                      { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
-                      { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
-                      { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
-                      { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
-                    ].map((category) => (
+                    {trbsData.categories.map((category) => (
                       <Card key={category.id} className="border-l-4 border-l-safety-orange">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-lg text-industrial-gray">
@@ -552,7 +541,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                                         </FormControl>
                                         <div className="flex-1 space-y-1 leading-none">
                                           <FormLabel className="text-sm font-normal">
-                                            {hazard}
+                                            {hazard.hazard}
                                           </FormLabel>
                                         </div>
                                       </FormItem>
