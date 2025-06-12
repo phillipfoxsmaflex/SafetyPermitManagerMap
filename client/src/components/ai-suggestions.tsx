@@ -128,8 +128,14 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     },
     onSuccess: (data) => {
       console.log("Client: onSuccess called with:", data);
+      // Force cache invalidation for permit data and suggestions
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      
+      // Force refetch permit data immediately
+      queryClient.refetchQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
       toast({
         title: "Vorschlag übernommen",
         description: data?.message || "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",

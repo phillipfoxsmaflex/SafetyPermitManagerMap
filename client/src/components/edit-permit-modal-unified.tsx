@@ -155,6 +155,57 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
     },
   });
 
+  // Sync form with latest permit data whenever currentPermit changes
+  React.useEffect(() => {
+    if (currentPermit && open) {
+      console.log("Syncing form with latest permit data:", currentPermit.id);
+      form.reset({
+        type: currentPermit.type || "",
+        workDescription: currentPermit.description || "",
+        location: currentPermit.location || "",
+        workLocationId: currentPermit.workLocationId || undefined,
+        requestedBy: currentPermit.requestorName || "",
+        department: currentPermit.department || "",
+        plannedStartDate: currentPermit.startDate || "",
+        plannedEndDate: currentPermit.endDate || "",
+        emergencyContact: currentPermit.emergencyContact || "",
+        departmentHeadApproval: currentPermit.departmentHeadApproval || false,
+        safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
+        maintenanceApproval: currentPermit.maintenanceApproval || false,
+        departmentHeadId: undefined,
+        safetyOfficerId: undefined,
+        maintenanceApproverId: undefined,
+        identifiedHazards: currentPermit.identifiedHazards || "",
+        selectedHazards: currentPermit.selectedHazards || [],
+        hazardNotes: currentPermit.hazardNotes || "",
+        completedMeasures: currentPermit.completedMeasures || [],
+        status: currentPermit.status || "draft",
+        performerName: currentPermit.performerName || "",
+        performerSignature: currentPermit.performerSignature || "",
+        workStartedAt: currentPermit.workStartedAt || "",
+        workCompletedAt: currentPermit.workCompletedAt || "",
+        additionalComments: currentPermit.additionalComments || "",
+        immediateActions: currentPermit.immediateActions || "",
+        beforeWorkStarts: currentPermit.beforeWorkStarts || "",
+        complianceNotes: currentPermit.complianceNotes || "",
+        overallRisk: currentPermit.overallRisk || "",
+      });
+      
+      // Update hazard notes state
+      if (currentPermit.hazardNotes) {
+        try {
+          const notes = typeof currentPermit.hazardNotes === 'string' 
+            ? JSON.parse(currentPermit.hazardNotes) 
+            : currentPermit.hazardNotes;
+          setHazardNotes(notes);
+        } catch (e) {
+          console.warn("Could not parse hazard notes:", currentPermit.hazardNotes);
+          setHazardNotes({});
+        }
+      }
+    }
+  }, [currentPermit, open, form]);
+
   // Update form
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
