@@ -143,6 +143,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
+  async getUserByFullName(fullName: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.fullName, fullName)).limit(1);
+    return user;
+  }
+
   async getPermit(id: number): Promise<Permit | undefined> {
     const [permit] = await db.select().from(permits).where(eq(permits.id, id));
     return permit || undefined;

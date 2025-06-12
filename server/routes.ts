@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get permit by ID
+  // Get permit by ID with resolved approver names
   app.get("/api/permits/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -242,7 +242,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Permit not found" });
       }
       
-      res.json(permit);
+      // Resolve approver names from IDs stored in departmentHead, safetyOfficer, maintenanceApprover fields
+      let resolvedPermit = { ...permit };
+      
+      // Parse names from stored text fields and try to find matching user IDs
+      if (permit.departmentHead) {
+        const user = await storage.getUserByFullName(permit.departmentHead);
+        if (user) resolvedPermit.departmentHeadId = user.id;
+      }
+      
+      if (permit.safetyOfficer) {
+        const user = await storage.getUserByFullName(permit.safetyOfficer);
+        if (user) resolvedPermit.safetyOfficerId = user.id;
+      }
+      
+      if (permit.maintenanceApprover) {
+        const user = await storage.getUserByFullName(permit.maintenanceApprover);
+        if (user) resolvedPermit.maintenanceApproverId = user.id;
+      }
+      
+      res.json(resolvedPermit);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch permit" });
     }

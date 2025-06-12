@@ -114,6 +114,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
     queryKey: ["/api/users/maintenance-approvers"],
   });
 
+  // Fetch all users for requestor dropdown
+  const { data: allUsers = [] } = useQuery<any[]>({
+    queryKey: ["/api/users"],
+  });
+
   // Get current permit data
   const { data: currentPermit } = useQuery<Permit>({
     queryKey: [`/api/permits/${permit?.id}`],
@@ -180,9 +185,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
         departmentHeadApproval: currentPermit.departmentHeadApproval || false,
         safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
         maintenanceApproval: currentPermit.maintenanceApproval || false,
-        departmentHeadId: undefined,
-        safetyOfficerId: undefined,
-        maintenanceApproverId: undefined,
+        departmentHeadId: currentPermit.departmentHead ? 
+          departmentHeads.find(head => head.fullName === currentPermit.departmentHead)?.id : undefined,
+        safetyOfficerId: currentPermit.safetyOfficer ? 
+          safetyOfficers.find(officer => officer.fullName === currentPermit.safetyOfficer)?.id : undefined,
+        maintenanceApproverId: currentPermit.maintenanceApprover ? 
+          maintenanceApprovers.find(approver => approver.fullName === currentPermit.maintenanceApprover)?.id : undefined,
         identifiedHazards: currentPermit.identifiedHazards || "",
         selectedHazards: currentPermit.selectedHazards || [],
         hazardNotes: currentPermit.hazardNotes || "",
@@ -404,9 +412,20 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Beantragt von</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Name des Antragstellers" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Antragsteller auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {allUsers.map((user) => (
+                                  <SelectItem key={user.id} value={user.fullName}>
+                                    {user.fullName} ({user.department})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
