@@ -205,9 +205,15 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     iframe.src = `/api/permits/${permitId}/suggestions/apply-all?redirect=/success`;
     
     iframe.onload = () => {
-      // Request completed, refresh the suggestions
+      // Request completed, refresh the suggestions and permit data
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
+      
+      // Force reload of the current page to ensure all components refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
       toast({
         title: "Alle Vorschläge übernommen",
@@ -341,9 +347,15 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
     iframe.src = `/api/suggestions/${suggestionId}/apply?redirect=/success`;
     
     iframe.onload = () => {
-      // Request completed, refresh the suggestions
+      // Request completed, refresh the suggestions and permit data
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
+      
+      // Force reload of the current page to ensure all components refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
       toast({
         title: "Vorschlag übernommen",
@@ -402,6 +414,25 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       case 'safety': return 'Sicherheit';
       case 'compliance': return 'Compliance';
       default: return type;
+    }
+  };
+
+  const getFieldLabel = (fieldName: string) => {
+    switch (fieldName) {
+      case 'preventiveMeasures': return 'Maßnahmen vor Arbeitsbeginn';
+      case 'beforeWorkStarts': return 'Maßnahmen vor Arbeitsbeginn';
+      case 'immediateActions': return 'Sofortmaßnahmen';
+      case 'additionalComments': return 'Zusätzliche Sicherheitshinweise';
+      case 'selectedHazards': return 'Ausgewählte Gefährdungen';
+      case 'hazardNotes': return 'Gefährdungsnotizen';
+      case 'overallRisk': return 'Gesamtrisiko';
+      case 'identifiedHazards': return 'Identifizierte Gefährdungen';
+      case 'riskLevel': return 'Risikostufe';
+      case 'complianceNotes': return 'Compliance-Hinweise';
+      case 'performerName': return 'Durchführende Person';
+      case 'emergencyContact': return 'Notfallkontakt';
+      case 'completedMeasures': return 'Abgeschlossene Maßnahmen';
+      default: return fieldName;
     }
   };
 
@@ -501,7 +532,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
                     </Badge>
                     {suggestion.fieldName && (
                       <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                        Feld: {suggestion.fieldName}
+                        {getFieldLabel(suggestion.fieldName)}
                       </Badge>
                     )}
                     {suggestion.status === 'accepted' && (
