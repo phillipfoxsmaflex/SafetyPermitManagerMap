@@ -130,41 +130,41 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const form = useForm<EditPermitFormData>({
     resolver: zodResolver(editPermitSchema),
     defaultValues: {
-      type: permit?.type || "",
-      workDescription: permit?.description || "",
-      location: permit?.location || "",
-      workLocationId: permit?.location || undefined,
-      requestedBy: permit?.requestorName || "",
-      department: permit?.department || "",
-      plannedStartDate: permit?.startDate ? (permit.startDate instanceof Date ? permit.startDate.toISOString().slice(0, 16) : permit.startDate) : "",
-      plannedEndDate: permit?.endDate ? (permit.endDate instanceof Date ? permit.endDate.toISOString().slice(0, 16) : permit.endDate) : "",
-      emergencyContact: permit?.emergencyContact || "",
-      departmentHeadApproval: permit?.departmentHeadApproval || false,
-      safetyOfficerApproval: permit?.safetyOfficerApproval || false,
-      maintenanceApproval: permit?.maintenanceApproval || false,
-      departmentHeadId: permit?.departmentHead || undefined,
-      safetyOfficerId: permit?.safetyOfficer || undefined,
-      maintenanceApproverId: permit?.maintenanceApprover || undefined,
-      identifiedHazards: permit?.identifiedHazards || "",
-      selectedHazards: permit?.selectedHazards || [],
-      hazardNotes: permit?.hazardNotes || "",
-      completedMeasures: permit?.completedMeasures || [],
-      status: permit?.status || "draft",
-      performerName: permit?.performerName || "",
-      performerSignature: permit?.performerSignature || "",
-      workStartedAt: permit?.workStartedAt || "",
-      workCompletedAt: permit?.workCompletedAt || "",
-      additionalComments: permit?.additionalComments || "",
-      immediateActions: permit?.immediateActions || "",
-      beforeWorkStarts: permit?.beforeWorkStarts || "",
-      complianceNotes: permit?.complianceNotes || "",
-      overallRisk: permit?.overallRisk || "",
+      type: "",
+      workDescription: "",
+      location: "",
+      workLocationId: undefined,
+      requestedBy: "",
+      department: "",
+      plannedStartDate: "",
+      plannedEndDate: "",
+      emergencyContact: "",
+      departmentHeadApproval: false,
+      safetyOfficerApproval: false,
+      maintenanceApproval: false,
+      departmentHeadId: undefined,
+      safetyOfficerId: undefined,
+      maintenanceApproverId: undefined,
+      identifiedHazards: "",
+      selectedHazards: [],
+      hazardNotes: "",
+      completedMeasures: [],
+      status: "draft",
+      performerName: "",
+      performerSignature: "",
+      workStartedAt: "",
+      workCompletedAt: "",
+      additionalComments: "",
+      immediateActions: "",
+      beforeWorkStarts: "",
+      complianceNotes: "",
+      overallRisk: "",
     },
   });
 
-  // Sync form with latest permit data whenever currentPermit changes
+  // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
   React.useEffect(() => {
-    if (currentPermit && open) {
+    if (mode === 'edit' && currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
       
       // Format dates properly for datetime-local input
@@ -899,7 +899,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                     <CardTitle>Arbeitsdurchführung</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {permit.status === "active" ? (
+                    {mode === 'edit' && permit?.status === "active" ? (
                       <>
                         <FormField
                           control={form.control}
