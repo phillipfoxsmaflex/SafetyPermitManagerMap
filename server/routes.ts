@@ -1471,11 +1471,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           emergencyContact: 'emergencyContact',
           performerName: 'performerName',
           
-          // Safety fields
+          // Safety fields - KORRIGIERTE FRONTEND-BACKEND MAPPINGS
           identifiedHazards: 'identifiedHazards',
           additionalComments: 'additionalComments',
           immediateActions: 'immediateActions',
-          beforeWorkStarts: 'beforeWorkStarts',
+          beforeWorkStarts: 'preventiveMeasures',  // KORREKTUR: beforeWorkStarts → Frontend: preventiveMeasures
           complianceNotes: 'complianceNotes',
           overallRisk: 'overallRisk',
           
