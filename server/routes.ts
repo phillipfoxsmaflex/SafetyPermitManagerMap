@@ -8,106 +8,114 @@ import { storage } from "./storage";
 import { insertPermitSchema, insertDraftPermitSchema, insertPermitAttachmentSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Helper function to format TRBS data for webhook
-function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes: string | null) {
+// Helper function to load and validate TRBS data from frontend source
+function loadTRBSData() {
   try {
-    // Hardcoded fallback - use attached TRBS data from attached_assets
-    const trbsDataFallback = {
-      "categories": [
-        {
-          "id": "2",
-          "category": "Mechanische Gefährdungen",
-          "hazards": [
-            {"hazard": "Ungeschützt bewegte Maschinenteile"},
-            {"hazard": "Teile mit gefährlichen Oberflächen"},
-            {"hazard": "Bewegte Transportmittel, bewegte Arbeitsmittel"},
-            {"hazard": "Unkontrolliert bewegte Teile"},
-            {"hazard": "Sturz auf der Ebene, Ausrutschen, Umknicken, Fehltreten, Stolpern"}
-          ]
-        },
-        {
-          "id": "3", 
-          "category": "Elektrische Gefährdungen",
-          "hazards": [
-            {"hazard": "Elektrischer Strom"},
-            {"hazard": "Elektrostatische Aufladungen"}
-          ]
-        },
-        {
-          "id": "4",
-          "category": "Gefahrstoffe",
-          "hazards": [
-            {"hazard": "Hautkontakt mit Gefahrstoffen"},
-            {"hazard": "Einatmen von Gefahrstoffen"},
-            {"hazard": "Verschlucken von Gefahrstoffen"},
-            {"hazard": "Physikalisch-chemische Gefährdungen durch Gefahrstoffe"}
-          ]
-        },
-        {
-          "id": "5",
-          "category": "Brand- und Explosionsgefährdungen", 
-          "hazards": [
-            {"hazard": "Brennbare Flüssigkeiten"},
-            {"hazard": "Brennbare Gase"},
-            {"hazard": "Brennbare Stäube"},
-            {"hazard": "Heiße Oberflächen"},
-            {"hazard": "Flammen"}
-          ]
-        }
-      ]
-    };
-
-    let trbsData;
-    try {
-      const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_complete_hazards.json');
-      trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
-    } catch (fileError) {
-      console.warn('Could not load complete TRBS data file, trying fallback');
-      try {
-        const fallbackPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
-        trbsData = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
-      } catch (fallbackError) {
-        console.warn('Could not load any TRBS data file, using hardcoded fallback');
-        trbsData = trbsDataFallback;
-      }
+    // Use the same data source as frontend for consistency
+    const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_complete_hazards.json');
+    const trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
+    
+    // Validate data structure
+    if (!trbsData.categories || !Array.isArray(trbsData.categories)) {
+      throw new Error('Invalid TRBS data structure - missing categories array');
     }
     
+    // Validate all 11 categories are present
+    if (trbsData.categories.length !== 11) {
+      console.warn(`TRBS data incomplete: Expected 11 categories, found ${trbsData.categories.length}`);
+    }
+    
+    console.log('Successfully loaded TRBS data:', {
+      categories: trbsData.categories.length,
+      totalHazards: trbsData.categories.reduce((sum: number, cat: any) => sum + cat.hazards.length, 0)
+    });
+    
+    return trbsData;
+  } catch (error) {
+    console.error('Failed to load TRBS data from frontend source:', error);
+    throw new Error('TRBS data unavailable - webhook cannot function properly');
+  }
+}
+
+// Enhanced function to format complete TRBS assessment for webhook
+function formatCompleteTRBSForWebhook(permit: any) {
+  try {
+    const trbsData = loadTRBSData();
+    
+    // Parse permit's hazard selections and notes
+    const selectedHazardsList = permit.selectedHazards || [];
     let hazardNotesObj: Record<string, string> = {};
+    
     try {
-      hazardNotesObj = hazardNotes ? JSON.parse(hazardNotes) : {};
-    } catch (noteParseError) {
-      console.warn('Invalid JSON in hazardNotes during TRBS formatting:', hazardNotes);
+      hazardNotesObj = permit.hazardNotes ? JSON.parse(permit.hazardNotes) : {};
+    } catch (parseError) {
+      console.warn('Invalid JSON in permit hazardNotes:', permit.hazardNotes);
       hazardNotesObj = {};
     }
     
-    const selectedHazardsList = selectedHazards || [];
-    const allHazards: any[] = [];
-    
-    // Process all TRBS categories and flatten to a single array
-    trbsData.categories.forEach((category: any) => {
-      category.hazards.forEach((hazard: any, hazardIndex: number) => {
-        const hazardId = `${category.id}-${hazardIndex}`;
-        const isSelected = selectedHazardsList.includes(hazardId);
-        
-        allHazards.push({
-          hazardId: hazardId,
-          hazardDescription: hazard.hazard,
-          isSelected: isSelected,
-          notes: hazardNotesObj[hazardId] || ''
+    // Build complete TRBS assessment with all categories and hazards
+    const trbsAssessment = {
+      categories: trbsData.categories.map((category: any) => {
+        const categoryHazards = category.hazards.map((hazard: any, hazardIndex: number) => {
+          const hazardId = `${category.id}-${hazardIndex}`;
+          const isSelected = selectedHazardsList.includes(hazardId);
+          
+          return {
+            hazardId,
+            hazardDescription: hazard.hazard,
+            isSelected,
+            notes: hazardNotesObj[hazardId] || "",
+            riskLevel: isSelected ? (hazardNotesObj[hazardId] ? "assessed" : "identified") : "not_applicable"
+          };
         });
-      });
+        
+        const selectedCount = categoryHazards.filter(h => h.isSelected).length;
+        
+        return {
+          categoryId: parseInt(category.id),
+          categoryName: category.category,
+          hazards: categoryHazards,
+          totalHazards: categoryHazards.length,
+          selectedCount,
+          hasSelections: selectedCount > 0,
+          completionRate: Math.round((selectedCount / categoryHazards.length) * 100)
+        };
+      }),
+      
+      // Summary statistics
+      summary: {
+        totalCategories: trbsData.categories.length,
+        totalHazards: trbsData.categories.reduce((sum: number, cat: any) => sum + cat.hazards.length, 0),
+        selectedHazards: selectedHazardsList.length,
+        categoriesWithSelections: trbsData.categories.filter((cat: any) => 
+          cat.hazards.some((_: any, idx: number) => selectedHazardsList.includes(`${cat.id}-${idx}`))
+        ).length,
+        overallRisk: permit.overallRisk || "not_assessed",
+        assessmentComplete: selectedHazardsList.length > 0
+      },
+      
+      // Additional safety data
+      safetyMeasures: {
+        identifiedHazards: permit.identifiedHazards || "",
+        completedMeasures: permit.completedMeasures || [],
+        immediateActions: permit.immediateActions || "",
+        beforeWorkStarts: permit.beforeWorkStarts || "",
+        preventiveMeasures: permit.preventiveMeasures || "",
+        complianceNotes: permit.complianceNotes || ""
+      }
+    };
+    
+    console.log('Formatted complete TRBS assessment for webhook:', {
+      totalCategories: trbsAssessment.categories.length,
+      totalHazards: trbsAssessment.summary.totalHazards,
+      selectedHazards: trbsAssessment.summary.selectedHazards,
+      categoriesWithSelections: trbsAssessment.summary.categoriesWithSelections
     });
     
-    console.log('Formatted TRBS hazards for webhook:', {
-      totalHazards: allHazards.length,
-      selectedCount: allHazards.filter((h: any) => h.isSelected).length,
-      sampleHazards: allHazards.slice(0, 3)
-    });
-    
-    return allHazards;
+    return trbsAssessment;
   } catch (error) {
-    console.error('Error formatting TRBS data for webhook:', error);
-    return [];
+    console.error('Error formatting complete TRBS data for webhook:', error);
+    throw error;
   }
 }
 
@@ -1097,20 +1105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workStartedAt: permit.workStartedAt?.toISOString(),
         workCompletedAt: permit.workCompletedAt?.toISOString(),
         
-        // Comprehensive TRBS safety assessment with structured data
-        trbsAssessment: {
-          // Basic safety fields
-          identifiedHazards: permit.identifiedHazards,
-          additionalComments: permit.additionalComments,
-          immediateActions: permit.immediateActions,
-          beforeWorkStarts: permit.beforeWorkStarts,
-          complianceNotes: permit.complianceNotes,
-          overallRisk: permit.overallRisk,
-          completedMeasures: permit.completedMeasures || [],
-          
-          // Consolidated hazard assessment with true/false for each hazard
-          selectedHazards: formatTRBSDataForWebhook(permit.selectedHazards, permit.hazardNotes)
-        },
+        // Complete TRBS safety assessment with all 11 categories and 48 hazards
+        trbsAssessment: formatCompleteTRBSForWebhook(permit),
         
         // Work execution tracking
         performerSignature: permit.performerSignature,
