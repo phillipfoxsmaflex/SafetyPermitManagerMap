@@ -284,11 +284,13 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="basic">Grunddaten</TabsTrigger>
                 <TabsTrigger value="hazards">Gefährdungen</TabsTrigger>
+                <TabsTrigger value="measures">Maßnahmen</TabsTrigger>
                 <TabsTrigger value="approvals">Genehmigungen</TabsTrigger>
-                {mode === 'edit' && <TabsTrigger value="ai-suggestions">KI-Vorschläge</TabsTrigger>}
+                <TabsTrigger value="execution">Durchführung</TabsTrigger>
+                {mode === 'edit' && <TabsTrigger value="workflow">Workflow</TabsTrigger>}
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4">
@@ -439,15 +441,117 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
                     <CardTitle>TRBS-Gefährdungsbeurteilung</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor="search">Gefährdungen suchen</Label>
+                        <Input
+                          id="search"
+                          placeholder="Suchbegriff eingeben..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="category">Kategorie filtern</Label>
+                        <Select onValueChange={(value) => setSelectedCategory(value === "all" ? null : Number(value))}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Alle Kategorien" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Alle Kategorien</SelectItem>
+                            {trbsData.categories.map((category, index) => (
+                              <SelectItem key={category.id} value={index.toString()}>
+                                {category.category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {trbsData.categories
+                        .filter((category, index) => {
+                          if (selectedCategory !== null && index !== selectedCategory) return false;
+                          if (!searchQuery) return true;
+                          return category.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                 category.hazards.some(h => h.hazard.toLowerCase().includes(searchQuery.toLowerCase()));
+                        })
+                        .map((category, categoryIndex) => (
+                          <Card key={category.id}>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-lg">{category.category}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                {category.hazards
+                                  .filter(hazard => !searchQuery || 
+                                    hazard.hazard.toLowerCase().includes(searchQuery.toLowerCase()))
+                                  .map((hazard, hazardIndex) => {
+                                    const hazardId = `${category.id}-${hazardIndex}`;
+                                    return (
+                                      <div key={hazardId} className="space-y-2">
+                                        <FormField
+                                          control={form.control}
+                                          name="selectedHazards"
+                                          render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                              <FormControl>
+                                                <Checkbox
+                                                  checked={field.value?.includes(hazardId) || false}
+                                                  onCheckedChange={(checked) => {
+                                                    const currentValue = field.value || [];
+                                                    if (checked) {
+                                                      field.onChange([...currentValue, hazardId]);
+                                                    } else {
+                                                      field.onChange(currentValue.filter((id: string) => id !== hazardId));
+                                                    }
+                                                  }}
+                                                />
+                                              </FormControl>
+                                              <div className="flex-1 space-y-1">
+                                                <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                  {hazard.hazard}
+                                                </FormLabel>
+                                              </div>
+                                            </FormItem>
+                                          )}
+                                        />
+                                        
+                                        {form.watch("selectedHazards")?.includes(hazardId) && (
+                                          <div className="ml-6">
+                                            <Label htmlFor={`hazard-note-${hazardId}`}>Anmerkungen zu dieser Gefährdung</Label>
+                                            <Textarea
+                                              id={`hazard-note-${hazardId}`}
+                                              placeholder="Spezifische Anmerkungen oder Maßnahmen für diese Gefährdung..."
+                                              className="mt-1"
+                                              value={hazardNotes[hazardId] || ""}
+                                              onChange={(e) => setHazardNotes(prev => ({
+                                                ...prev,
+                                                [hazardId]: e.target.value
+                                              }))}
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="identifiedHazards"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Identifizierte Gefährdungen</FormLabel>
+                          <FormLabel>Zusätzliche identifizierte Gefährdungen</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Beschreibung der identifizierten Gefährdungen"
+                              placeholder="Weitere Gefährdungen, die nicht in der TRBS-Liste enthalten sind"
                               className="min-h-[100px]"
                               {...field} 
                             />
@@ -456,7 +560,16 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
+              <TabsContent value="measures" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sicherheitsmaßnahmen</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <FormField
                       control={form.control}
                       name="immediateActions"
@@ -480,10 +593,52 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
                       name="beforeWorkStarts"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
+                          <FormLabel>Vorsorgemaßnahmen</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Vorsorgemaßnahmen vor Beginn der Arbeiten"
+                              placeholder="Maßnahmen, die vor Arbeitsbeginn durchgeführt werden müssen"
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="overallRisk"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gesamtrisikobewertung</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Risikostufe wählen" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="low">Niedrig</SelectItem>
+                              <SelectItem value="medium">Mittel</SelectItem>
+                              <SelectItem value="high">Hoch</SelectItem>
+                              <SelectItem value="critical">Kritisch</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="complianceNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>TRBS-Compliance-Hinweise</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Hinweise zur Einhaltung der TRBS-Vorschriften"
                               className="min-h-[100px]"
                               {...field} 
                             />
@@ -600,8 +755,86 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
                 </Card>
               </TabsContent>
 
+              <TabsContent value="execution" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Arbeitsdurchführung</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {mode === 'edit' && permit?.status === "active" ? (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="performerName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name des Durchführers</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Vollständiger Name der Person, die die Arbeit durchführt" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="workStartedAt"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Arbeitsbeginn</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="workCompletedAt"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Arbeitsende</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="performerSignature"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Digitale Unterschrift des Durchführers</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Unterschrift oder Bestätigung" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    ) : (
+                      <Alert className="mb-4">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Die Arbeitsdurchführung ist nur verfügbar, wenn die Genehmigung den Status "Aktiv" hat.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {mode === 'edit' && permit && (
-                <TabsContent value="ai-suggestions" className="space-y-4">
+                <TabsContent value="workflow" className="space-y-4">
                   <AiSuggestions permitId={permit.id} />
                 </TabsContent>
               )}
