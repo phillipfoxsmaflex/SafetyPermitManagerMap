@@ -1,15 +1,14 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { X, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield, ArrowLeft, CheckCircle } from "lucide-react";
+import { X, Save, AlertTriangle, Info, Search, Eye, ChevronRight, FileText, Shield, Clock } from "lucide-react";
 import { z } from "zod";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,33 +32,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { AiSuggestions } from "@/components/ai-suggestions";
-import { PermitAttachments } from "@/components/permit-attachments";
-import type { CreatePermitFormData, HazardCategory, HazardNote } from "@/lib/types";
+import { insertPermitSchema } from "@shared/schema";
 import type { User, WorkLocation } from "@shared/schema";
 
-const createPermitSchema = z.object({
-  type: z.string().min(1, "Permit type is required"),
-  location: z.string().min(1, "Location is required"),
-  description: z.string().min(1, "Description is required"),
-  requestorName: z.string().min(1, "Requestor name is required"),
-  department: z.string().min(1, "Department is required"),
-  contactNumber: z.string().min(1, "Contact number is required"),
-  emergencyContact: z.string().min(1, "Emergency contact is required"),
-  startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().min(1, "End date is required"),
-  riskLevel: z.string().optional(),
-  safetyOfficer: z.string().optional(),
-  departmentHead: z.string().min(1, "Abteilungsleiter ist erforderlich"),
-  maintenanceApprover: z.string().min(1, "Instandhaltungs-/Engineering-Genehmiger ist erforderlich"),
-  identifiedHazards: z.string().optional(),
-  additionalComments: z.string().optional(),
-  selectedHazards: z.array(z.string()).optional(),
-  hazardNotes: z.string().optional(),
-  completedMeasures: z.array(z.string()).optional(),
+const createPermitSchema = insertPermitSchema.extend({
+  plannedStartDate: z.string().min(1, "Geplantes Startdatum ist erforderlich"),
+  plannedEndDate: z.string().min(1, "Geplantes Enddatum ist erforderlich"),
+  workDescription: z.string().min(1, "Arbeitsumfang ist erforderlich"),
+  requestedBy: z.string().min(1, "Antragsteller ist erforderlich"),
+  workLocationId: z.string().optional(),
+  departmentHeadId: z.number().optional(),
+  safetyOfficerId: z.number().optional(),
+  maintenanceApproverId: z.number().optional(),
 });
+
+type CreatePermitFormData = z.infer<typeof createPermitSchema>;
 
 interface CreatePermitModalProps {
   open: boolean;
@@ -67,873 +58,703 @@ interface CreatePermitModalProps {
 }
 
 export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps) {
-  const [activeTab, setActiveTab] = useState("basic");
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [hazardNotes, setHazardNotes] = useState<HazardNote>({});
+  const [hazardNotes, setHazardNotes] = useState<{[key: string]: string}>({});
+  const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch dropdown data
-  const { data: workLocations = [] } = useQuery({
+  const { data: workLocations = [] } = useQuery<WorkLocation[]>({
     queryKey: ["/api/work-locations/active"],
   });
 
-  const { data: departmentHeads = [] } = useQuery({
+  const { data: departmentHeads = [] } = useQuery<User[]>({
     queryKey: ["/api/users/department-heads"],
   });
 
-  const { data: safetyOfficers = [] } = useQuery({
+  const { data: safetyOfficers = [] } = useQuery<User[]>({
     queryKey: ["/api/users/safety-officers"],
   });
 
-  const { data: maintenanceApprovers = [] } = useQuery({
+  const { data: maintenanceApprovers = [] } = useQuery<User[]>({
     queryKey: ["/api/users/maintenance-approvers"],
   });
 
-  // TRBS hazard categories data
-  const categories: HazardCategory[] = [
-    {
-      id: 1,
-      category: "Mechanische Gefährdungen",
-      hazards: [
-        { hazard: "ungeschützte bewegte Maschinenteile", protectiveMeasures: "Schutzeinrichtungen, Abschalten der Maschine" },
-        { hazard: "Teile mit gefährlichen Oberflächen", protectiveMeasures: "Schutzhandschuhe, Abdeckungen" },
-        { hazard: "bewegte Transportmittel, bewegte Arbeitsmittel", protectiveMeasures: "Absperrungen, Warnsignale" },
-        { hazard: "unkontrolliert bewegte Teile", protectiveMeasures: "Sicherung gegen Herabfallen" },
-        { hazard: "Sturz, Ausrutschen, Umknicken, Stolpern", protectiveMeasures: "rutschfeste Bodenbeläge, ordentliche Verkehrswege" }
-      ]
-    },
-    {
-      id: 2,
-      category: "Elektrische Gefährdungen",
-      hazards: [
-        { hazard: "elektrischer Schlag", protectiveMeasures: "Freischaltung, spannungsfreier Zustand" },
-        { hazard: "Lichtbogenbildung", protectiveMeasures: "geeignete Schutzausrüstung" },
-        { hazard: "elektrostatische Aufladungen", protectiveMeasures: "Erdung, antistatische Ausrüstung" },
-        { hazard: "Blitzschlag", protectiveMeasures: "Blitzschutzanlage" }
-      ]
-    },
-    {
-      id: 3,
-      category: "Gefahrstoffe",
-      hazards: [
-        { hazard: "Hautkontakt mit Gefahrstoffen", protectiveMeasures: "Schutzhandschuhe, Schutzkleidung" },
-        { hazard: "Einatmen von Gefahrstoffen", protectiveMeasures: "Atemschutz, Absaugung" },
-        { hazard: "Verschlucken von Gefahrstoffen", protectiveMeasures: "Hygienemaßnahmen, Verbot von Essen und Trinken" },
-        { hazard: "Hautkontakt mit unter Druck stehenden Flüssigkeiten", protectiveMeasures: "Schutzausrüstung, Druckentlastung" }
-      ]
-    },
-    {
-      id: 4,
-      category: "Biologische Arbeitsstoffe",
-      hazards: [
-        { hazard: "Infektionsgefährdung", protectiveMeasures: "Hygienemaßnahmen, Schutzimpfungen" },
-        { hazard: "sensibilisierende Wirkung", protectiveMeasures: "Minimierung der Exposition" },
-        { hazard: "toxische Wirkung", protectiveMeasures: "persönliche Schutzausrüstung" }
-      ]
-    },
-    {
-      id: 5,
-      category: "Brand- und Explosionsgefährdungen",
-      hazards: [
-        { hazard: "brennbare Feststoffe, Flüssigkeiten, Gase", protectiveMeasures: "Zündquellen vermeiden, Inertisierung" },
-        { hazard: "explosionsfähige Atmosphäre", protectiveMeasures: "Ex-Schutz-Maßnahmen, Zoneneinteilung" },
-        { hazard: "Explosivstoffe", protectiveMeasures: "sichere Lagerung, Mengenbegrenzung" }
-      ]
-    },
-    {
-      id: 6,
-      category: "Thermische Gefährdungen",
-      hazards: [
-        { hazard: "heiße Medien/Oberflächen", protectiveMeasures: "Isolation, Schutzkleidung" },
-        { hazard: "kalte Medien/Oberflächen", protectiveMeasures: "Isolation, Schutzkleidung" },
-        { hazard: "Brand, Explosion", protectiveMeasures: "Brandschutzmaßnahmen" }
-      ]
-    },
-    {
-      id: 7,
-      category: "Gefährdungen durch spezielle physikalische Einwirkungen",
-      hazards: [
-        { hazard: "Lärm", protectiveMeasures: "Gehörschutz, Lärmminderung" },
-        { hazard: "Ultraschall, Infraschall", protectiveMeasures: "Abschirmung, Begrenzung der Exposition" },
-        { hazard: "Ganzkörpervibrationen", protectiveMeasures: "schwingungsarme Arbeitsmittel" },
-        { hazard: "Hand-Arm-Vibrationen", protectiveMeasures: "vibrationsmindernde Handschuhe" },
-        { hazard: "optische Strahlung", protectiveMeasures: "Augenschutz, Abschirmung" },
-        { hazard: "ionisierende Strahlung", protectiveMeasures: "Strahlenschutzmaßnahmen" },
-        { hazard: "elektromagnetische Felder", protectiveMeasures: "Abschirmung, Abstandsregelungen" },
-        { hazard: "Unter- oder Überdruck", protectiveMeasures: "Druckausgleich" }
-      ]
-    },
-    {
-      id: 8,
-      category: "Gefährdungen durch Arbeitsumgebungsbedingungen",
-      hazards: [
-        { hazard: "Klima", protectiveMeasures: "Klimatisierung, geeignete Kleidung" },
-        { hazard: "Beleuchtung/Sichtverhältnisse", protectiveMeasures: "ausreichende Beleuchtung" },
-        { hazard: "Ersticken", protectiveMeasures: "Belüftung, Sauerstoffmessung" },
-        { hazard: "Ertrinken", protectiveMeasures: "Schwimmhilfen, Absicherung" },
-        { hazard: "Bewegungseinschränkung", protectiveMeasures: "ausreichend Platz schaffen" }
-      ]
-    },
-    {
-      id: 9,
-      category: "Physische Belastung/Arbeitsschwere",
-      hazards: [
-        { hazard: "schwere dynamische Arbeit", protectiveMeasures: "Hebehilfen, Pausenregelung" },
-        { hazard: "einseitige dynamische Arbeit", protectiveMeasures: "Arbeitsplatzwechsel, Pausenregelung" },
-        { hazard: "Haltungsarbeit/Zwangshaltung", protectiveMeasures: "ergonomische Arbeitsplätze" },
-        { hazard: "Kombination aus statischer und dynamischer Arbeit", protectiveMeasures: "ausgewogene Arbeitsgestaltung" }
-      ]
-    },
-    {
-      id: 10,
-      category: "Psychische Faktoren",
-      hazards: [
-        { hazard: "ungenügend gestaltete Arbeitsaufgabe", protectiveMeasures: "Arbeitsgestaltung optimieren" },
-        { hazard: "ungenügend gestaltete Arbeitsorganisation", protectiveMeasures: "Organisationsverbesserung" },
-        { hazard: "ungenügend gestaltete soziale Bedingungen", protectiveMeasures: "Teambuilding-Maßnahmen" },
-        { hazard: "ungenügend gestaltete Arbeitsplatz- und Arbeitsumgebungsbedingungen", protectiveMeasures: "ergonomische Verbesserungen" }
-      ]
-    },
-    {
-      id: 11,
-      category: "Sonstige Gefährdungen",
-      hazards: [
-        { hazard: "durch Menschen", protectiveMeasures: "Sicherheitspersonal, Überwachung" },
-        { hazard: "durch Tiere", protectiveMeasures: "Schutzmaßnahmen, Fernhalten" },
-        { hazard: "durch Pflanzen und pflanzliche Produkte", protectiveMeasures: "Schutzkleidung, Information" },
-        { hazard: "auf Verkehrswegen", protectiveMeasures: "Verkehrsregelung, Warnschilder" }
-      ]
-    }
-  ];
-
-  // Helper functions for hazard management
-  const getHazardId = (categoryId: number, hazardIndex: number) => `${categoryId}-${hazardIndex}`;
-  
-  const toggleHazard = (categoryId: number, hazardIndex: number) => {
-    const hazardId = getHazardId(categoryId, hazardIndex);
-    const currentHazards = form.getValues("selectedHazards") || [];
-    const isSelected = currentHazards.includes(hazardId);
-    
-    if (isSelected) {
-      form.setValue("selectedHazards", currentHazards.filter(h => h !== hazardId));
-    } else {
-      form.setValue("selectedHazards", [...currentHazards, hazardId]);
-    }
-  };
-
-  const updateHazardNote = (hazardId: string, note: string) => {
-    const newNotes = { ...hazardNotes, [hazardId]: note };
-    setHazardNotes(newNotes);
-    form.setValue("hazardNotes", JSON.stringify(newNotes));
-  };
-
-  const isHazardSelected = (categoryId: number, hazardIndex: number) => {
-    const hazardId = getHazardId(categoryId, hazardIndex);
-    const selectedHazards = watchedSelectedHazards || [];
-    return selectedHazards.includes(hazardId);
-  };
-
-  const filteredCategories = categories.filter(category =>
-    category.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.hazards.some(hazard => 
-      hazard.hazard.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      hazard.protectiveMeasures.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+  });
 
   const form = useForm<CreatePermitFormData>({
     resolver: zodResolver(createPermitSchema),
     defaultValues: {
       type: "",
+      workDescription: "",
       location: "",
-      description: "",
-      requestorName: "",
+      workLocationId: "",
+      requestedBy: "",
       department: "",
-      contactNumber: "",
+      plannedStartDate: "",
+      plannedEndDate: "",
       emergencyContact: "",
-      startDate: "",
-      endDate: "",
-      riskLevel: "",
-      safetyOfficer: "",
+      departmentHeadApproval: false,
+      safetyOfficerApproval: false,
+      maintenanceApproval: false,
+      departmentHeadId: undefined,
+      safetyOfficerId: undefined,
+      maintenanceApproverId: undefined,
       identifiedHazards: "",
-      additionalComments: "",
       selectedHazards: [],
-      hazardNotes: "{}",
+      hazardNotes: "",
       completedMeasures: [],
+      status: "draft",
+      performerName: "",
+      performerSignature: "",
+      workStartedAt: "",
+      workCompletedAt: "",
+      additionalComments: "",
+      immediateActions: "",
+      beforeWorkStarts: "",
+      complianceNotes: "",
+      overallRisk: "",
     },
   });
 
-  // Watch for real-time updates
-  const watchedSelectedHazards = form.watch("selectedHazards");
-
-  const createPermitMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: async (data: CreatePermitFormData) => {
-      const response = await apiRequest("/api/permits", "POST", data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData));
-      }
-      return response.json();
+      // Transform form data to match API expectations
+      const submitData = {
+        type: data.type,
+        description: data.workDescription,
+        location: data.location,
+        requestorName: data.requestedBy,
+        department: data.department,
+        startDate: data.plannedStartDate,
+        endDate: data.plannedEndDate,
+        emergencyContact: data.emergencyContact,
+        identifiedHazards: data.identifiedHazards,
+        additionalComments: data.additionalComments,
+        immediateActions: data.immediateActions,
+        beforeWorkStarts: data.beforeWorkStarts,
+        complianceNotes: data.complianceNotes,
+        overallRisk: data.overallRisk,
+        selectedHazards: selectedHazards,
+        hazardNotes: JSON.stringify(hazardNotes),
+        completedMeasures: data.completedMeasures || [],
+        performerName: data.performerName,
+        departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
+        safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
+        maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
+        status: "draft",
+      };
+      
+      return apiRequest("/api/permits", "POST", submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
       toast({
-        title: "Genehmigung erstellt",
-        description: "Die Arbeitserlaubnis wurde erfolgreich zur Genehmigung eingereicht.",
+        title: "Erfolg",
+        description: "Arbeitserlaubnis wurde erfolgreich erstellt.",
       });
       onOpenChange(false);
       form.reset();
-      setActiveTab("basic");
+      setHazardNotes({});
+      setSelectedHazards([]);
     },
-    onError: (error: any) => {
-      let errorMessage = "Die Genehmigung konnte nicht erstellt werden.";
-      let errorDetails = "";
-      
-      try {
-        const errorData = JSON.parse(error.message);
-        errorMessage = errorData.message || errorMessage;
-        
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorDetails = errorData.errors.join("\n• ");
-          errorMessage = errorData.message;
-        } else if (errorData.field) {
-          errorDetails = `Fehler in Feld: ${errorData.field}`;
-        }
-      } catch (e) {
-        // Use default error message if parsing fails
-      }
-      
+    onError: (error: Error) => {
+      const errorMessage = error.message || "Unbekannter Fehler beim Erstellen der Arbeitserlaubnis.";
       toast({
-        title: "Erstellung fehlgeschlagen",
-        description: errorDetails ? `${errorMessage}\n\n• ${errorDetails}` : errorMessage,
+        title: "Fehler",
+        description: errorMessage,
         variant: "destructive",
-        duration: 8000,
-      });
-    },
-  });
-
-  const saveDraftMutation = useMutation({
-    mutationFn: async (data: CreatePermitFormData) => {
-      const draftData = { ...data, status: "draft" };
-      const response = await apiRequest("/api/permits", "POST", draftData);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData));
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
-      toast({
-        title: "Entwurf gespeichert",
-        description: "Die Arbeitserlaubnis wurde als Entwurf gespeichert.",
-      });
-      onOpenChange(false);
-      form.reset();
-      setActiveTab("basic");
-    },
-    onError: (error: any) => {
-      let errorMessage = "Der Entwurf konnte nicht gespeichert werden.";
-      let errorDetails = "";
-      
-      try {
-        const errorData = JSON.parse(error.message);
-        errorMessage = errorData.message || errorMessage;
-        
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorDetails = errorData.errors.join("\n• ");
-          errorMessage = errorData.message;
-        } else if (errorData.field) {
-          errorDetails = `Fehler in Feld: ${errorData.field}`;
-        }
-      } catch (e) {
-        // Use default error message if parsing fails
-      }
-      
-      toast({
-        title: "Speichern fehlgeschlagen",
-        description: errorDetails ? `${errorMessage}\n\n• ${errorDetails}` : errorMessage,
-        variant: "destructive",
-        duration: 8000,
       });
     },
   });
 
   const onSubmit = (data: CreatePermitFormData) => {
-    createPermitMutation.mutate(data);
+    console.log("Form submission data:", data);
+    createMutation.mutate(data);
   };
 
-  const onSaveDraft = () => {
-    const currentData = form.getValues();
-    saveDraftMutation.mutate(currentData);
+  // Load TRBS hazard data
+  const { data: trbsData } = useQuery({
+    queryKey: ["/api/trbs-hazards"],
+    staleTime: Infinity,
+  });
+
+  const hazardCategories = trbsData || {};
+
+  const toggleHazard = (hazardId: string) => {
+    setSelectedHazards(prev => 
+      prev.includes(hazardId) 
+        ? prev.filter(id => id !== hazardId)
+        : [...prev, hazardId]
+    );
   };
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+  const updateHazardNote = (hazardId: string, note: string) => {
+    setHazardNotes(prev => ({
+      ...prev,
+      [hazardId]: note
+    }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-industrial-gray">
-            Neue Arbeitsgenehmigung erstellen
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Neue Arbeitserlaubnis erstellen
           </DialogTitle>
-          <DialogDescription>
-            Erstellen Sie eine neue Arbeitserlaubnis mit vollständiger Sicherheitsbewertung und TRBS-konformer Gefährdungsbeurteilung.
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic" className="text-sm">
-                  1. Grunddaten
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden">
+            <Tabs defaultValue="basic" className="h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
+                <TabsTrigger value="basic" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Grunddaten
                 </TabsTrigger>
-                <TabsTrigger value="safety" className="text-sm">
-                  2. Sicherheit
+                <TabsTrigger value="hazards" className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Gefährdungsbeurteilung
                 </TabsTrigger>
-                <TabsTrigger value="attachments" className="text-sm">
-                  3. Anhänge
-                </TabsTrigger>
-                <TabsTrigger value="ai" className="text-sm">
-                  4. AI-Analyse
-                </TabsTrigger>
-                <TabsTrigger value="approval" className="text-sm">
-                  5. Genehmigung
+                <TabsTrigger value="approvals" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Genehmigungen
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="basic" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Genehmigungstyp</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Genehmigungstyp auswählen..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="confined_space">Enger Raum Zutritt</SelectItem>
-                            <SelectItem value="hot_work">Heißarbeiten</SelectItem>
-                            <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
-                            <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
-                            <SelectItem value="height">Höhenarbeiten</SelectItem>
-                            <SelectItem value="general_permit">Allgemeiner Erlaubnisschein</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Arbeitsort</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Arbeitsort auswählen..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(workLocations as any[]).map((location: any) => (
-                              <SelectItem key={location.id} value={location.name}>
-                                {location.name}
-                                {location.building && ` - ${location.building}`}
-                                {location.area && ` (${location.area})`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gewünschtes Startdatum</FormLabel>
-                        <FormControl>
-                          <Input type="datetime-local" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gewünschtes Enddatum</FormLabel>
-                        <FormControl>
-                          <Input type="datetime-local" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Arbeitsbeschreibung</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Beschreiben Sie die auszuführenden Arbeiten..."
-                              className="min-h-[100px]"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="requestorName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name des Antragstellers</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Abteilung</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="contactNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Kontaktnummer</FormLabel>
-                        <FormControl>
-                          <Input type="tel" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notfallkontakt</FormLabel>
-                        <FormControl>
-                          <Input type="tel" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="safety" className="space-y-6">
-                <Alert className="border-yellow-200 bg-yellow-50">
-                  <AlertTriangle className="h-4 w-4 text-caution-orange" />
-                  <AlertDescription className="text-industrial-gray">
-                    <strong>TRBS Gefährdungsbeurteilung:</strong> Wählen Sie alle zutreffenden Gefährdungskategorien aus und dokumentieren Sie die erforderlichen Schutzmaßnahmen.
-                  </AlertDescription>
-                </Alert>
-
-                {/* Search and filter */}
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Gefährdungen durchsuchen..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full"
-                      />
-                    </div>
-                    {selectedCategory && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setSelectedCategory(null)}
-                        className="flex items-center space-x-2"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        <span>Zurück zur Übersicht</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Main hazard interface */}
-                {!selectedCategory ? (
-                  /* Category overview */
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredCategories.map((category) => {
-                      const selectedHazardsInCategory = (form.getValues("selectedHazards") || [])
-                        .filter(hazardId => hazardId.startsWith(`${category.id}-`)).length;
-
-                      return (
-                        <Card
-                          key={category.id}
-                          className="cursor-pointer transition-all hover:shadow-md border-l-4 border-l-primary"
-                          onClick={() => setSelectedCategory(category.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <CardTitle className="text-sm font-medium text-industrial-gray line-clamp-2">
-                                {category.category}
-                              </CardTitle>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">
-                                {category.hazards.length} Gefährdungen
-                              </span>
-                              {selectedHazardsInCategory > 0 && (
-                                <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs">
-                                  {selectedHazardsInCategory} ausgewählt
-                                </span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  /* Detailed hazard view */
-                  (() => {
-                    const category = categories.find(c => c.id === selectedCategory);
-                    if (!category) return null;
-
-                    return (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg text-industrial-gray">
-                            {category.category}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {category.hazards.map((hazard, index) => {
-                            const hazardId = getHazardId(category.id, index);
-                            const isSelected = isHazardSelected(category.id, index);
-                            const note = hazardNotes[hazardId] || "";
-
-                            return (
-                              <div key={index} className="border rounded-lg p-4 space-y-3">
-                                <div className="flex items-start space-x-3">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleHazard(category.id, index)}
-                                    className="mt-1"
-                                  />
-                                  <div className="flex-1 space-y-2">
-                                    <div>
-                                      <h4 className="font-medium text-sm text-industrial-gray">
-                                        {hazard.hazard}
-                                      </h4>
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        <strong>Schutzmaßnahmen:</strong> {hazard.protectiveMeasures}
-                                      </p>
-                                    </div>
-                                    
-                                    {isSelected && (
-                                      <div className="space-y-2">
-                                        <label className="text-sm font-medium text-industrial-gray">
-                                          Zusätzliche Notizen:
-                                        </label>
-                                        <Textarea
-                                          value={note}
-                                          onChange={(e) => updateHazardNote(hazardId, e.target.value)}
-                                          placeholder="Zusätzliche Informationen oder spezifische Maßnahmen..."
-                                          className="text-sm"
-                                          rows={2}
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          
-                          {/* Sonstige (Other) section */}
-                          <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-1 space-y-2">
-                                <div>
-                                  <h4 className="font-medium text-sm text-industrial-gray">
-                                    Sonstige Gefährdungen
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    Weitere spezifische Gefährdungen oder Maßnahmen für diese Kategorie
-                                  </p>
-                                </div>
-                                
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-industrial-gray">
-                                    Zusätzliche Gefährdungen und Maßnahmen:
-                                  </label>
-                                  <Textarea
-                                    value={hazardNotes[`${category.id}-sonstige`] || ""}
-                                    onChange={(e) => updateHazardNote(`${category.id}-sonstige`, e.target.value)}
-                                    placeholder="Beschreiben Sie weitere Gefährdungen und erforderliche Schutzmaßnahmen..."
-                                    className="text-sm"
-                                    rows={3}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })()
-                )}
-
-                {/* Summary of selected hazards */}
-                {(watchedSelectedHazards || []).length > 0 && (
-                  <Card className="bg-blue-50 border-blue-200">
+              <ScrollArea className="flex-1 p-1">
+                <TabsContent value="basic" className="space-y-6 mt-0">
+                  {/* Grundinformationen */}
+                  <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm text-blue-800 flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>Ausgewählte Gefährdungen ({(watchedSelectedHazards || []).length})</span>
-                      </CardTitle>
+                      <CardTitle>Grundinformationen</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {(watchedSelectedHazards || []).map(hazardId => {
-                          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
-                          const category = categories.find(c => c.id === categoryId);
-                          const hazard = category?.hazards[hazardIndex];
-                          
-                          if (!category || !hazard) return null;
-                          
-                          return (
-                            <div key={hazardId} className="text-xs bg-white p-2 rounded border">
-                              <span className="font-medium text-blue-700">{category.category}:</span>
-                              <span className="text-blue-600 ml-1">{hazard.hazard}</span>
-                            </div>
-                          );
-                        })}
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="type"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Arbeitstyp</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Arbeitstyp auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="hot_work">Heißarbeiten (Schweißen, Schneiden, Löten)</SelectItem>
+                                  <SelectItem value="height_work">Arbeiten in der Höhe (&gt;2m Absturzgefahr)</SelectItem>
+                                  <SelectItem value="confined_space">Arbeiten in engen Räumen/Behältern</SelectItem>
+                                  <SelectItem value="electrical_work">Elektrische Arbeiten (Schaltanlagen, Kabel)</SelectItem>
+                                  <SelectItem value="chemical_work">Arbeiten mit Gefahrstoffen</SelectItem>
+                                  <SelectItem value="machinery_work">Arbeiten an Maschinen/Anlagen</SelectItem>
+                                  <SelectItem value="excavation">Erdarbeiten/Grabungen</SelectItem>
+                                  <SelectItem value="maintenance">Instandhaltungsarbeiten</SelectItem>
+                                  <SelectItem value="cleaning">Reinigungs-/Wartungsarbeiten</SelectItem>
+                                  <SelectItem value="other">Sonstige Arbeiten</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="workLocationId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Arbeitsort</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Arbeitsort auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {workLocations.map((location) => (
+                                    <SelectItem key={location.id} value={location.id.toString()}>
+                                      {location.name} - {location.description}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Spezifischer Arbeitsort</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="z.B. Tank 3, Halle A, Dach Gebäude B..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="workDescription"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Arbeitsumfang</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Detaillierte Beschreibung der durchzuführenden Arbeiten..."
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="plannedStartDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Geplanter Beginn</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="datetime-local"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="plannedEndDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Geplantes Ende</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="datetime-local"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     </CardContent>
                   </Card>
-                )}
 
-
-              </TabsContent>
-
-              <TabsContent value="approval" className="space-y-6">
-                <Alert className="border-blue-200 bg-blue-50">
-                  <Info className="h-4 w-4 text-safety-blue" />
-                  <AlertDescription className="text-industrial-gray">
-                    <strong>Genehmigungsverfahren:</strong> Mindestens ein Abteilungsleiter und die Instandhaltung/Engineering müssen diese Arbeitserlaubnis genehmigen.
-                  </AlertDescription>
-                </Alert>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Erforderliche Genehmiger zuweisen</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="departmentHead"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Abteilungsleiter (Genehmiger) *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Abteilungsleiter auswählen..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(departmentHeads as any[]).map((user: any) => (
-                                <SelectItem key={user.id} value={user.fullName}>
-                                  {user.fullName} - {user.department}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="safetyOfficer"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sicherheitsbeauftragter</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(safetyOfficers as any[]).map((user: any) => (
-                                <SelectItem key={user.id} value={user.fullName}>
-                                  {user.fullName} - {user.department}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="maintenanceApprover"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Technik *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Technik-Genehmiger auswählen..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(maintenanceApprovers as any[]).map((user: any) => (
-                                <SelectItem key={user.id} value={user.fullName}>
-                                  {user.fullName} - {user.department}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-industrial-gray">
-                        <strong>Hinweis:</strong> Diese Personen erhalten eine Benachrichtigung zur Genehmigung der Arbeitserlaubnis. 
-                        Beide Genehmigungen sind erforderlich, bevor die Arbeiten beginnen können.
-                      </p>
-                    </div>
-
-                  </CardContent>
-                </Card>
-
-                <FormField
-                  control={form.control}
-                  name="additionalComments"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Zusätzliche Kommentare</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Weitere Sicherheitsüberlegungen oder spezielle Anweisungen..."
-                          {...field}
+                  {/* Antragsteller und Kontakt */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Antragsteller und Kontaktdaten</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="requestedBy"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Antragsteller</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Name des Antragstellers..."
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </TabsContent>
 
-              <TabsContent value="attachments" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">Dokumente und Anhänge</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-secondary-gray">
-                      <p className="mb-4">Dateianhänge sind nach dem Erstellen der Genehmigung verfügbar.</p>
-                      <p className="text-sm">Erstellen Sie zunächst die Genehmigung, um Dokumente hochzuladen.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                        <FormField
+                          control={form.control}
+                          name="department"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Abteilung</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Abteilung auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Engineering">Engineering</SelectItem>
+                                  <SelectItem value="Maintenance">Instandhaltung</SelectItem>
+                                  <SelectItem value="Production">Produktion</SelectItem>
+                                  <SelectItem value="Quality">Qualitätssicherung</SelectItem>
+                                  <SelectItem value="Safety">Arbeitssicherheit</SelectItem>
+                                  <SelectItem value="External">Externe Firma</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-              <TabsContent value="ai" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-industrial-gray">AI-Unterstützte Verbesserungen</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-secondary-gray">
-                      <p className="mb-4">AI-Verbesserungen sind nur nach dem Erstellen der Genehmigung verfügbar.</p>
-                      <p className="text-sm">Erstellen Sie zunächst die Genehmigung, um AI-Analyse zu nutzen.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                      <FormField
+                        control={form.control}
+                        name="emergencyContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Notfallkontakt</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Notfallkontakte mit Telefonnummern (24h erreichbar)..."
+                                className="min-h-[80px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <div className="flex space-x-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onSaveDraft}
-                  disabled={saveDraftMutation.isPending || createPermitMutation.isPending}
-                >
-                  {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                      <FormField
+                        control={form.control}
+                        name="performerName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ausführende Person(en)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Name(n) der ausführenden Person(en)..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="hazards" className="space-y-6 mt-0">
+                  {/* TRBS Gefährdungsbeurteilung */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>TRBS-konforme Gefährdungsbeurteilung</CardTitle>
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Wählen Sie alle zutreffenden Gefährdungen aus den TRBS-Kategorien aus und dokumentieren Sie spezifische Schutzmaßnahmen.
+                        </AlertDescription>
+                      </Alert>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.entries(hazardCategories).map(([categoryId, category]: [string, any]) => (
+                        <Card key={categoryId} className="mb-4">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg text-blue-700">
+                              {categoryId}. {category.name}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              {category.hazards && Object.entries(category.hazards).map(([hazardId, hazard]: [string, any]) => {
+                                const fullHazardId = `${categoryId}-${hazardId}`;
+                                const isSelected = selectedHazards.includes(fullHazardId);
+                                
+                                return (
+                                  <div key={hazardId} className="border rounded-lg p-4">
+                                    <div className="flex items-start space-x-3">
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => toggleHazard(fullHazardId)}
+                                        className="mt-1"
+                                      />
+                                      <div className="flex-1 space-y-2">
+                                        <div>
+                                          <span className="font-medium text-gray-900">{hazard.name}</span>
+                                          {hazard.description && (
+                                            <p className="text-sm text-gray-600 mt-1">{hazard.description}</p>
+                                          )}
+                                        </div>
+                                        
+                                        {hazard.measures && (
+                                          <div className="text-sm">
+                                            <span className="font-medium text-green-700">Standard-Schutzmaßnahmen:</span>
+                                            <p className="text-green-600 mt-1">{hazard.measures}</p>
+                                          </div>
+                                        )}
+
+                                        {isSelected && (
+                                          <div className="mt-3">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                              Spezifische Anmerkungen zu dieser Gefährdung:
+                                            </label>
+                                            <Textarea
+                                              placeholder="Spezifische Bedingungen, zusätzliche Maßnahmen oder Anmerkungen..."
+                                              value={hazardNotes[fullHazardId] || ""}
+                                              onChange={(e) => updateHazardNote(fullHazardId, e.target.value)}
+                                              className="w-full"
+                                              rows={2}
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {/* Allgemeine Sicherheitsmaßnahmen */}
+                      <div className="space-y-4 mt-6">
+                        <h4 className="text-lg font-semibold text-gray-900">Allgemeine Sicherheitsmaßnahmen</h4>
+                        
+                        <FormField
+                          control={form.control}
+                          name="immediateActions"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sofortmaßnahmen</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Beschreiben Sie Sofortmaßnahmen, die bei Gefahr oder Notfall einzuleiten sind..."
+                                  className="min-h-[100px]"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="beforeWorkStarts"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Beschreiben Sie spezifische Maßnahmen, die vor Arbeitsbeginn durchzuführen sind..."
+                                  className="min-h-[100px]"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Risikobewertung und zusätzliche Informationen */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Risikobewertung und zusätzliche Informationen</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="overallRisk"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Risikokategorie</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Risikokategorie auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="niedrig">Niedrig - Routine-Arbeiten mit geringem Gefährdungspotential</SelectItem>
+                                <SelectItem value="mittel">Mittel - Arbeiten mit moderatem Risiko, erhöhte Aufmerksamkeit erforderlich</SelectItem>
+                                <SelectItem value="hoch">Hoch - Arbeiten mit erheblichem Risiko, besondere Schutzmaßnahmen erforderlich</SelectItem>
+                                <SelectItem value="kritisch">Kritisch - Arbeiten mit sehr hohem Risiko, umfassende Sicherheitsvorkehrungen</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="identifiedHazards"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Zusätzliche Gefahren und Kommentare</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Beschreiben Sie weitere identifizierte Gefahren, spezielle Bedingungen oder wichtige Kommentare..."
+                                className="min-h-[120px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="additionalComments"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Weitere Anmerkungen</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Zusätzliche Anmerkungen, besondere Hinweise oder Auflagen..."
+                                className="min-h-[100px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="complianceNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Relevante Vorschriften und Normen</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="z.B. TRBS 2152-2 (Behälter), DGUV 113-004 (Schweißen), ATEX 153..."
+                                className="min-h-[80px]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="approvals" className="space-y-6 mt-0">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Genehmigungsverantwortliche</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="departmentHeadId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Abteilungsleiter</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Abteilungsleiter auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {departmentHeads.map((head) => (
+                                  <SelectItem key={head.id} value={head.id.toString()}>
+                                    {head.fullName} ({head.username})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="safetyOfficerId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sicherheitsbeauftragter</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {safetyOfficers.map((officer) => (
+                                  <SelectItem key={officer.id} value={officer.id.toString()}>
+                                    {officer.fullName} ({officer.username})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="maintenanceApproverId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instandhaltungs-/Engineering-Genehmiger</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Genehmiger auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {maintenanceApprovers.map((approver) => (
+                                  <SelectItem key={approver.id} value={approver.id.toString()}>
+                                    {approver.fullName} ({approver.username})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </ScrollArea>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t flex-shrink-0">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Abbrechen
                 </Button>
-                <Button
-                  type="submit"
-                  className="bg-safety-blue hover:bg-blue-700 text-white"
-                  disabled={createPermitMutation.isPending}
+                <Button 
+                  type="submit" 
+                  disabled={createMutation.isPending}
+                  className="flex items-center gap-2"
                 >
-                  {createPermitMutation.isPending ? "Submitting..." : "Submit for Approval"}
+                  <Save className="h-4 w-4" />
+                  {createMutation.isPending ? "Wird erstellt..." : "Arbeitserlaubnis erstellen"}
                 </Button>
               </div>
-            </div>
+            </Tabs>
           </form>
         </Form>
       </DialogContent>
