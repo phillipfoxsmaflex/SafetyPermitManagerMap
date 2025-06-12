@@ -1,0 +1,94 @@
+[
+  {
+    "permitId": "GN-2025-002",
+    "analysisComplete": true,
+    "improvedPermit": {
+      "type": "hot_work",
+      "location": "Tankfarm Nord",
+      "description": "Heißarbeiten zum Pumpenwechsel an Tank 3 (Ethanol) in ATEX Zone 1. Tank-Entleerung, Inertisierung und Freimessung vor Schweißarbeiten erforderlich. Kontinuierliche Überwachung.",
+      "department": "Engineering",
+      "requestorName": "Michael Schmidt",
+      "contactNumber": "585",
+      "emergencyContact": "Werksfeuerwehr: +49-XXX-XXXX (24h), Rettungsdienst: 112, Betriebsarzt: +49-XXX-XXXX",
+      "performerName": "Zertifizierter Schweißer mit ATEX-Qualifikation und gültiger G25-Untersuchung erforderlich",
+      "identifiedHazards": "Explosionsgefahr durch Ethanol-Dämpfe, Brand durch Schweißarbeiten, O2-Mangel in Behältern, toxische Gase (CO, H2S), heiße Oberflächen, elektrostatische Entladung, Hautverbrennung",
+      "additionalComments": "ATEX Zone 1 erfordert Ex-geschützte Geräte. Kontinuierliche Gasmessung obligatorisch. Rettungsmannschaft in Bereitschaft. Kommunikation über Ex-Funk. Arbeitszeit begrenzt auf 6h.",
+      "immediateActions": "• Mehrgasmessgerät kalibrieren\n• Ex-geschützte Ausrüstung bereitstellen\n• Rettungsmannschaft alarmieren\n• Kommunikationsmittel testen\n• Löschbereitschaft sicherstellen",
+      "beforeWorkStarts": "• Tank vollständig entleeren und reinigen\n• N2-Inertisierung durchführen\n• Freimessung durch Messtrupp\n• Zwangsbelüftung aktivieren\n• Heißarbeitserlaubnis erteilen\n• Brandwache installieren",
+      "complianceNotes": "TRBS 2152-2 (Behälter), TRGS 900 (Grenzwerte), DGUV 113-004 (Schweißen), TRBS 2152-3 (Brandschutz), BetrSichV §14 (Explosionsschutz), ATEX 153",
+      "overallRisk": "high",
+      "selectedHazards": [
+        {
+          "hazardId": "5-0",
+          "hazardDescription": "brennbare Feststoffe, Flüssigkeiten, Gase",
+          "isSelected": true,
+          "notes": "Ethanol-Dämpfe, explosive Atmosphäre möglich"
+        },
+        {
+          "hazardId": "5-1",
+          "hazardDescription": "explosionsfähige Atmosphäre",
+          "isSelected": true,
+          "notes": "ATEX Zone 1, kontinuierliche Gasmessung erforderlich"
+        },
+        {
+          "hazardId": "6-0",
+          "hazardDescription": "heiße Medien/Oberflächen",
+          "isSelected": true,
+          "notes": "Schweißarbeiten, heiße Bauteile, Verbrennungsgefahr"
+        },
+        {
+          "hazardId": "6-2",
+          "hazardDescription": "Brand, Explosion",
+          "isSelected": true,
+          "notes": "Zündquelle in explosionsgefährdeter Atmosphäre"
+        },
+        {
+          "hazardId": "3-1",
+          "hazardDescription": "Einatmen von Gefahrstoffen",
+          "isSelected": true,
+          "notes": "Ethanol-Dämpfe, CO, H2S, O2-Mangel in Behältern"
+        },
+        {
+          "hazardId": "2-2",
+          "hazardDescription": "Statische Entladung",
+          "isSelected": true,
+          "notes": "Zündquelle in Ex-Atmosphäre, Erdung erforderlich"
+        },
+        {
+          "hazardId": "7-4",
+          "hazardDescription": "optische Strahlung",
+          "isSelected": true,
+          "notes": "UV-Strahlung beim Schweißen, Augenschutz erforderlich"
+        },
+        {
+          "hazardId": "8-0",
+          "hazardDescription": "Klima (Hitze, Kälte)",
+          "isSelected": true,
+          "notes": "Hitzebelastung durch Schweißarbeiten und PSA"
+        },
+        {
+          "hazardId": "11-3",
+          "hazardDescription": "Absturz in/durch Behälter, Becken, Gruben",
+          "isSelected": true,
+          "notes": "Arbeit am Tank, Absturzsicherung erforderlich"
+        }
+      ]
+    },
+    "riskAssessment": {
+      "overallRisk": "high",
+      "riskFactors": [
+        "Explosionsgefahr ATEX Zone 1",
+        "Heißarbeiten an Ethanol-Tank",
+        "Behälterbefahrung",
+        "Toxische Gase",
+        "Brandgefahr"
+      ],
+      "complianceScore": 75
+    },
+    "_metadata": {
+      "processedAt": "2025-06-12T21:12:06.206Z",
+      "originalFormat": "object",
+      "processingSuccessful": true
+    }
+  }
+]

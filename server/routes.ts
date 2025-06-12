@@ -1430,46 +1430,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Improved permit selectedHazards:', improvedPermit.selectedHazards);
         
         // Compare original vs improved permit and create suggestions for differences
+        // Backend field names to Frontend field names mapping
         const fieldMappings = {
-          // Basic fields
-          type: 'Permit-Typ',
-          location: 'Arbeitsort',
-          description: 'Arbeitsbeschreibung', 
-          department: 'Abteilung',
-          requestorName: 'Antragsteller',
-          contactNumber: 'Kontaktnummer',
-          emergencyContact: 'Notfallkontakt',
-          performerName: 'Ausführende Person',
+          // Basic fields - corrected mappings
+          type: 'type',
+          location: 'location', 
+          description: 'workDescription',  // KI: description → Frontend: workDescription
+          department: 'department',
+          requestorName: 'requestedBy',    // KI: requestorName → Frontend: requestedBy
+          contactNumber: 'contactNumber',   // Keep as is - will be handled in form
+          emergencyContact: 'emergencyContact',
+          performerName: 'performerName',
           
           // Safety fields
-          identifiedHazards: 'Identifizierte Gefährdungen',
-          additionalComments: 'Zusätzliche Kommentare',
-          immediateActions: 'Sofortmaßnahmen',
-          beforeWorkStarts: 'Vor Arbeitsbeginn',
-          complianceNotes: 'Compliance-Hinweise',
-          overallRisk: 'Gesamtrisiko',
+          identifiedHazards: 'identifiedHazards',
+          additionalComments: 'additionalComments',
+          immediateActions: 'immediateActions',
+          beforeWorkStarts: 'beforeWorkStarts',
+          complianceNotes: 'complianceNotes',
+          overallRisk: 'overallRisk',
           
-          // TRBS fields
-          selectedHazards: 'TRBS-Gefährdungen',
-          hazardNotes: 'Gefährdungsnotizen'
+          // TRBS fields - special handling required
+          selectedHazards: 'selectedHazards',
+          hazardNotes: 'hazardNotes'
         };
 
         // Compare each field and create suggestions for differences
-        for (const [fieldName, displayName] of Object.entries(fieldMappings)) {
-          const originalValue = permit[fieldName as keyof typeof permit];
-          const improvedValue = improvedPermit[fieldName];
+        for (const [backendFieldName, frontendFieldName] of Object.entries(fieldMappings)) {
+          const originalValue = permit[backendFieldName as keyof typeof permit];
+          const improvedValue = improvedPermit[backendFieldName];
           
           // Handle different data types
           let originalStr = '';
           let improvedStr = '';
           
-          if (fieldName === 'selectedHazards') {
+          if (backendFieldName === 'selectedHazards') {
             // Handle selectedHazards with proper processing of complex objects
             console.log(`selectedHazards check: isArray=${Array.isArray(improvedValue)}, length=${improvedValue?.length}, firstItemType=${typeof improvedValue?.[0]}, hasHazardId=${!!improvedValue?.[0]?.hazardId}`);
             
             if (Array.isArray(improvedValue) && improvedValue.length > 0 && 
                 typeof improvedValue[0] === 'object' && improvedValue[0].hazardId) {
               // New format: array of objects with hazardId, description, notes
+              // SONDERFALL: Komplettaustausch - nur ausgewählte Hazards übernehmen
               const selectedIds = improvedValue.filter(h => h.isSelected).map(h => h.hazardId);
               const hazardNotesObj = {};
               improvedValue.forEach(h => {
@@ -1494,7 +1496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (originalNotes !== improvedNotes) {
                   const notesSuggestion = await storage.createAiSuggestion({
                     permitId: permit.id,
-                    suggestionType: 'ai_improvement',
+                    suggestionType: 'hazard_replacement',  // Special type for complete replacement
                     fieldName: 'hazardNotes',
                     originalValue: originalNotes,
                     suggestedValue: improvedNotes,
@@ -1511,27 +1513,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               originalStr = Array.isArray(originalValue) ? JSON.stringify(originalValue) : '[]';
               improvedStr = Array.isArray(improvedValue) ? JSON.stringify(improvedValue) : '[]';
             }
-          } else if (fieldName === 'hazardNotes') {
-            originalStr = typeof originalValue === 'string' ? originalValue : '{}';
-            improvedStr = typeof improvedValue === 'string' ? improvedValue : JSON.stringify(improvedValue || {});
+          } else if (backendFieldName === 'hazardNotes') {
+            // Skip hazardNotes here as it's handled above with selectedHazards
+            continue;
           } else {
             originalStr = String(originalValue || '');
             improvedStr = String(improvedValue || '');
           }
           
-          console.log(`Field ${fieldName}: "${originalStr}" vs "${improvedStr}" (different: ${originalStr !== improvedStr})`);
+          console.log(`Field ${backendFieldName}: "${originalStr}" vs "${improvedStr}" (different: ${originalStr !== improvedStr})`);
           
           // Create suggestion if values differ
           if (originalStr !== improvedStr && improvedStr.trim() !== '') {
-            console.log(`Creating suggestion for ${fieldName}: ${originalStr} -> ${improvedStr}`);
+            console.log(`Creating suggestion for ${backendFieldName}: ${originalStr} -> ${improvedStr}`);
             const suggestion = await storage.createAiSuggestion({
               permitId: permit.id,
-              suggestionType: 'ai_improvement',
-              fieldName: fieldName,
+              suggestionType: backendFieldName === 'selectedHazards' ? 'hazard_replacement' : 'ai_improvement',
+              fieldName: frontendFieldName, // Use corrected frontend field name for proper mapping
               originalValue: originalStr,
               suggestedValue: improvedStr,
-              reasoning: `KI-Verbesserung für ${displayName}`,
-              priority: ['emergencyContact', 'selectedHazards', 'immediateActions'].includes(fieldName) ? 'high' : 'medium',
+              reasoning: `KI-Verbesserung für ${frontendFieldName}`,
+              priority: ['emergencyContact', 'selectedHazards', 'immediateActions'].includes(backendFieldName) ? 'high' : 'medium',
               status: 'pending'
             });
             createdSuggestions.push(suggestion);
