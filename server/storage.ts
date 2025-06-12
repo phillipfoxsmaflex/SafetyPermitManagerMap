@@ -446,10 +446,57 @@ export class DatabaseStorage implements IStorage {
         const schemaFieldName = fieldMapping[fieldName] || fieldName;
         console.log(`Mapped field ${fieldName} to schema field ${schemaFieldName}`);
 
-        // Special handling for hazard-related fields
-        if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes') {
-          console.log(`Processing hazard-related field: ${fieldName}`);
-          await this.mapSuggestionToTRBS(suggestion, currentPermit);
+        // Special handling for hazard-related fields with direct replacement
+        if (fieldName === 'selectedHazards') {
+          console.log(`Processing selectedHazards with direct replacement`);
+          
+          // Parse and apply selectedHazards directly
+          let newSelectedHazards: string[] = [];
+          if (Array.isArray(sanitizedValue)) {
+            newSelectedHazards = sanitizedValue;
+          } else if (typeof sanitizedValue === 'string') {
+            try {
+              newSelectedHazards = JSON.parse(sanitizedValue);
+            } catch {
+              newSelectedHazards = [];
+            }
+          }
+          
+          console.log(`Directly updating selectedHazards to:`, newSelectedHazards);
+          
+          await db
+            .update(permits)
+            .set({
+              selectedHazards: newSelectedHazards,
+              updatedAt: new Date()
+            })
+            .where(eq(permits.id, permitId));
+            
+        } else if (fieldName === 'hazardNotes') {
+          console.log(`Processing hazardNotes with direct replacement`);
+          
+          // Parse and apply hazardNotes directly
+          let newHazardNotes: Record<string, string> = {};
+          if (typeof sanitizedValue === 'string') {
+            try {
+              newHazardNotes = JSON.parse(sanitizedValue);
+            } catch {
+              newHazardNotes = {};
+            }
+          } else if (typeof sanitizedValue === 'object' && sanitizedValue !== null) {
+            newHazardNotes = sanitizedValue as Record<string, string>;
+          }
+          
+          console.log(`Directly updating hazardNotes to:`, newHazardNotes);
+          
+          await db
+            .update(permits)
+            .set({
+              hazardNotes: JSON.stringify(newHazardNotes),
+              updatedAt: new Date()
+            })
+            .where(eq(permits.id, permitId));
+            
         } else {
           // Apply regular field updates using proper Drizzle syntax
           const updateData: Partial<typeof permits.$inferSelect> = {
