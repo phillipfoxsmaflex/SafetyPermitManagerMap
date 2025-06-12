@@ -438,26 +438,26 @@ export class DatabaseStorage implements IStorage {
         };
 
         const schemaFieldName = fieldMapping[fieldName] || fieldName;
-        console.log(`Mapped field ${fieldName} to database field ${dbFieldName}`);
+        console.log(`Mapped field ${fieldName} to schema field ${schemaFieldName}`);
 
         // Special handling for hazard-related fields
         if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes') {
           console.log(`Processing hazard-related field: ${fieldName}`);
           await this.mapSuggestionToTRBS(suggestion, currentPermit);
         } else {
-          // Apply regular field updates
-          const updateData: any = { 
-            [dbFieldName]: sanitizedValue
+          // Apply regular field updates using proper Drizzle syntax
+          const updateData: Partial<typeof permits.$inferSelect> = {
+            [schemaFieldName]: sanitizedValue
           };
 
-          console.log(`Updating permit ${permitId} with:`, updateData);
+          console.log(`Updating permit ${permitId} with field ${schemaFieldName}:`, sanitizedValue);
           
           const result = await db
             .update(permits)
             .set(updateData)
             .where(eq(permits.id, permitId));
             
-          console.log(`Update result:`, result);
+          console.log(`Update result successful`);
         }
       }
 
