@@ -59,11 +59,17 @@ function formatTRBSDataForWebhook(selectedHazards: string[] | null, hazardNotes:
 
     let trbsData;
     try {
-      const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
+      const trbsDataPath = path.join(__dirname, '../client/src/data/trbs_complete_hazards.json');
       trbsData = JSON.parse(fs.readFileSync(trbsDataPath, 'utf8'));
     } catch (fileError) {
-      console.warn('Could not load TRBS data file, using fallback data');
-      trbsData = trbsDataFallback;
+      console.warn('Could not load complete TRBS data file, trying fallback');
+      try {
+        const fallbackPath = path.join(__dirname, '../client/src/data/trbs_hazards.json');
+        trbsData = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+      } catch (fallbackError) {
+        console.warn('Could not load any TRBS data file, using hardcoded fallback');
+        trbsData = trbsDataFallback;
+      }
     }
     
     let hazardNotesObj: Record<string, string> = {};

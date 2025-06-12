@@ -1,0 +1,120 @@
+{
+  "title": "TRBS Gefährdungsbeurteilung - Vollständige Kategorien",
+  "version": "2025",
+  "categories": [
+    {
+      "id": "1",
+      "category": "Mechanische Gefährdungen",
+      "hazards": [
+        {"hazard": "Quetschung durch bewegte Teile"},
+        {"hazard": "Schneiden an scharfen Kanten"},
+        {"hazard": "Stoß durch herunterfallende Gegenstände"},
+        {"hazard": "Sturz durch ungesicherte Öffnungen"}
+      ]
+    },
+    {
+      "id": "2",
+      "category": "Elektrische Gefährdungen",
+      "hazards": [
+        {"hazard": "Stromschlag durch defekte Geräte"},
+        {"hazard": "Lichtbogen bei Schalthandlungen"},
+        {"hazard": "Statische Entladung"},
+        {"hazard": "Induktive Kopplung"}
+      ]
+    },
+    {
+      "id": "3",
+      "category": "Gefahrstoffe",
+      "hazards": [
+        {"hazard": "Hautkontakt mit Gefahrstoffen"},
+        {"hazard": "Einatmen von Gefahrstoffen"},
+        {"hazard": "Verschlucken von Gefahrstoffen"},
+        {"hazard": "Hautkontakt mit unter Druck stehenden Flüssigkeiten"}
+      ]
+    },
+    {
+      "id": "4",
+      "category": "Biologische Arbeitsstoffe",
+      "hazards": [
+        {"hazard": "Infektionsgefährdung"},
+        {"hazard": "sensibilisierende Wirkung"},
+        {"hazard": "toxische Wirkung"}
+      ]
+    },
+    {
+      "id": "5",
+      "category": "Brand- und Explosionsgefährdungen",
+      "hazards": [
+        {"hazard": "brennbare Feststoffe, Flüssigkeiten, Gase"},
+        {"hazard": "explosionsfähige Atmosphäre"},
+        {"hazard": "Explosivstoffe"}
+      ]
+    },
+    {
+      "id": "6",
+      "category": "Thermische Gefährdungen",
+      "hazards": [
+        {"hazard": "heiße Medien/Oberflächen"},
+        {"hazard": "kalte Medien/Oberflächen"},
+        {"hazard": "Brand, Explosion"}
+      ]
+    },
+    {
+      "id": "7",
+      "category": "Gefährdungen durch spezielle physikalische Einwirkungen",
+      "hazards": [
+        {"hazard": "Lärm"},
+        {"hazard": "Ultraschall, Infraschall"},
+        {"hazard": "Ganzkörpervibrationen"},
+        {"hazard": "Hand-Arm-Vibrationen"},
+        {"hazard": "optische Strahlung"},
+        {"hazard": "ionisierende Strahlung"},
+        {"hazard": "elektromagnetische Felder"},
+        {"hazard": "Unter- oder Überdruck"}
+      ]
+    },
+    {
+      "id": "8",
+      "category": "Gefährdungen durch Arbeitsumgebungsbedingungen",
+      "hazards": [
+        {"hazard": "Klima (Hitze, Kälte)"},
+        {"hazard": "unzureichende Beleuchtung"},
+        {"hazard": "Lärm"},
+        {"hazard": "unzureichende Verkehrswege"},
+        {"hazard": "Sturz, Ausgleiten"},
+        {"hazard": "unzureichende Flucht- und Rettungswege"}
+      ]
+    },
+    {
+      "id": "9",
+      "category": "Physische Belastung/Arbeitsschwere",
+      "hazards": [
+        {"hazard": "schwere dynamische Arbeit"},
+        {"hazard": "einseitige dynamische Arbeit"},
+        {"hazard": "Haltungsarbeit/Zwangshaltungen"},
+        {"hazard": "Fortbewegung/ungünstige Körperhaltung"},
+        {"hazard": "Kombination körperlicher Belastungsfaktoren"}
+      ]
+    },
+    {
+      "id": "10",
+      "category": "Psychische Faktoren",
+      "hazards": [
+        {"hazard": "unzureichend gestaltete Arbeitsaufgabe"},
+        {"hazard": "unzureichend gestaltete Arbeitsorganisation"},
+        {"hazard": "unzureichend gestaltete soziale Bedingungen"},
+        {"hazard": "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"}
+      ]
+    },
+    {
+      "id": "11",
+      "category": "Sonstige Gefährdungen",
+      "hazards": [
+        {"hazard": "durch Menschen (körperliche Gewalt)"},
+        {"hazard": "durch Tiere"},
+        {"hazard": "durch Pflanzen und pflanzliche Produkte"},
+        {"hazard": "Absturz in/durch Behälter, Becken, Gruben"}
+      ]
+    }
+  ]
+}
