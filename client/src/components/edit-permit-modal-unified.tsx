@@ -176,7 +176,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
         type: currentPermit.type || "",
         workDescription: currentPermit.description || "",
         location: currentPermit.location || "",
-        workLocationId: undefined, // Not available in current schema
+        workLocationId: currentPermit.location ? 
+          workLocations.find(loc => loc.name === currentPermit.location)?.id?.toString() : "",
         requestedBy: currentPermit.requestorName || "",
         department: currentPermit.department || "",
         plannedStartDate: formatDate(currentPermit.startDate),
