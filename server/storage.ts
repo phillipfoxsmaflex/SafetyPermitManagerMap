@@ -369,15 +369,21 @@ export class DatabaseStorage implements IStorage {
 
   async applySuggestion(id: number): Promise<boolean> {
     try {
+      console.log(`Applying AI suggestion ${id}...`);
+      
       const [suggestion] = await db
         .select()
         .from(aiSuggestions)
         .where(eq(aiSuggestions.id, id))
         .limit(1);
 
-      if (!suggestion) return false;
+      if (!suggestion) {
+        console.error(`Suggestion ${id} not found`);
+        return false;
+      }
 
       const { permitId, fieldName, suggestedValue } = suggestion;
+      console.log(`Suggestion details: permitId=${permitId}, fieldName=${fieldName}, value=${suggestedValue}`);
 
       if (fieldName && suggestedValue !== null && suggestedValue !== undefined) {
         // Get current permit data
@@ -387,32 +393,77 @@ export class DatabaseStorage implements IStorage {
           .where(eq(permits.id, permitId))
           .limit(1);
 
-        if (!currentPermit) return false;
+        if (!currentPermit) {
+          console.error(`Permit ${permitId} not found`);
+          return false;
+        }
 
         // Validate and sanitize the suggested value based on field type
         const sanitizedValue = this.sanitizeSuggestionValue(fieldName, suggestedValue);
+        console.log(`Sanitized value for ${fieldName}:`, sanitizedValue);
+        
         if (sanitizedValue === null) {
           console.warn(`Skipping invalid suggestion for field ${fieldName}:`, suggestedValue);
           return true; // Skip but don't fail
         }
 
-        // Prepare update data
-        const updateData: any = { 
-          [fieldName]: sanitizedValue,
-          updatedAt: new Date() 
+        // Map camelCase field names to snake_case database field names
+        const fieldMapping: Record<string, string> = {
+          // Basic fields
+          'immediateActions': 'immediate_actions',
+          'beforeWorkStarts': 'before_work_starts',
+          'complianceNotes': 'compliance_notes',
+          'additionalComments': 'additional_comments',
+          'identifiedHazards': 'identified_hazards',
+          'overallRisk': 'overall_risk',
+          'selectedHazards': 'selected_hazards',
+          'hazardNotes': 'hazard_notes',
+          'completedMeasures': 'completed_measures',
+          'requestorName': 'requestor_name',
+          'contactNumber': 'contact_number',
+          'emergencyContact': 'emergency_contact',
+          'startDate': 'start_date',
+          'endDate': 'end_date',
+          'riskLevel': 'risk_level',
+          'safetyOfficer': 'safety_officer',
+          'departmentHead': 'department_head',
+          'maintenanceApprover': 'maintenance_approver',
+          'performerName': 'performer_name',
+          'performerSignature': 'performer_signature',
+          // Direct mapping for already snake_case fields
+          'location': 'location',
+          'description': 'description',
+          'department': 'department',
+          'status': 'status'
         };
 
-        // Apply the suggestion to the permit
-        await db
-          .update(permits)
-          .set(updateData)
-          .where(eq(permits.id, permitId));
+        const dbFieldName = fieldMapping[fieldName] || fieldName;
+        console.log(`Mapped field ${fieldName} to database field ${dbFieldName}`);
 
-        // Map suggestion to TRBS categories if it's a hazard-related suggestion
-        await this.mapSuggestionToTRBS(suggestion, currentPermit);
+        // Special handling for hazard-related fields
+        if (fieldName === 'selectedHazards' || fieldName === 'hazardNotes') {
+          console.log(`Processing hazard-related field: ${fieldName}`);
+          await this.mapSuggestionToTRBS(suggestion, currentPermit);
+        } else {
+          // Apply regular field updates
+          const updateData: any = { 
+            [dbFieldName]: sanitizedValue,
+            updated_at: new Date() 
+          };
+
+          console.log(`Updating permit ${permitId} with:`, updateData);
+          
+          const result = await db
+            .update(permits)
+            .set(updateData)
+            .where(eq(permits.id, permitId));
+            
+          console.log(`Update result:`, result);
+        }
       }
 
       // Mark suggestion as accepted and applied
+      console.log(`Marking suggestion ${id} as accepted`);
       await db
         .update(aiSuggestions)
         .set({ 
@@ -421,10 +472,12 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(aiSuggestions.id, id));
 
+      console.log(`Successfully applied suggestion ${id}`);
       return true;
     } catch (error) {
       console.error('Error applying suggestion:', error);
       console.error('Suggestion ID:', id);
+      console.error('Error details:', error);
       return false;
     }
   }
