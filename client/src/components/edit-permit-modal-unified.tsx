@@ -279,13 +279,38 @@ export function EditPermitModalUnified({ permit, open, onOpenChange }: EditPermi
   const onSubmit = (data: EditPermitFormData) => {
     // Map frontend field names to backend field names
     const mappedData = {
-      ...data,
+      type: data.type,
+      department: data.department,
       description: data.workDescription, // Backend expects 'description'
       requestorName: data.requestedBy, // Backend expects 'requestorName'
       startDate: data.plannedStartDate, // Backend expects 'startDate'
       endDate: data.plannedEndDate, // Backend expects 'endDate'
+      location: data.location,
+      emergencyContact: data.emergencyContact,
+      contactNumber: data.contactNumber || permit?.contactNumber,
+      selectedHazards: data.selectedHazards,
+      hazardNotes: data.hazardNotes,
+      identifiedHazards: data.identifiedHazards,
+      additionalComments: data.additionalComments,
+      immediateActions: data.immediateActions,
+      beforeWorkStarts: data.beforeWorkStarts,
+      complianceNotes: data.complianceNotes,
+      overallRisk: data.overallRisk,
+      completedMeasures: data.completedMeasures,
+      preventiveMeasures: data.preventiveMeasures,
+      performerName: data.performerName,
+      performerSignature: data.performerSignature,
+      workStartedAt: data.workStartedAt,
+      workCompletedAt: data.workCompletedAt,
+      status: data.status
     };
-    updateMutation.mutate(mappedData);
+    
+    // Remove undefined fields to avoid validation issues
+    const cleanedData = Object.fromEntries(
+      Object.entries(mappedData).filter(([_, value]) => value !== undefined)
+    );
+    
+    updateMutation.mutate(cleanedData);
   };
 
   if (!permit) return null;
