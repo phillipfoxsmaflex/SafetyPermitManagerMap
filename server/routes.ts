@@ -1428,7 +1428,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           selectedHazards: permit.selectedHazards
         });
         console.log('Improved permit selectedHazards:', improvedPermit.selectedHazards);
+        console.log('Improved permit hazardNotes type:', typeof improvedPermit.hazardNotes);
+        console.log('Improved permit hazardNotes value:', improvedPermit.hazardNotes);
         
+        // PRIORITY: Check for hazardNotes first before processing other fields
+        if (improvedPermit.hazardNotes && typeof improvedPermit.hazardNotes === 'object') {
+          console.log('Processing hazardNotes as structured object:', improvedPermit.hazardNotes);
+          
+          const improvedNotesStr = JSON.stringify(improvedPermit.hazardNotes);
+          const originalNotesStr = permit.hazardNotes || '{}';
+          
+          console.log(`HazardNotes comparison: Original="${originalNotesStr}" vs Improved="${improvedNotesStr}"`);
+          
+          if (originalNotesStr !== improvedNotesStr) {
+            console.log(`Creating hazardNotes suggestion with specific notes for each hazard`);
+            const suggestion = await storage.createAiSuggestion({
+              permitId: permit.id,
+              suggestionType: 'hazard_notes_update',
+              fieldName: 'hazardNotes', // Direct field mapping
+              originalValue: originalNotesStr,
+              suggestedValue: improvedNotesStr,
+              reasoning: 'Spezifische KI-generierte Notizen für identifizierte Gefährdungen',
+              priority: 'high',
+              status: 'pending'
+            });
+            createdSuggestions.push(suggestion);
+          }
+        } else {
+          console.log('HazardNotes check failed: exists=', !!improvedPermit.hazardNotes, 'type=', typeof improvedPermit.hazardNotes);
+        }
+
         // Compare original vs improved permit and create suggestions for differences
         // Backend field names to Frontend field names mapping
         const fieldMappings = {
@@ -1514,8 +1543,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
               improvedStr = Array.isArray(improvedValue) ? JSON.stringify(improvedValue) : '[]';
             }
           } else if (backendFieldName === 'hazardNotes') {
-            // Skip hazardNotes here as it's handled above with selectedHazards
-            continue;
+            // Handle hazardNotes as structured object with specific notes for each hazard
+            if (typeof improvedValue === 'object' && improvedValue !== null) {
+              console.log('Processing hazardNotes as structured object:', improvedValue);
+              
+              // Convert improved hazard notes to JSON string for comparison
+              const improvedNotesStr = JSON.stringify(improvedValue);
+              const originalNotesStr = permit.hazardNotes || '{}';
+              
+              console.log(`HazardNotes comparison: Original="${originalNotesStr}" vs Improved="${improvedNotesStr}"`);
+              
+              if (originalNotesStr !== improvedNotesStr) {
+                console.log(`Creating hazardNotes suggestion with specific notes for each hazard`);
+                const suggestion = await storage.createAiSuggestion({
+                  permitId: permit.id,
+                  suggestionType: 'hazard_notes_update',
+                  fieldName: 'hazardNotes', // Direct field mapping
+                  originalValue: originalNotesStr,
+                  suggestedValue: improvedNotesStr,
+                  reasoning: 'Spezifische KI-generierte Notizen für identifizierte Gefährdungen',
+                  priority: 'high',
+                  status: 'pending'
+                });
+                createdSuggestions.push(suggestion);
+              }
+              continue; // Skip standard processing
+            }
           } else {
             originalStr = String(originalValue || '');
             improvedStr = String(improvedValue || '');
