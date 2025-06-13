@@ -248,6 +248,7 @@ export function CreatePermitModal({ open, onOpenChange }: CreatePermitModalProps
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                  <SelectItem value="general">Allgemeiner Erlaubnisschein</SelectItem>
                                   <SelectItem value="hot_work">Heißarbeiten (Schweißen, Schneiden, Löten)</SelectItem>
                                   <SelectItem value="height_work">Arbeiten in der Höhe (&gt;2m Absturzgefahr)</SelectItem>
                                   <SelectItem value="confined_space">Arbeiten in engen Räumen/Behältern</SelectItem>

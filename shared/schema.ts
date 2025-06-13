@@ -25,6 +25,7 @@ export const permits = pgTable("permits", {
   permitId: text("permit_id").notNull().unique(), // e.g., CS-2024-001
   type: text("type").notNull(), // 'confined_space', 'hot_work', 'electrical', 'chemical', 'height'
   location: text("location").notNull(),
+  workLocationId: integer("work_location_id").references(() => workLocations.id),
   description: text("description").notNull(),
   requestorId: integer("requestor_id").references(() => users.id),
   requestorName: text("requestor_name").notNull(),

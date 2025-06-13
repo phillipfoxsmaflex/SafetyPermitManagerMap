@@ -191,14 +191,14 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
         departmentHeadApproval: currentPermit.departmentHeadApproval || false,
         safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
         maintenanceApproval: currentPermit.maintenanceApproval || false,
-        departmentHeadId: currentPermit.departmentHeadId || undefined,
-        safetyOfficerId: currentPermit.safetyOfficerId || undefined,
-        maintenanceApproverId: currentPermit.maintenanceApproverId || undefined,
+        departmentHeadId: undefined, // Not using individual IDs anymore
+        safetyOfficerId: undefined, // Not using individual IDs anymore  
+        maintenanceApproverId: undefined, // Not using individual IDs anymore
         identifiedHazards: currentPermit.identifiedHazards || "",
         selectedHazards: currentPermit.selectedHazards || [],
         hazardNotes: currentPermit.hazardNotes || "",
-        immediateMeasures: currentPermit.immediateMeasures || "",
-        preventiveMeasures: currentPermit.preventiveMeasures || "",
+        immediateMeasures: "",
+        preventiveMeasures: "",
         completedMeasures: currentPermit.completedMeasures || [],
         status: currentPermit.status || "draft",
         performerName: currentPermit.performerName || "",
