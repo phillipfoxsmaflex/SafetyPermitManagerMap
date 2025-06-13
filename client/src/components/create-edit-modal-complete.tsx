@@ -171,11 +171,12 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
 
   // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
   useEffect(() => {
-    if (mode === 'edit' && permit && open) {
-      // Use permit prop directly if currentPermit is not available yet
+    if (mode === 'edit' && open && (currentPermit || permit)) {
+      // Use currentPermit if available, otherwise fall back to permit prop
       const permitData = currentPermit || permit;
       console.log("Syncing form with permit data:", permitData.id);
       console.log("Permit workLocationId:", permitData.workLocationId);
+      console.log("Full permit data:", permitData);
       
       // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
