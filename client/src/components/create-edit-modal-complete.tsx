@@ -379,6 +379,8 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                                 <SelectItem value="height">Arbeiten in der Höhe</SelectItem>
                                 <SelectItem value="chemical_handling">Chemikalienumgang</SelectItem>
                                 <SelectItem value="electrical_work">Elektrische Arbeiten</SelectItem>
+                                <SelectItem value="excavation">Erdarbeiten</SelectItem>
+                                <SelectItem value="maintenance">Wartungsarbeiten</SelectItem>
                                 <SelectItem value="general">Allgemeiner Erlaubnisschein</SelectItem>
                               </SelectContent>
                             </Select>
@@ -1018,6 +1020,10 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                                   body: JSON.stringify(tempPermitData)
                                 });
                                 const newPermit = await createResponse.json();
+                                
+                                if (!newPermit || !newPermit.id) {
+                                  throw new Error("Fehler beim Erstellen der temporären Genehmigung");
+                                }
 
                                 // KI-Analyse der temporären Genehmigung starten
                                 await fetch(`/api/permits/${newPermit.id}/analyze`, {
