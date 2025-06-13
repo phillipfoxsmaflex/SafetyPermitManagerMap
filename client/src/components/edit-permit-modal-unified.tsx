@@ -723,10 +723,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         name="immediateActions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sofortmaßnahmen</FormLabel>
+                            <FormLabel>Allgemeine Maßnahmen</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Beschreiben Sie Sofortmaßnahmen, die bei Gefahr oder Notfall einzuleiten sind..."
+                                placeholder="PSAgA-Ausrüstung prüfen, Wetterbedingungen bewerten, Absperrung errichten, Notfallplan aktivieren, Kommunikation etablieren"
                                 className="min-h-[100px]"
                                 {...field}
                               />
@@ -744,7 +744,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                             <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Beschreiben Sie spezifische Maßnahmen, die vor Arbeitsbeginn durchzuführen sind..."
+                                placeholder="• Behälter ordnungsgemäß entleeren und reinigen
+• Betriebsmittel installieren und Funktionsprüfung durchführen
+• Kommunikationsverbindung nach außen etablieren
+• Rettungsmannschaft in Bereitschaft versetzen"
                                 className="min-h-[100px]"
                                 {...field}
                               />
@@ -795,7 +798,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormLabel>Zusätzliche Gefahren und Kommentare</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Beschreiben Sie weitere identifizierte Gefahren, spezielle Bedingungen oder wichtige Kommentare..."
+                              placeholder="Absturzgefahr, rutschige Oberflächen, Witterungseinflüsse"
                               className="min-h-[120px]"
                               {...field}
                             />
@@ -813,7 +816,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormLabel>Weitere Anmerkungen</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Zusätzliche Anmerkungen, besondere Hinweise oder Auflagen..."
+                              placeholder="Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten."
                               className="min-h-[100px]"
                               {...field}
                             />

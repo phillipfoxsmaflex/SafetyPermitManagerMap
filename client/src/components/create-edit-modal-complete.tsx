@@ -666,7 +666,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Sicherheitsmaßnahmen</CardTitle>
+                    <CardTitle>Allgemeine Sicherheitsmaßnahmen</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -674,10 +674,10 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                       name="immediateActions"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Sofortmaßnahmen</FormLabel>
+                          <FormLabel>Allgemeine Maßnahmen</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Unmittelbar zu treffende Sicherheitsmaßnahmen"
+                              placeholder="PSAgA-Ausrüstung prüfen, Wetterbedingungen bewerten, Absperrung errichten, Notfallplan aktivieren, Kommunikation etablieren"
                               className="min-h-[100px]"
                               {...field} 
                             />
@@ -692,10 +692,62 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                       name="beforeWorkStarts"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Vorsorgemaßnahmen</FormLabel>
+                          <FormLabel>Maßnahmen vor Arbeitsbeginn</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Maßnahmen, die vor Arbeitsbeginn durchgeführt werden müssen"
+                              placeholder="• Behälter ordnungsgemäß entleeren und reinigen
+• Betriebsmittel installieren und Funktionsprüfung durchführen
+• Kommunikationsverbindung nach außen etablieren
+• Rettungsmannschaft in Bereitschaft versetzen"
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Risikobewertung und zusätzliche Informationen</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="overallRisk"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Risikokategorie</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Risikokategorie auswählen..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="niedrig">Niedrig - Routine-Arbeiten mit geringem Gefährdungspotential</SelectItem>
+                              <SelectItem value="mittel">Mittel - Arbeiten mit moderatem Risiko, erhöhte Aufmerksamkeit erforderlich</SelectItem>
+                              <SelectItem value="hoch">Hoch - Arbeiten mit erheblichem Risiko, besondere Schutzmaßnahmen erforderlich</SelectItem>
+                              <SelectItem value="kritisch">Kritisch - Arbeiten mit sehr hohem Risiko, umfassende Sicherheitsvorkehrungen</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="identifiedHazards"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zusätzliche Gefahren und Kommentare</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Absturzgefahr, rutschige Oberflächen, Witterungseinflüsse"
                               className="min-h-[100px]"
                               {...field} 
                             />
@@ -707,37 +759,13 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
 
                     <FormField
                       control={form.control}
-                      name="overallRisk"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gesamtrisikobewertung</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Risikostufe wählen" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="low">Niedrig</SelectItem>
-                              <SelectItem value="medium">Mittel</SelectItem>
-                              <SelectItem value="high">Hoch</SelectItem>
-                              <SelectItem value="critical">Kritisch</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="complianceNotes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>TRBS-Compliance-Hinweise</FormLabel>
+                          <FormLabel>Weitere Anmerkungen</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Hinweise zur Einhaltung der TRBS-Vorschriften"
+                              placeholder="Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten."
                               className="min-h-[100px]"
                               {...field} 
                             />
