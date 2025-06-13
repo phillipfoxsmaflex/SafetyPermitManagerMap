@@ -846,23 +846,6 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="additionalComments"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Zusätzliche Kommentare</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Weitere Anmerkungen oder spezielle Anforderungen"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -949,7 +932,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
               </TabsContent>
 
               <TabsContent value="attachments" className="space-y-4">
-                {mode === 'edit' && permit ? (
+                {permit ? (
                   <PermitAttachments permitId={permit.id} readonly={!canEditPermit(permit, user)} />
                 ) : (
                   <Alert>
@@ -962,32 +945,34 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
               </TabsContent>
 
               <TabsContent value="workflow" className="space-y-4">
-                {mode === 'edit' && permit ? (
+                {permit ? (
                   <>
                     <AiSuggestions permitId={permit.id} />
                     
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Status und Workflow</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <WorkflowVisualization currentStatus={permit.status} />
-                        
-                        <StatusTimeline permitId={permit.id} />
-                        
-                        <WorkflowButtons 
-                          permit={permit}
-                          user={user!}
-                          onWorkflowAction={(action, nextStatus) => {
-                            workflowMutation.mutate({ 
-                              permitId: permit.id, 
-                              action, 
-                              nextStatus 
-                            });
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
+                    {mode === 'edit' && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Status und Workflow</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <WorkflowVisualization currentStatus={permit.status} />
+                          
+                          <StatusTimeline permitId={permit.id} />
+                          
+                          <WorkflowButtons 
+                            permit={permit}
+                            user={user!}
+                            onWorkflowAction={(action, nextStatus) => {
+                              workflowMutation.mutate({ 
+                                permitId: permit.id, 
+                                action, 
+                                nextStatus 
+                              });
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    )}
                   </>
                 ) : (
                   <Alert>
