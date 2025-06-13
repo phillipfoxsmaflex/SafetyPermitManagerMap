@@ -127,6 +127,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
   const { data: currentPermit } = useQuery<Permit>({
     queryKey: [`/api/permits/${permit?.id}`],
     enabled: mode === 'edit' && !!permit?.id,
+    staleTime: 0, // Always refetch to ensure latest data
   });
 
   const form = useForm<EditPermitFormData>({
@@ -279,8 +280,11 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits/stats"] });
       if (mode === 'edit' && permit?.id) {
         queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+        // Force refetch of current permit data
+        queryClient.refetchQueries({ queryKey: [`/api/permits/${permit.id}`] });
       }
       toast({
         title: "Erfolg",
