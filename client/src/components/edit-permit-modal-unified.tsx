@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -574,8 +575,44 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                     <CardTitle>TRBS Gefährdungsbeurteilung</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor="search">Gefährdungen suchen</Label>
+                        <Input
+                          id="search"
+                          placeholder="Suchbegriff eingeben..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="category">Kategorie filtern</Label>
+                        <Select onValueChange={(value) => setSelectedCategory(value === "all" ? null : Number(value))}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Alle Kategorien" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Alle Kategorien</SelectItem>
+                            {trbsData.categories.map((category, index) => (
+                              <SelectItem key={category.id} value={index.toString()}>
+                                {category.category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
                     {/* TRBS Hazard Categories */}
-                    {trbsData.categories.map((category) => (
+                    {trbsData.categories
+                      .filter((category, index) => {
+                        if (selectedCategory !== null && index !== selectedCategory) return false;
+                        if (!searchQuery) return true;
+                        return category.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                               category.hazards.some(h => h.hazard.toLowerCase().includes(searchQuery.toLowerCase()));
+                      })
+                      .map((category) => (
                       <Card key={category.id} className="border-l-4 border-l-safety-orange">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-lg text-industrial-gray">
@@ -584,7 +621,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="grid gap-3">
-                            {category.hazards.map((hazard, hazardIndex) => {
+                            {category.hazards
+                              .filter(hazard => !searchQuery || 
+                                hazard.hazard.toLowerCase().includes(searchQuery.toLowerCase()))
+                              .map((hazard, hazardIndex) => {
                               const hazardId = `${category.id}-${hazardIndex}`;
                               const isSelected = form.watch('selectedHazards')?.includes(hazardId);
                               

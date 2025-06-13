@@ -342,10 +342,9 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="basic">Grunddaten</TabsTrigger>
                 <TabsTrigger value="hazards">Gefährdungen</TabsTrigger>
-                <TabsTrigger value="measures">Maßnahmen</TabsTrigger>
                 <TabsTrigger value="approvals">Genehmigungen</TabsTrigger>
                 <TabsTrigger value="execution">Durchführung</TabsTrigger>
                 <TabsTrigger value="attachments">Anhänge</TabsTrigger>
@@ -664,9 +663,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     />
                   </CardContent>
                 </Card>
-              </TabsContent>
 
-              <TabsContent value="measures" className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle>Sicherheitsmaßnahmen</CardTitle>
@@ -752,6 +749,8 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                   </CardContent>
                 </Card>
               </TabsContent>
+
+
 
               <TabsContent value="approvals" className="space-y-4">
                 <Card>
