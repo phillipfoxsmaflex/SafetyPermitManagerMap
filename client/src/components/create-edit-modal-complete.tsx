@@ -171,9 +171,11 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
 
   // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
   useEffect(() => {
-    if (mode === 'edit' && currentPermit && open) {
-      console.log("Syncing form with latest permit data:", currentPermit.id);
-      console.log("Current permit workLocationId:", currentPermit.workLocationId);
+    if (mode === 'edit' && permit && open) {
+      // Use permit prop directly if currentPermit is not available yet
+      const permitData = currentPermit || permit;
+      console.log("Syncing form with permit data:", permitData.id);
+      console.log("Permit workLocationId:", permitData.workLocationId);
       
       // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
@@ -183,43 +185,43 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
       };
 
       form.reset({
-        type: currentPermit.type || "",
-        department: currentPermit.department || "",
-        workDescription: currentPermit.description || "",
-        requestedBy: currentPermit.requestorName || "",
-        plannedStartDate: formatDate(currentPermit.startDate),
-        plannedEndDate: formatDate(currentPermit.endDate),
-        location: currentPermit.location || "",
-        emergencyContact: currentPermit.emergencyContact || "",
-        workLocationId: currentPermit.workLocationId || undefined,
-        departmentHeadApproval: currentPermit.departmentHeadApproval || false,
-        safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
-        maintenanceApproval: currentPermit.maintenanceApproval || false,
+        type: permitData.type || "",
+        department: permitData.department || "",
+        workDescription: permitData.description || "",
+        requestedBy: permitData.requestorName || "",
+        plannedStartDate: formatDate(permitData.startDate),
+        plannedEndDate: formatDate(permitData.endDate),
+        location: permitData.location || "",
+        emergencyContact: permitData.emergencyContact || "",
+        workLocationId: permitData.workLocationId || undefined,
+        departmentHeadApproval: permitData.departmentHeadApproval || false,
+        safetyOfficerApproval: permitData.safetyOfficerApproval || false,
+        maintenanceApproval: permitData.maintenanceApproval || false,
         departmentHeadId: undefined, // Not using individual IDs anymore
         safetyOfficerId: undefined, // Not using individual IDs anymore  
         maintenanceApproverId: undefined, // Not using individual IDs anymore
-        identifiedHazards: currentPermit.identifiedHazards || "",
-        selectedHazards: currentPermit.selectedHazards || [],
-        hazardNotes: currentPermit.hazardNotes || "",
+        identifiedHazards: permitData.identifiedHazards || "",
+        selectedHazards: permitData.selectedHazards || [],
+        hazardNotes: permitData.hazardNotes || "",
         immediateMeasures: "",
         preventiveMeasures: "",
-        completedMeasures: currentPermit.completedMeasures || [],
-        status: currentPermit.status || "draft",
-        performerName: currentPermit.performerName || "",
-        performerSignature: currentPermit.performerSignature || "",
-        workStartedAt: formatDate(currentPermit.workStartedAt),
-        workCompletedAt: formatDate(currentPermit.workCompletedAt),
-        additionalComments: currentPermit.additionalComments || "",
-        immediateActions: currentPermit.immediateActions || "",
-        beforeWorkStarts: currentPermit.beforeWorkStarts || "",
-        complianceNotes: currentPermit.complianceNotes || "",
-        overallRisk: currentPermit.overallRisk || "",
+        completedMeasures: permitData.completedMeasures || [],
+        status: permitData.status || "draft",
+        performerName: permitData.performerName || "",
+        performerSignature: permitData.performerSignature || "",
+        workStartedAt: formatDate(permitData.workStartedAt),
+        workCompletedAt: formatDate(permitData.workCompletedAt),
+        additionalComments: permitData.additionalComments || "",
+        immediateActions: permitData.immediateActions || "",
+        beforeWorkStarts: permitData.beforeWorkStarts || "",
+        complianceNotes: permitData.complianceNotes || "",
+        overallRisk: permitData.overallRisk || "",
       });
 
       // Parse hazard notes if they exist
-      if (currentPermit.hazardNotes) {
+      if (permitData.hazardNotes) {
         try {
-          setHazardNotes(JSON.parse(currentPermit.hazardNotes));
+          setHazardNotes(JSON.parse(permitData.hazardNotes));
         } catch {
           setHazardNotes({});
         }
