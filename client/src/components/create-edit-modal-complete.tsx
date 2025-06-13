@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { PermitAttachments } from "@/components/permit-attachments";
+import { TemporaryAttachments } from "@/components/temporary-attachments";
 import { StatusIndicator } from "@/components/status-indicator";
 import { StatusTimeline } from "@/components/status-timeline";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
@@ -94,6 +95,8 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [temporaryAttachments, setTemporaryAttachments] = useState<any[]>([]);
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
@@ -348,7 +351,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                 <TabsTrigger value="approvals">Genehmigungen</TabsTrigger>
                 <TabsTrigger value="execution">Durchführung</TabsTrigger>
                 <TabsTrigger value="attachments">Anhänge</TabsTrigger>
-                <TabsTrigger value="workflow">Status & KI</TabsTrigger>
+                <TabsTrigger value="workflow">KI-Vorschläge</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4">
@@ -940,17 +943,15 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {mode === 'edit' && permit ? (
+                    {permit ? (
                       <PermitAttachments permitId={permit.id} readonly={false} />
-                    ) : mode === 'create' ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">Keine Anhänge vorhanden</h3>
-                        <p>Anhänge können nach dem Erstellen der Genehmigung hinzugefügt werden.</p>
-                      </div>
-                    ) : permit ? (
-                      <PermitAttachments permitId={permit.id} readonly={false} />
-                    ) : null}
+                    ) : (
+                      <TemporaryAttachments 
+                        attachments={temporaryAttachments}
+                        onAttachmentsChange={setTemporaryAttachments}
+                        readonly={false}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -964,16 +965,14 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {mode === 'edit' && permit ? (
+                    {permit ? (
                       <AiSuggestions permitId={permit.id} />
-                    ) : mode === 'create' ? (
+                    ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">Keine KI-Vorschläge vorhanden</h3>
-                        <p>KI-Verbesserungsvorschläge werden nach dem Erstellen der Genehmigung generiert.</p>
+                        <h3 className="text-lg font-medium mb-2">KI-Analyse verfügbar</h3>
+                        <p>Nach dem Speichern kann eine KI-Analyse für Verbesserungsvorschläge durchgeführt werden.</p>
                       </div>
-                    ) : (
-                      <AiSuggestions permitId={permit?.id || 0} />
                     )}
                   </CardContent>
                 </Card>
