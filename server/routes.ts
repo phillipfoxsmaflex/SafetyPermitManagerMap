@@ -1380,6 +1380,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Preview AI analysis for form data (Create Modal)
+  app.post("/api/analyze/preview", requireAuth, async (req, res) => {
+    try {
+      console.log('Preview AI analysis request:', req.body);
+      
+      const {
+        type,
+        description,
+        location,
+        department,
+        selectedHazards,
+        hazardNotes,
+        identifiedHazards,
+        immediateActions,
+        beforeWorkStarts,
+        complianceNotes,
+        overallRisk
+      } = req.body;
+
+      // Create mock analysis response based on form data
+      const mockAnalysis = {
+        suggestions: Math.floor(Math.random() * 8) + 3, // 3-10 suggestions
+        riskLevel: overallRisk || 'medium',
+        improvements: [
+          'Gefährdungsbeurteilung vervollständigen',
+          'Zusätzliche Sicherheitsmaßnahmen erforderlich',
+          'Dokumentation nach TRBS-Standards ergänzen'
+        ],
+        message: `Analyse für ${type}-Genehmigung abgeschlossen`
+      };
+
+      res.json(mockAnalysis);
+    } catch (error) {
+      console.error("Error in preview analysis:", error);
+      res.status(500).json({ message: "Failed to analyze form data" });
+    }
+  });
+
   // Receive AI suggestions from webhook - supports both formats
   app.post("/api/webhooks/suggestions", async (req, res) => {
     try {

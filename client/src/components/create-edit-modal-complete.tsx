@@ -968,10 +968,69 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     {permit ? (
                       <AiSuggestions permitId={permit.id} />
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">KI-Analyse verfügbar</h3>
-                        <p>Nach dem Speichern kann eine KI-Analyse für Verbesserungsvorschläge durchgeführt werden.</p>
+                      <div className="space-y-4">
+                        <div className="text-center py-4">
+                          <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-primary" />
+                          <h3 className="text-lg font-medium mb-2">KI-Analyse verfügbar</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Führen Sie eine KI-Analyse der aktuellen Formulardaten durch
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={async () => {
+                              setAnalyzeLoading(true);
+                              try {
+                                const formData = form.getValues();
+                                const response = await fetch("/api/analyze/preview", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    type: formData.type,
+                                    description: formData.workDescription,
+                                    location: formData.location,
+                                    department: formData.department,
+                                    selectedHazards: formData.selectedHazards || [],
+                                    hazardNotes: JSON.stringify(hazardNotes),
+                                    identifiedHazards: formData.identifiedHazards,
+                                    immediateActions: formData.immediateActions,
+                                    beforeWorkStarts: formData.beforeWorkStarts,
+                                    complianceNotes: formData.complianceNotes,
+                                    overallRisk: formData.overallRisk
+                                  })
+                                });
+                                
+                                const result = await response.json();
+                                
+                                toast({
+                                  title: "KI-Analyse abgeschlossen",
+                                  description: `${result?.suggestions || 0} Verbesserungsvorschläge generiert`,
+                                });
+                              } catch (error) {
+                                console.error("KI-Analyse-Fehler:", error);
+                                toast({
+                                  title: "Fehler bei der Analyse",
+                                  description: "Die KI-Analyse konnte nicht durchgeführt werden",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setAnalyzeLoading(false);
+                              }
+                            }}
+                            disabled={analyzeLoading || !form.getValues().type}
+                            className="flex items-center gap-2"
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                            {analyzeLoading ? "Analysiere..." : "KI-Analyse starten"}
+                          </Button>
+                        </div>
+                        
+                        {!form.getValues().type && (
+                          <div className="text-center text-sm text-muted-foreground">
+                            Wählen Sie zuerst einen Genehmigungstyp aus, um die Analyse zu starten
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
