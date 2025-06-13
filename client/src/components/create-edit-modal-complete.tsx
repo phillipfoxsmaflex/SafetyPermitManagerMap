@@ -994,10 +994,6 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                             complianceNotes: formData.complianceNotes || "",
                             overallRisk: formData.overallRisk || "medium",
                             completedMeasures: formData.completedMeasures || [],
-                            performerName: "",
-                            performerSignature: "",
-                            workStartedAt: "",
-                            workCompletedAt: "",
                             status: "draft"
                           };
 
