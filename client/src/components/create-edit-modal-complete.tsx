@@ -44,7 +44,7 @@ import { WorkflowVisualization } from "@/components/workflow-visualization";
 import { WorkflowButtons } from "@/components/workflow-buttons";
 import trbsData from "@/data/trbs_complete_hazards.json";
 import { canEditPermit } from "@/lib/permissions";
-import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle, Activity } from "lucide-react";
+import { AlertTriangle, Info, Save, Send, ArrowLeft, CheckCircle, Activity, Paperclip } from "lucide-react";
 import type { Permit } from "@shared/schema";
 
 interface CreateEditModalCompleteProps {
@@ -932,16 +932,26 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
               </TabsContent>
 
               <TabsContent value="attachments" className="space-y-4">
-                {permit ? (
-                  <PermitAttachments permitId={permit.id} readonly={!canEditPermit(permit, user)} />
-                ) : (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      Anhänge können nach dem Erstellen der Genehmigung hinzugefügt werden.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Anhänge
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {permit ? (
+                      <PermitAttachments permitId={permit.id} readonly={!canEditPermit(permit, user)} />
+                    ) : (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Anhänge können nach dem Erstellen der Genehmigung hinzugefügt werden.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="workflow" className="space-y-4">
