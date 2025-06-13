@@ -168,7 +168,12 @@ export function TemporaryAttachments({ attachments, onAttachmentsChange, readonl
               multiple
               accept="image/*,application/pdf,.doc,.docx,.txt"
               style={{ display: 'none' }}
-              key={triggerFileSelect ? 'file-select' : 'file-idle'}
+              ref={(input) => {
+                if (input && triggerFileSelect) {
+                  input.click();
+                  setTriggerFileSelect(false);
+                }
+              }}
               onChange={(e) => handleFileUpload(e.target.files)}
             />
             
@@ -177,7 +182,12 @@ export function TemporaryAttachments({ attachments, onAttachmentsChange, readonl
               accept="image/*"
               capture="environment"
               style={{ display: 'none' }}
-              key={triggerCameraSelect ? 'camera-select' : 'camera-idle'}
+              ref={(input) => {
+                if (input && triggerCameraSelect) {
+                  input.click();
+                  setTriggerCameraSelect(false);
+                }
+              }}
               onChange={(e) => handleFileUpload(e.target.files, true)}
             />
 

@@ -376,9 +376,10 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                               <SelectContent>
                                 <SelectItem value="confined_space">Arbeiten in engen Räumen</SelectItem>
                                 <SelectItem value="hot_work">Heiße Arbeiten</SelectItem>
-                                <SelectItem value="height_work">Arbeiten in der Höhe</SelectItem>
+                                <SelectItem value="height">Arbeiten in der Höhe</SelectItem>
                                 <SelectItem value="chemical_handling">Chemikalienumgang</SelectItem>
                                 <SelectItem value="electrical_work">Elektrische Arbeiten</SelectItem>
+                                <SelectItem value="general">Allgemeiner Erlaubnisschein</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -980,33 +981,60 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                             onClick={async () => {
                               setAnalyzeLoading(true);
                               try {
+                                // Erst die Genehmigung temporär erstellen
                                 const formData = form.getValues();
-                                const response = await fetch("/api/analyze/preview", {
+                                const tempPermitData = {
+                                  type: formData.type,
+                                  department: formData.department,
+                                  description: formData.workDescription || "Temporäre Analyse-Genehmigung",
+                                  requestorName: formData.requestedBy || "Temporär",
+                                  startDate: formData.plannedStartDate || new Date().toISOString(),
+                                  endDate: formData.plannedEndDate || new Date().toISOString(),
+                                  location: formData.location || "Temporär",
+                                  emergencyContact: formData.emergencyContact || "+49 123 456789",
+                                  contactNumber: formData.emergencyContact || "+49 123 456789",
+                                  selectedHazards: formData.selectedHazards || [],
+                                  hazardNotes: JSON.stringify(hazardNotes),
+                                  identifiedHazards: formData.identifiedHazards || "Temporäre Analyse",
+                                  additionalComments: "Temporäre Genehmigung für KI-Analyse",
+                                  immediateActions: formData.immediateActions || "",
+                                  beforeWorkStarts: formData.beforeWorkStarts || "",
+                                  complianceNotes: formData.complianceNotes || "",
+                                  overallRisk: formData.overallRisk || "medium",
+                                  completedMeasures: formData.completedMeasures || [],
+                                  performerName: "",
+                                  performerSignature: "",
+                                  workStartedAt: "",
+                                  workCompletedAt: "",
+                                  status: "draft"
+                                };
+
+                                // Temporäre Genehmigung erstellen
+                                const createResponse = await fetch("/api/permits", {
                                   method: "POST",
                                   headers: {
                                     "Content-Type": "application/json",
                                   },
-                                  body: JSON.stringify({
-                                    type: formData.type,
-                                    description: formData.workDescription,
-                                    location: formData.location,
-                                    department: formData.department,
-                                    selectedHazards: formData.selectedHazards || [],
-                                    hazardNotes: JSON.stringify(hazardNotes),
-                                    identifiedHazards: formData.identifiedHazards,
-                                    immediateActions: formData.immediateActions,
-                                    beforeWorkStarts: formData.beforeWorkStarts,
-                                    complianceNotes: formData.complianceNotes,
-                                    overallRisk: formData.overallRisk
-                                  })
+                                  body: JSON.stringify(tempPermitData)
                                 });
-                                
-                                const result = await response.json();
-                                
+                                const newPermit = await createResponse.json();
+
+                                // KI-Analyse der temporären Genehmigung starten
+                                await fetch(`/api/permits/${newPermit.id}/analyze`, {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({})
+                                });
+
                                 toast({
-                                  title: "KI-Analyse abgeschlossen",
-                                  description: `${result?.suggestions || 0} Verbesserungsvorschläge generiert`,
+                                  title: "KI-Analyse gestartet",
+                                  description: "Die Analyse wird durchgeführt. Schauen Sie im KI-Vorschläge-Tab nach den Ergebnissen.",
                                 });
+
+                                // Form-State mit der neuen Genehmigung aktualisieren
+                                queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
                               } catch (error) {
                                 console.error("KI-Analyse-Fehler:", error);
                                 toast({
