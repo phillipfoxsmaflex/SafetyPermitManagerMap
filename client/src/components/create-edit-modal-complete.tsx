@@ -955,42 +955,53 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
               </TabsContent>
 
               <TabsContent value="workflow" className="space-y-4">
-                {permit ? (
-                  <>
-                    <AiSuggestions permitId={permit.id} />
-                    
-                    {mode === 'edit' && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Status und Workflow</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <WorkflowVisualization currentStatus={permit.status} />
-                          
-                          <StatusTimeline permitId={permit.id} />
-                          
-                          <WorkflowButtons 
-                            permit={permit}
-                            user={user!}
-                            onWorkflowAction={(action, nextStatus) => {
-                              workflowMutation.mutate({ 
-                                permitId: permit.id, 
-                                action, 
-                                nextStatus 
-                              });
-                            }}
-                          />
-                        </CardContent>
-                      </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      KI-Verbesserungsvorschläge
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {permit ? (
+                      <AiSuggestions permitId={permit.id} />
+                    ) : (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          KI-Vorschläge werden nach dem Erstellen der Genehmigung verfügbar.
+                        </AlertDescription>
+                      </Alert>
                     )}
-                  </>
-                ) : (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      KI-Vorschläge und Workflow-Management sind nach dem Erstellen der Genehmigung verfügbar.
-                    </AlertDescription>
-                  </Alert>
+                  </CardContent>
+                </Card>
+                
+                {mode === 'edit' && permit && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Activity className="h-5 w-5" />
+                        Status und Workflow
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <WorkflowVisualization currentStatus={permit.status} />
+                      
+                      <StatusTimeline permitId={permit.id} />
+                      
+                      <WorkflowButtons 
+                        permit={permit}
+                        user={user!}
+                        onWorkflowAction={(action, nextStatus) => {
+                          workflowMutation.mutate({ 
+                            permitId: permit.id, 
+                            action, 
+                            nextStatus 
+                          });
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
             </Tabs>
