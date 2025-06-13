@@ -943,12 +943,11 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     {permit ? (
                       <PermitAttachments permitId={permit.id} readonly={!canEditPermit(permit, user)} />
                     ) : (
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          Anhänge können nach dem Erstellen der Genehmigung hinzugefügt werden.
-                        </AlertDescription>
-                      </Alert>
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">Keine Anhänge vorhanden</h3>
+                        <p>Anhänge können nach dem Erstellen der Genehmigung hinzugefügt werden.</p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -966,12 +965,11 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                     {permit ? (
                       <AiSuggestions permitId={permit.id} />
                     ) : (
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          KI-Vorschläge werden nach dem Erstellen der Genehmigung verfügbar.
-                        </AlertDescription>
-                      </Alert>
+                      <div className="text-center py-8 text-muted-foreground">
+                        <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">Keine KI-Vorschläge vorhanden</h3>
+                        <p>KI-Verbesserungsvorschläge werden nach dem Erstellen der Genehmigung generiert.</p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
