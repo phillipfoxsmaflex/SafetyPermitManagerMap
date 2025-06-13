@@ -316,7 +316,7 @@ export default function PermitDetails() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-sm font-medium text-secondary-gray">Standort</div>
+                <div className="text-sm font-medium text-secondary-gray">Arbeitsort</div>
                 <div className="text-industrial-gray">{permit.location}</div>
               </div>
               <div>

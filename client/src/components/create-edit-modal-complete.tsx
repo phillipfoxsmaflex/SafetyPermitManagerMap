@@ -267,7 +267,14 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
         return apiRequest("/api/permits", "POST", createData);
       } else {
         if (!permit?.id) throw new Error("Permit ID fehlt");
-        return apiRequest(`/api/permits/${permit.id}`, "PATCH", data);
+        const updateData = {
+          ...data,
+          workLocationId: data.workLocationId,
+          hazardNotes: JSON.stringify(hazardNotes),
+          selectedHazards: data.selectedHazards || [],
+          completedMeasures: data.completedMeasures || [],
+        };
+        return apiRequest(`/api/permits/${permit.id}`, "PATCH", updateData);
       }
     },
     onSuccess: () => {
@@ -375,14 +382,17 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="confined_space">Arbeiten in engen Räumen</SelectItem>
-                                <SelectItem value="hot_work">Heiße Arbeiten</SelectItem>
-                                <SelectItem value="height">Arbeiten in der Höhe</SelectItem>
-                                <SelectItem value="chemical_handling">Chemikalienumgang</SelectItem>
-                                <SelectItem value="electrical_work">Elektrische Arbeiten</SelectItem>
-                                <SelectItem value="excavation">Erdarbeiten</SelectItem>
-                                <SelectItem value="maintenance">Wartungsarbeiten</SelectItem>
                                 <SelectItem value="general">Allgemeiner Erlaubnisschein</SelectItem>
+                                <SelectItem value="hot_work">Heißarbeiten (Schweißen, Schneiden, Löten)</SelectItem>
+                                <SelectItem value="height_work">Arbeiten in der Höhe (&gt;2m Absturzgefahr)</SelectItem>
+                                <SelectItem value="confined_space">Arbeiten in engen Räumen/Behältern</SelectItem>
+                                <SelectItem value="electrical_work">Elektrische Arbeiten (Schaltanlagen, Kabel)</SelectItem>
+                                <SelectItem value="chemical_work">Arbeiten mit Gefahrstoffen</SelectItem>
+                                <SelectItem value="machinery_work">Arbeiten an Maschinen/Anlagen</SelectItem>
+                                <SelectItem value="excavation">Erdarbeiten/Grabungen</SelectItem>
+                                <SelectItem value="maintenance">Instandhaltungsarbeiten</SelectItem>
+                                <SelectItem value="cleaning">Reinigungs-/Wartungsarbeiten</SelectItem>
+                                <SelectItem value="other">Sonstige Arbeiten</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
