@@ -644,23 +644,6 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                         ))}
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="identifiedHazards"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Zusätzliche identifizierte Gefährdungen</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Weitere Gefährdungen, die nicht in der TRBS-Liste enthalten sind"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
 
