@@ -124,11 +124,13 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
   });
 
   // Get current permit data for edit mode
-  const { data: currentPermit } = useQuery<Permit>({
+  const { data: currentPermit, isLoading: isLoadingPermit } = useQuery<Permit>({
     queryKey: [`/api/permits/${permit?.id}`],
     enabled: mode === 'edit' && !!permit?.id,
     staleTime: 0, // Always refetch to ensure latest data
   });
+
+  console.log("Current permit from query:", currentPermit);
 
   const form = useForm<EditPermitFormData>({
     resolver: zodResolver(editPermitSchema),
