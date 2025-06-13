@@ -171,6 +171,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
   useEffect(() => {
     if (mode === 'edit' && currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
+      console.log("Current permit workLocationId:", currentPermit.workLocationId);
       
       // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
@@ -487,7 +488,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                             <FormLabel>Arbeitsort</FormLabel>
                             <Select 
                               onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
-                              value={field.value?.toString() || ""}
+                              value={field.value ? field.value.toString() : ""}
                             >
                               <FormControl>
                                 <SelectTrigger>
