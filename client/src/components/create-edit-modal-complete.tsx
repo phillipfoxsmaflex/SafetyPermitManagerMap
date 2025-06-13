@@ -424,9 +424,64 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Beantragt von</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Antragsteller auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {allUsers.map((user) => (
+                                  <SelectItem key={user.id} value={user.fullName}>
+                                    {user.fullName} ({user.department})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="emergencyContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Notfallkontakt</FormLabel>
                             <FormControl>
-                              <Input placeholder="Name des Antragstellers" {...field} />
+                              <Input placeholder="Notfallkontakt (optional)" {...field} />
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="workLocationId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Arbeitsort</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
+                              value={field.value?.toString() || ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Arbeitsort auswählen..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {workLocations.map((location) => (
+                                  <SelectItem key={location.id} value={location.id.toString()}>
+                                    {location.name} - {location.description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -437,9 +492,9 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                         name="location"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Arbeitsort</FormLabel>
+                            <FormLabel>Spezifischer Ort (optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Spezifischer Arbeitsort" {...field} />
+                              <Input placeholder="Detaillierte Ortsangabe..." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -477,19 +532,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="emergencyContact"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notfallkontakt</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Name und Telefonnummer für Notfälle" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+
                   </CardContent>
                 </Card>
               </TabsContent>
