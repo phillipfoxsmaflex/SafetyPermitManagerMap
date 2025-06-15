@@ -643,12 +643,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         withdraw: ['pending', 'approved'],
         approve: ['pending'],
         activate: ['approved'],
-        complete: ['active']
+        complete: ['active'],
+        reject: ['pending'],
+        suspend: ['active']
       };
 
+      console.log(`Workflow validation: action=${action}, currentStatus=${currentPermit.status}, nextStatus=${nextStatus}`);
+
       if (!validTransitions[action] || !validTransitions[action].includes(currentPermit.status)) {
+        console.error(`Invalid transition: cannot ${action} from status ${currentPermit.status} to ${nextStatus}`);
         return res.status(400).json({ 
-          message: `Invalid transition: cannot ${action} from status ${currentPermit.status}` 
+          message: `Invalid transition: cannot ${action} from status ${currentPermit.status} to ${nextStatus}` 
         });
       }
 
@@ -745,7 +750,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else {
         // Handle other workflow actions
+        console.log(`Executing workflow action: ${action} -> ${nextStatus} for permit ${permitId}`);
         const updatedPermit = await storage.updatePermitStatus(permitId, nextStatus, userId, comment);
+        
+        if (!updatedPermit) {
+          console.error(`Failed to update permit ${permitId} status to ${nextStatus}`);
+          return res.status(500).json({ message: "Failed to update permit status" });
+        }
+        
+        console.log(`Successfully updated permit ${permitId} status to ${nextStatus}`);
         res.json(updatedPermit);
       }
     } catch (error) {

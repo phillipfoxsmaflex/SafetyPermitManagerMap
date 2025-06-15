@@ -91,18 +91,43 @@ export function WorkflowButtons({
           }
         ];
       
+      case 'rejected':
+        return [
+          {
+            id: 'withdraw',
+            label: 'Zur Überarbeitung',
+            icon: ArrowLeft,
+            variant: 'outline' as const,
+            nextStatus: 'draft'
+          }
+        ];
+      
+      case 'suspended':
+        return [
+          {
+            id: 'activate',
+            label: 'Fortsetzen',
+            icon: Play,
+            variant: 'default' as const,
+            nextStatus: 'active'
+          }
+        ];
+      
       default:
+        console.log('WorkflowButtons: No actions available for status:', permit.status);
         return [];
     }
   };
 
   const handleAction = async (action: any) => {
-    console.log('Executing action:', action);
+    console.log('WorkflowButtons: Executing action:', action);
+    console.log('WorkflowButtons: Permit ID:', permit.id);
+    console.log('WorkflowButtons: Current status:', permit.status);
     try {
       await onAction(action.id, action.nextStatus);
       setConfirmAction(null);
     } catch (error) {
-      console.error('Action failed:', error);
+      console.error('WorkflowButtons: Action failed:', error);
     }
   };
 

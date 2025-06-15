@@ -296,8 +296,9 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   // Workflow mutation
   const workflowMutation = useMutation({
-    mutationFn: async ({ permitId, action, nextStatus }: { permitId: number; action: string; nextStatus: string }) => {
-      return apiRequest(`/api/permits/${permitId}/workflow`, "POST", { action, nextStatus });
+    mutationFn: async ({ actionId, nextStatus }: { actionId: string; nextStatus: string }) => {
+      if (!permit) throw new Error("No permit selected");
+      return apiRequest(`/api/permits/${permit.id}/workflow`, "POST", { action: actionId, nextStatus });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit!.id}`] });
@@ -1049,7 +1050,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           permit={currentPermit || permit} 
                           currentUser={user} 
                           onAction={async (actionId: string, nextStatus: string) => {
-                            workflowMutation.mutate({ permitId: permit.id, action: actionId, nextStatus });
+                            console.log('Unified modal workflow action:', { actionId, nextStatus, permitId: permit.id });
+                            workflowMutation.mutate({ actionId, nextStatus });
                           }}
                           isLoading={workflowMutation.isPending}
                         />

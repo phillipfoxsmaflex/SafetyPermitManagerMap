@@ -218,6 +218,7 @@ export function EditPermitModalWorkflow({ permit, open, onOpenChange }: EditPerm
   });
 
   const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
+    console.log('Workflow action called:', { actionId, nextStatus, permitId: currentPermit?.id });
     workflowMutation.mutate({ actionId, nextStatus });
   };
 

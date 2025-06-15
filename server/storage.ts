@@ -9,7 +9,7 @@ export interface IStorage {
   getUserByFullName(fullName: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
-  
+
   // Permit operations
   getPermit(id: number): Promise<Permit | undefined>;
   getPermitByPermitId(permitId: string): Promise<Permit | undefined>;
@@ -25,22 +25,22 @@ export interface IStorage {
     expiredToday: number;
     completed: number;
   }>;
-  
+
   // Notification operations
   getUserNotifications(userId: number): Promise<Notification[]>;
   getUnreadNotificationCount(userId: number): Promise<number>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
-  
+
   // User role operations
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
   updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
-  
+
   // Template operations
   getAllTemplates(): Promise<Template[]>;
   createTemplate(template: InsertTemplate): Promise<Template>;
-  
+
   // AI Suggestions operations
   getPermitSuggestions(permitId: number): Promise<AiSuggestion[]>;
   createAiSuggestion(suggestion: InsertAiSuggestion): Promise<AiSuggestion>;
@@ -49,7 +49,7 @@ export interface IStorage {
   applyAllSuggestions(permitId: number): Promise<number>;
   rejectAllSuggestions(permitId: number): Promise<number>;
   deleteAllSuggestions(permitId: number): Promise<number>;
-  
+
   // Webhook configuration operations
   getAllWebhookConfigs(): Promise<WebhookConfig[]>;
   getActiveWebhookConfig(): Promise<WebhookConfig | undefined>;
@@ -57,36 +57,36 @@ export interface IStorage {
   updateWebhookConfig(id: number, updates: Partial<WebhookConfig>): Promise<WebhookConfig | undefined>;
   deleteWebhookConfig(id: number): Promise<boolean>;
   testWebhookConnection(id: number): Promise<boolean>;
-  
+
   // Work Location operations
   getAllWorkLocations(): Promise<WorkLocation[]>;
   getActiveWorkLocations(): Promise<WorkLocation[]>;
   createWorkLocation(location: InsertWorkLocation): Promise<WorkLocation>;
   updateWorkLocation(id: number, updates: Partial<WorkLocation>): Promise<WorkLocation | undefined>;
   deleteWorkLocation(id: number): Promise<boolean>;
-  
+
   // User role filtering operations
   getUsersByRole(role: string): Promise<User[]>;
   getDepartmentHeads(): Promise<User[]>;
   getSafetyOfficers(): Promise<User[]>;
   getMaintenanceApprovers(): Promise<User[]>;
-  
+
   // Permit Attachment operations
   getPermitAttachments(permitId: number): Promise<PermitAttachment[]>;
   createPermitAttachment(attachment: InsertPermitAttachment): Promise<PermitAttachment>;
   deletePermitAttachment(id: number): Promise<boolean>;
   getAttachmentById(id: number): Promise<PermitAttachment | undefined>;
-  
+
   // Session operations
   createSession(session: InsertSession): Promise<Session>;
   getSessionBySessionId(sessionId: string): Promise<Session | undefined>;
   deleteSession(sessionId: string): Promise<boolean>;
   cleanupExpiredSessions(): Promise<void>;
-  
+
   // AI Suggestions cleanup operations
   cleanupOldSuggestions(): Promise<number>;
   cleanupSuggestionsForUser(userId: number): Promise<number>;
-  
+
   // Workflow operations
   updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined>;
   addStatusHistoryEntry(permitId: number, status: string, userId: number, comment?: string): Promise<void>;
@@ -101,15 +101,15 @@ export class DatabaseStorage implements IStorage {
       'chemical': 'CH',
       'height': 'HT'
     };
-    
+
     const prefix = typeMap[type] || 'GN';
     const year = new Date().getFullYear();
-    
+
     // Find the highest existing permit number for this type and year
     const existingPermits = await db.select()
       .from(permits)
       .where(like(permits.permitId, `${prefix}-${year}-%`));
-    
+
     let maxNumber = 0;
     existingPermits.forEach(permit => {
       const match = permit.permitId.match(new RegExp(`${prefix}-${year}-(\\d+)`));
@@ -117,7 +117,7 @@ export class DatabaseStorage implements IStorage {
         maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
       }
     });
-    
+
     const nextNumber = (maxNumber + 1).toString().padStart(3, '0');
     return `${prefix}-${year}-${nextNumber}`;
   }
@@ -174,7 +174,7 @@ export class DatabaseStorage implements IStorage {
   async createPermit(insertPermit: InsertPermit): Promise<Permit> {
     const permitId = await this.generatePermitId(insertPermit.type);
     const now = new Date();
-    
+
     const [permit] = await db
       .insert(permits)
       .values({
@@ -209,7 +209,7 @@ export class DatabaseStorage implements IStorage {
         safetyOfficerApprovalDate: null,
       })
       .returning();
-    
+
     return permit;
   }
 
@@ -219,26 +219,26 @@ export class DatabaseStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(permits.id, id))
       .returning();
-    
+
     return permit || undefined;
   }
 
   async deletePermit(id: number): Promise<boolean> {
     try {
       // Delete all associated data in the correct order to avoid foreign key constraints
-      
+
       // 1. Delete AI suggestions
       await db.delete(aiSuggestions).where(eq(aiSuggestions.permitId, id));
-      
+
       // 2. Delete permit attachments
       await db.delete(permitAttachments).where(eq(permitAttachments.permitId, id));
-      
+
       // 3. Delete notifications related to this permit
       await db.delete(notifications).where(eq(notifications.relatedPermitId, id));
-      
+
       // 4. Finally delete the permit itself
       const result = await db.delete(permits).where(eq(permits.id, id));
-      
+
       console.log(`Deleted permit ${id} and all associated data: suggestions, attachments, notifications`);
       return (result.rowCount || 0) > 0;
     } catch (error) {
@@ -376,7 +376,7 @@ export class DatabaseStorage implements IStorage {
   async applySuggestion(id: number): Promise<boolean> {
     try {
       console.log(`Applying AI suggestion ${id}...`);
-      
+
       const [suggestion] = await db
         .select()
         .from(aiSuggestions)
@@ -407,7 +407,7 @@ export class DatabaseStorage implements IStorage {
         // Validate and sanitize the suggested value based on field type
         const sanitizedValue = this.sanitizeSuggestionValue(fieldName, suggestedValue);
         console.log(`Sanitized value for ${fieldName}:`, sanitizedValue);
-        
+
         if (sanitizedValue === null) {
           console.warn(`Skipping invalid suggestion for field ${fieldName}:`, suggestedValue);
           return true; // Skip but don't fail
@@ -450,7 +450,7 @@ export class DatabaseStorage implements IStorage {
         // Special handling for hazard-related fields with direct replacement
         if (fieldName === 'selectedHazards') {
           console.log(`Processing selectedHazards with direct replacement`);
-          
+
           // Parse and apply selectedHazards directly
           let newSelectedHazards: string[] = [];
           if (Array.isArray(sanitizedValue)) {
@@ -462,9 +462,9 @@ export class DatabaseStorage implements IStorage {
               newSelectedHazards = [];
             }
           }
-          
+
           console.log(`Directly updating selectedHazards to:`, newSelectedHazards);
-          
+
           await db
             .update(permits)
             .set({
@@ -472,10 +472,10 @@ export class DatabaseStorage implements IStorage {
               updatedAt: new Date()
             })
             .where(eq(permits.id, permitId));
-            
+
         } else if (fieldName === 'hazardNotes') {
           console.log(`Processing hazardNotes with direct replacement`);
-          
+
           // Parse and apply hazardNotes directly
           let newHazardNotes: Record<string, string> = {};
           if (typeof sanitizedValue === 'string') {
@@ -487,9 +487,9 @@ export class DatabaseStorage implements IStorage {
           } else if (typeof sanitizedValue === 'object' && sanitizedValue !== null) {
             newHazardNotes = sanitizedValue as Record<string, string>;
           }
-          
+
           console.log(`Directly updating hazardNotes to:`, newHazardNotes);
-          
+
           await db
             .update(permits)
             .set({
@@ -497,22 +497,22 @@ export class DatabaseStorage implements IStorage {
               updatedAt: new Date()
             })
             .where(eq(permits.id, permitId));
-            
+
         } else {
           // Apply regular field updates using proper Drizzle syntax
           console.log(`Updating permit ${permitId} with field ${schemaFieldName}:`, sanitizedValue);
-          
+
           // Create update object with explicit field mapping
           const updateData: any = {
             updatedAt: new Date()
           };
           updateData[schemaFieldName] = sanitizedValue;
-          
+
           const result = await db
             .update(permits)
             .set(updateData)
             .where(eq(permits.id, permitId));
-            
+
           console.log(`Update result successful`);
         }
       }
@@ -563,12 +563,12 @@ export class DatabaseStorage implements IStorage {
             } catch {
               // Not valid JSON, continue with string parsing
             }
-            
+
             // Handle comma-separated string format like "1-0, 7-1, 8-0, 4-0"
             if (suggestedValue.includes(',')) {
               return suggestedValue.split(',').map(s => s.trim()).filter(s => s);
             }
-            
+
             // Single value or space-separated values
             return suggestedValue.split(/[,\s]+/).map(s => s.trim()).filter(s => s);
           }
@@ -587,12 +587,12 @@ export class DatabaseStorage implements IStorage {
             } catch {
               // Not valid JSON, continue with string parsing
             }
-            
+
             // Handle comma-separated string format like "1-0, 7-1, 8-0, 4-0"
             if (suggestedValue.includes(',')) {
               return suggestedValue.split(',').map(s => s.trim()).filter(s => s);
             }
-            
+
             // Single value or space-separated values
             return suggestedValue.split(/[,\s]+/).map(s => s.trim()).filter(s => s);
           }
@@ -672,7 +672,7 @@ export class DatabaseStorage implements IStorage {
   async mapSuggestionToTRBS(suggestion: any, permit: any): Promise<void> {
     try {
       const { fieldName, suggestedValue, reasoning, suggestionType } = suggestion;
-      
+
       let currentSelectedHazards: string[] = [];
       let currentHazardNotes: Record<string, string> = {};
 
@@ -691,7 +691,7 @@ export class DatabaseStorage implements IStorage {
       if (fieldName === 'selectedHazards') {
         try {
           let hazardData: any = null;
-          
+
           // Try to parse suggested value as JSON if it's a string
           if (typeof suggestedValue === 'string') {
             try {
@@ -721,13 +721,13 @@ export class DatabaseStorage implements IStorage {
                 console.log(`Mapped hazard ${hazardId} with specific note: ${hazardItem.notes}`);
               }
             }
-            
+
             // If we found structured data, return early to avoid generic mapping
             if (hasNewMapping) {
               console.log(`Updating permit ${permit.id} with structured TRBS mappings:`);
               console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
               console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
-              
+
               await db
                 .update(permits)
                 .set({
@@ -756,13 +756,13 @@ export class DatabaseStorage implements IStorage {
                 console.log(`Mapped hazard ${hazardId} with note: ${value}`);
               }
             }
-            
+
             // If we found structured data, return early to avoid generic mapping
             if (hasNewMapping) {
               console.log(`Updating permit ${permit.id} with structured TRBS mappings:`);
               console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
               console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
-              
+
               await db
                 .update(permits)
                 .set({
@@ -785,39 +785,39 @@ export class DatabaseStorage implements IStorage {
       const trbsMapping: Record<string, string[]> = {
         // Mechanische Gefährdungen
         'maschine|gerät|werkzeug|schnitt|quetsch|stoß|uncontrolled|beweglich|rotating|sharp': ['0-0', '0-1', '0-2', '0-3', '0-4'],
-        
+
         // Absturzgefährdungen
         'absturz|höhe|leiter|gerüst|plattform|fall|sturz|height|ladder|scaffold': ['1-0', '1-1', '1-2', '1-3'],
-        
+
         // Brand- und Explosionsgefährdungen
         'brand|feuer|flamm|entzünd|heiß|funken|zündung|fire|ignition|hot|spark': ['2-0', '2-1', '2-2'],
         'explosion|explosiv|gas|dampf|staub|explosive|vapor|dust|detonation': ['3-0', '3-1', '3-2'],
-        
+
         // Elektrische Gefährdungen
         'elektr|strom|spannung|isolation|erdung|kurzschluss|electrical|voltage|current|shock': ['4-0', '4-1', '4-2'],
-        
+
         // Gefahrstoffe
         'chemisch|giftig|ätzend|reizend|chemical|toxic|corrosive|irritant|carcinogen': ['5-0', '5-1', '5-2', '5-3'],
         'ethanol|lösungsmittel|säure|base|solvent|acid|alkali': ['5-0', '5-1'],
-        
+
         // Biologische Gefährdungen
         'biologisch|bakterien|viren|pilze|infectious|bacteria|virus|fungi|contamination': ['6-0', '6-1'],
-        
+
         // Physikalische Einwirkungen
         'lärm|vibration|strahlung|temperatur|noise|radiation|temperature|heat|cold': ['7-0', '7-1', '7-2'],
-        
+
         // Ergonomische Gefährdungen
         'ergonomisch|heben|tragen|haltung|wiederholung|ergonomic|lifting|posture|repetitive': ['8-0', '8-1'],
-        
+
         // Psychische Faktoren
         'stress|belastung|zeitdruck|überforderung|psychological|mental|pressure|overload': ['9-0', '9-1'],
-        
+
         // Atemschutz und Inhalation
         'atemschutz|inhalation|dämpfe|aerosol|respiratory|breathing|fumes|vapor|inhale': ['5-2', '7-0'],
-        
+
         // Augenschutz
         'auge|spritzer|strahlung|eye|splash|radiation|vision': ['5-3', '7-2'],
-        
+
         // Hautschutz
         'haut|kontakt|absorption|skin|contact|dermal|gloves': ['5-1', '5-3']
       };
@@ -833,7 +833,7 @@ export class DatabaseStorage implements IStorage {
         const regex = new RegExp(keywordPattern, 'i');
         if (regex.test(suggestionText)) {
           console.log(`Matched pattern "${keywordPattern}" -> hazards: ${hazardIds.join(', ')}`);
-          
+
           // Add relevant hazard if not already present
           for (const hazardId of hazardIds) {
             if (!currentSelectedHazards.includes(hazardId)) {
@@ -843,7 +843,7 @@ export class DatabaseStorage implements IStorage {
               console.log(`Added hazard ${hazardId} to selected hazards`);
             }
           }
-          
+
           // Add or update hazard notes with actual suggestion content
           if (hazardIds.length > 0) {
             const primaryHazard = hazardIds[0];
@@ -892,7 +892,7 @@ export class DatabaseStorage implements IStorage {
         console.log(`Updating permit ${permit.id} with new TRBS mappings:`);
         console.log(`Selected hazards: ${currentSelectedHazards.join(', ')}`);
         console.log(`Hazard notes: ${JSON.stringify(currentHazardNotes)}`);
-        
+
         await db
           .update(permits)
           .set({
@@ -1044,7 +1044,7 @@ export class DatabaseStorage implements IStorage {
       });
 
       const success = response.ok;
-      
+
       if (success) {
         console.log('Webhook test successful. Response status:', response.status);
       } else {
@@ -1061,7 +1061,7 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Webhook test error for config ID:', id);
       console.error('Error details:', error);
-      
+
       // Provide specific error information
       let errorType = 'Unknown error';
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -1071,9 +1071,9 @@ export class DatabaseStorage implements IStorage {
       } else if (error instanceof Error) {
         errorType = error.message;
       }
-      
+
       console.error('Error type:', errorType);
-      
+
       // Update test status on error
       await this.updateWebhookConfig(id, {
         lastTestedAt: new Date(),
@@ -1219,7 +1219,7 @@ export class DatabaseStorage implements IStorage {
       .select({ id: permits.id })
       .from(permits)
       .where(eq(permits.requestorId, userId));
-    
+
     if (userPermits.length === 0) {
       return 0;
     }
@@ -1241,13 +1241,13 @@ export class DatabaseStorage implements IStorage {
   async updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined> {
     // First add to status history
     await this.addStatusHistoryEntry(id, status, userId, comment);
-    
+
     // Prepare update object with status-specific timestamps
     const updateData: Partial<Permit> = {
       status,
       updatedAt: new Date()
     };
-    
+
     // Set specific timestamps based on status
     switch (status) {
       case 'pending':
@@ -1264,13 +1264,13 @@ export class DatabaseStorage implements IStorage {
         updateData.completedAt = new Date();
         break;
     }
-    
+
     const [updatedPermit] = await db
       .update(permits)
       .set(updateData)
       .where(eq(permits.id, id))
       .returning();
-    
+
     return updatedPermit;
   }
 
@@ -1278,14 +1278,14 @@ export class DatabaseStorage implements IStorage {
     // Get current permit to read existing history
     const permit = await this.getPermit(permitId);
     if (!permit) return;
-    
+
     // Get user name for history entry
     const user = await this.getUser(userId);
     const userName = user?.username || 'Unknown';
-    
+
     // Parse existing history
     const existingHistory = permit.statusHistory ? JSON.parse(permit.statusHistory) : [];
-    
+
     // Add new entry
     const newEntry = {
       status,
@@ -1294,9 +1294,9 @@ export class DatabaseStorage implements IStorage {
       userName,
       comment
     };
-    
+
     const updatedHistory = [...existingHistory, newEntry];
-    
+
     // Update permit with new history
     await db
       .update(permits)
