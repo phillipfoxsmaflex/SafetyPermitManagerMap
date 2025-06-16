@@ -30,6 +30,14 @@ export default function PermitDetails() {
     queryKey: ["/api/auth/user"],
   });
 
+  const { data: workLocations = [] } = useQuery<any[]>({
+    queryKey: ["/api/work-locations/active"],
+  });
+
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ["/api/users"],
+  });
+
   const formatDateTime = (date: Date | string | null) => {
     if (!date) return 'Nicht angegeben';
     return new Date(date).toLocaleDateString('de-DE', {
@@ -72,6 +80,22 @@ export default function PermitDetails() {
       'hoch': { label: 'Hoch', color: 'bg-red-100 text-red-800' },
     };
     return levelMap[level] || { label: level, color: 'bg-gray-100 text-gray-800' };
+  };
+
+  const getWorkLocationName = (workLocationId: number | null) => {
+    if (!workLocationId || !Array.isArray(workLocations) || workLocations.length === 0) {
+      return permit?.location || 'Nicht angegeben';
+    }
+    const location = workLocations.find((loc: any) => loc.id === workLocationId);
+    return location ? `${location.name} - ${location.description}` : permit?.location || 'Nicht angegeben';
+  };
+
+  const getSubmittedByName = (submittedById: number | null) => {
+    if (!submittedById || !Array.isArray(users) || users.length === 0) {
+      return 'Nicht angegeben';
+    }
+    const user = users.find((u: any) => u.id === submittedById);
+    return user ? user.fullName || user.username : `Benutzer ID: ${submittedById}`;
   };
 
   const handleWorkflowAction = async (action: string, nextStatus: string) => {
@@ -164,7 +188,7 @@ export default function PermitDetails() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-secondary-gray">Arbeitsort</div>
-                    <div className="text-industrial-gray">{permit.location}</div>
+                    <div className="text-industrial-gray">{getWorkLocationName(permit.workLocationId)}</div>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-secondary-gray">Abteilung</div>
@@ -180,7 +204,7 @@ export default function PermitDetails() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-secondary-gray">Eingereicht von</div>
-                    <div className="text-industrial-gray">{permit.submittedBy ? `Benutzer ID: ${permit.submittedBy}` : 'Nicht angegeben'}</div>
+                    <div className="text-industrial-gray">{getSubmittedByName(permit.submittedBy)}</div>
                   </div>
                 </div>
                 
