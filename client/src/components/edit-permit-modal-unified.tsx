@@ -241,7 +241,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         title: "Erfolg",
         description: "Status erfolgreich aktualisiert.",
       });
-      onOpenChange(false);
+      // Don't close modal automatically to allow confirmation dialogs to work
     },
     onError: (error: Error) => {
       const errorMessage = error.message || "Fehler beim Status-Update.";

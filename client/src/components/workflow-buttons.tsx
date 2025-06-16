@@ -189,17 +189,26 @@ export function WorkflowButtons({
       })}
 
       {confirmAction && (
-        <AlertDialog open={true} onOpenChange={() => setConfirmAction(null)}>
-          <AlertDialogContent>
+        <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+          <AlertDialogContent className="z-[100]">
             <AlertDialogHeader>
               <AlertDialogTitle>Aktion bestätigen</AlertDialogTitle>
               <AlertDialogDescription>
-                Möchten Sie diese Aktion wirklich ausführen: {confirmAction.label}?
+                Möchten Sie diese Aktion wirklich ausführen: <strong>{confirmAction.label}</strong>?
+                <br />
+                Status wechselt von "{permit.status}" zu "{confirmAction.nextStatus}".
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleAction(confirmAction)}>
+              <AlertDialogCancel onClick={() => setConfirmAction(null)}>
+                Abbrechen
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => {
+                  console.log('WorkflowButtons: Confirmation dialog - executing action');
+                  handleAction(confirmAction);
+                }}
+              >
                 Bestätigen
               </AlertDialogAction>
             </AlertDialogFooter>
