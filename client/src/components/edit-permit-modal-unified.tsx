@@ -17,6 +17,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -1171,6 +1181,30 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         </Form>
         </div>
       </DialogContent>
+      
+      {/* Central Confirmation Dialog */}
+      {confirmAction && (
+        <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+          <AlertDialogContent className="z-[200]">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Workflow-Aktion bestätigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie diese Aktion wirklich ausführen: <strong>{confirmAction.label}</strong>?
+                <br />
+                Status wechselt von "{(currentPermit || permit)?.status}" zu "{confirmAction.nextStatus}".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfirmAction(null)}>
+                Abbrechen
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={executeConfirmedAction}>
+                Bestätigen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Dialog>
   );
 }
