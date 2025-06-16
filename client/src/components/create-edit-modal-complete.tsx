@@ -346,7 +346,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-industrial-gray flex items-center gap-2">
             <Activity className="h-5 w-5" />
@@ -360,6 +360,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
           </DialogDescription>
         </DialogHeader>
 
+        <div className="max-h-[75vh] overflow-y-auto pr-2">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
@@ -1082,6 +1083,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
             </div>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );
