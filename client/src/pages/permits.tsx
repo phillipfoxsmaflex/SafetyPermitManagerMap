@@ -240,9 +240,11 @@ export default function Permits() {
         <Plus className="h-6 w-6" />
       </Button>
 
-      <CreatePermitModal 
+      <EditPermitModalUnified 
+        permit={null}
         open={createModalOpen} 
-        onOpenChange={setCreateModalOpen} 
+        onOpenChange={setCreateModalOpen}
+        mode="create"
       />
 
 
