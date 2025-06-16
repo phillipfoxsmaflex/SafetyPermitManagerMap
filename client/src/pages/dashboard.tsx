@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { CreateEditModalComplete } from "@/components/create-edit-modal-complete";
-import { PermitTableClean } from "@/components/permit-table-clean";
+import { PermitTable } from "@/components/permit-table-clean";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -344,7 +344,7 @@ export default function Dashboard() {
             {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
           </h3>
         </div>
-        <PermitTableClean 
+        <PermitTable 
           permits={paginatedPermits} 
           isLoading={permitsLoading} 
           onEdit={handleEditPermit} 

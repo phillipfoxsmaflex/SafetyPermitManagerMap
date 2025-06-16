@@ -36,9 +36,10 @@ interface AiSuggestion {
 
 interface AiSuggestionsProps {
   permitId: number;
+  disabled?: boolean;
 }
 
-export function AiSuggestions({ permitId }: AiSuggestionsProps) {
+export function AiSuggestions({ permitId, disabled = false }: AiSuggestionsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);

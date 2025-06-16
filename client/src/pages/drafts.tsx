@@ -356,7 +356,7 @@ export default function Drafts() {
         </div>
 
         {/* Edit Modal */}
-        <EditPermitModal
+        <EditPermitModalUnified
           permit={selectedPermit}
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
