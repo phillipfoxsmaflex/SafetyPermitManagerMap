@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { Eye, Edit, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
-import { PermitPrintView } from "@/components/permit-print-view";
 import { Permit, User } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -45,14 +43,13 @@ function getPermitTypeLabel(type: string): string {
 
 export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, currentUser }: PermitTableProps) {
   const [, setLocation] = useLocation();
-  const [printPermit, setPrintPermit] = useState<Permit | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
 
 
   const handleView = (permit: Permit) => {
-    setLocation(`/permits/${permit.id}`);
+    setLocation(`/permit/${permit.id}`);
   };
 
 
@@ -63,7 +60,7 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
   };
 
   const handlePrint = (permit: Permit) => {
-    setPrintPermit(permit);
+    setLocation(`/permit/${permit.id}/print`);
   };
 
   const handleDelete = (permit: Permit) => {
@@ -190,12 +187,6 @@ export function PermitTable({ permits, isLoading, onEdit, onDelete, isAdmin, cur
         </Table>
       </div>
 
-      {printPermit && (
-        <PermitPrintView 
-          permit={printPermit} 
-          onClose={() => setPrintPermit(null)} 
-        />
-      )}
     </>
   );
 }
