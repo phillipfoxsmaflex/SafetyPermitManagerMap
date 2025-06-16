@@ -64,6 +64,7 @@ const permitSchema = z.object({
   workLocationId: z.string().optional(),
   requestedBy: z.string().min(1, "Antragsteller ist erforderlich"),
   department: z.string().min(1, "Abteilung ist erforderlich"),
+  contactNumber: z.string().optional(),
   plannedStartDate: z.string().min(1, "Geplanter Beginn ist erforderlich"),
   plannedEndDate: z.string().min(1, "Geplantes Ende ist erforderlich"),
   emergencyContact: z.string().optional(),
@@ -167,6 +168,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         workLocationId: data.workLocationId ? parseInt(data.workLocationId) : undefined,
         requestorName: data.requestedBy,
         department: data.department,
+        contactNumber: data.contactNumber,
         startDate: data.plannedStartDate,
         endDate: data.plannedEndDate,
         emergencyContact: data.emergencyContact,
@@ -291,6 +293,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         workLocationId: workLocationIdStr,
         requestedBy: currentPermit.requestorName || "",
         department: currentPermit.department || "",
+        contactNumber: currentPermit.contactNumber || "",
         plannedStartDate: formatDate(currentPermit.startDate),
         plannedEndDate: formatDate(currentPermit.endDate),
         emergencyContact: currentPermit.emergencyContact || "",
@@ -610,6 +613,24 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           )}
                         />
                       </div>
+
+                      <FormField
+                        control={form.control}
+                        name="contactNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kontaktnummer</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Telefonnummer für Rückfragen..."
+                                disabled={!canEdit}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
                       <FormField
                         control={form.control}
