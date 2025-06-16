@@ -163,87 +163,6 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
   });
 
-  // Check if permit can be edited (only drafts can be edited)
-  const canEdit = currentPermit?.status === 'draft';
-  const isLoading = updateMutation.isPending || workflowMutation.isPending;
-
-  // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
-  React.useEffect(() => {
-    if (mode === 'edit' && currentPermit && open) {
-      console.log("Syncing form with latest permit data:", currentPermit.id);
-
-      // Format dates properly for datetime-local input
-      const formatDate = (date: string | Date | null): string => {
-        if (!date) return "";
-        if (typeof date === 'string') {
-          // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
-          const dateObj = new Date(date);
-          return dateObj.toISOString().slice(0, 16);
-        }
-        return date.toISOString().slice(0, 16);
-      };
-
-      // Find work location ID by name
-      const findWorkLocationId = (locationName: string | null): number | undefined => {
-        if (!locationName) return undefined;
-        const location = workLocations.find(loc => loc.name === locationName);
-        return location?.id;
-      };
-
-      // Find user ID by full name
-      const findUserIdByName = (fullName: string | null, userList: any[]): number | undefined => {
-        if (!fullName) return undefined;
-        const user = userList.find(u => u.fullName === fullName || u.username === fullName);
-        return user?.id;
-      };
-
-      form.reset({
-        type: currentPermit.type || "",
-        workDescription: currentPermit.description || "",
-        location: currentPermit.location || "",
-        workLocationId: findWorkLocationId(currentPermit.location),
-        requestedBy: currentPermit.requestorName || "",
-        department: currentPermit.department || "",
-        plannedStartDate: formatDate(currentPermit.startDate),
-        plannedEndDate: formatDate(currentPermit.endDate),
-        emergencyContact: currentPermit.emergencyContact || "",
-        departmentHeadApproval: currentPermit.departmentHeadApproval || false,
-        safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
-        maintenanceApproval: currentPermit.maintenanceApproval || false,
-        departmentHeadId: findUserIdByName(currentPermit.departmentHead, departmentHeads),
-        safetyOfficerId: findUserIdByName(currentPermit.safetyOfficer, safetyOfficers),
-        maintenanceApproverId: findUserIdByName(currentPermit.maintenanceApprover, maintenanceApprovers),
-        identifiedHazards: currentPermit.identifiedHazards || "",
-        selectedHazards: currentPermit.selectedHazards || [],
-        hazardNotes: currentPermit.hazardNotes || "",
-        completedMeasures: currentPermit.completedMeasures || [],
-        status: currentPermit.status || "draft",
-        performerName: currentPermit.performerName || "",
-        performerSignature: currentPermit.performerSignature || "",
-        workStartedAt: formatDate(currentPermit.workStartedAt),
-        workCompletedAt: formatDate(currentPermit.workCompletedAt),
-        additionalComments: currentPermit.additionalComments || "",
-        immediateActions: currentPermit.immediateActions || "",
-        beforeWorkStarts: currentPermit.beforeWorkStarts || "",
-        complianceNotes: currentPermit.complianceNotes || "",
-        overallRisk: currentPermit.overallRisk || "",
-      });
-
-      // Update hazard notes state
-      if (currentPermit.hazardNotes) {
-        try {
-          const notes = typeof currentPermit.hazardNotes === 'string' 
-            ? JSON.parse(currentPermit.hazardNotes) 
-            : currentPermit.hazardNotes;
-          setHazardNotes(notes);
-        } catch (e) {
-          console.warn("Could not parse hazard notes:", currentPermit.hazardNotes);
-          setHazardNotes({});
-        }
-      }
-    }
-  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers]);
-
   // Update/Create form mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EditPermitFormData) => {
@@ -332,6 +251,87 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       });
     },
   });
+
+  // Check if permit can be edited (only drafts can be edited)
+  const canEdit = currentPermit?.status === 'draft';
+  const isLoading = updateMutation.isPending || workflowMutation.isPending;
+
+  // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
+  React.useEffect(() => {
+    if (mode === 'edit' && currentPermit && open) {
+      console.log("Syncing form with latest permit data:", currentPermit.id);
+
+      // Format dates properly for datetime-local input
+      const formatDate = (date: string | Date | null): string => {
+        if (!date) return "";
+        if (typeof date === 'string') {
+          // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
+          const dateObj = new Date(date);
+          return dateObj.toISOString().slice(0, 16);
+        }
+        return date.toISOString().slice(0, 16);
+      };
+
+      // Find work location ID by name
+      const findWorkLocationId = (locationName: string | null): number | undefined => {
+        if (!locationName) return undefined;
+        const location = workLocations.find(loc => loc.name === locationName);
+        return location?.id;
+      };
+
+      // Find user ID by full name
+      const findUserIdByName = (fullName: string | null, userList: any[]): number | undefined => {
+        if (!fullName) return undefined;
+        const user = userList.find(u => u.fullName === fullName || u.username === fullName);
+        return user?.id;
+      };
+
+      form.reset({
+        type: currentPermit.type || "",
+        workDescription: currentPermit.description || "",
+        location: currentPermit.location || "",
+        workLocationId: findWorkLocationId(currentPermit.location),
+        requestedBy: currentPermit.requestorName || "",
+        department: currentPermit.department || "",
+        plannedStartDate: formatDate(currentPermit.startDate),
+        plannedEndDate: formatDate(currentPermit.endDate),
+        emergencyContact: currentPermit.emergencyContact || "",
+        departmentHeadApproval: currentPermit.departmentHeadApproval || false,
+        safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
+        maintenanceApproval: currentPermit.maintenanceApproval || false,
+        departmentHeadId: findUserIdByName(currentPermit.departmentHead, departmentHeads),
+        safetyOfficerId: findUserIdByName(currentPermit.safetyOfficer, safetyOfficers),
+        maintenanceApproverId: findUserIdByName(currentPermit.maintenanceApprover, maintenanceApprovers),
+        identifiedHazards: currentPermit.identifiedHazards || "",
+        selectedHazards: currentPermit.selectedHazards || [],
+        hazardNotes: currentPermit.hazardNotes || "",
+        completedMeasures: currentPermit.completedMeasures || [],
+        status: currentPermit.status || "draft",
+        performerName: currentPermit.performerName || "",
+        performerSignature: currentPermit.performerSignature || "",
+        workStartedAt: formatDate(currentPermit.workStartedAt),
+        workCompletedAt: formatDate(currentPermit.workCompletedAt),
+        additionalComments: currentPermit.additionalComments || "",
+        immediateActions: currentPermit.immediateActions || "",
+        beforeWorkStarts: currentPermit.beforeWorkStarts || "",
+        complianceNotes: currentPermit.complianceNotes || "",
+        overallRisk: currentPermit.overallRisk || "",
+      });
+
+      // Update hazard notes state
+      if (currentPermit.hazardNotes) {
+        try {
+          const notes = typeof currentPermit.hazardNotes === 'string' 
+            ? JSON.parse(currentPermit.hazardNotes) 
+            : currentPermit.hazardNotes;
+          setHazardNotes(notes);
+        } catch (e) {
+          console.warn("Could not parse hazard notes:", currentPermit.hazardNotes);
+          setHazardNotes({});
+        }
+      }
+    }
+  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers]);
 
   const onSubmit = (data: EditPermitFormData) => {
     // Map frontend field names to backend field names
