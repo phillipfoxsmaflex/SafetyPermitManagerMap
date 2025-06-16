@@ -4,22 +4,30 @@ import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Printer, Eye } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Edit, Printer, FileText, Users, Settings, Brain, GitBranch, Activity } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { AiSuggestions } from "@/components/ai-suggestions";
-import { Permit } from "@shared/schema";
+import { WorkflowButtons } from "@/components/workflow-buttons";
+import { PermitAttachments } from "@/components/permit-attachments";
+import { StatusIndicator } from "@/components/status-indicator";
+import { WorkflowVisualization } from "@/components/workflow-visualization";
+import { Permit, User } from "@shared/schema";
 
 export default function PermitDetails() {
   const [match, params] = useRoute("/permit/:id");
   const permitId = params?.id;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Use specific permit query to avoid cache invalidation issues
   const { data: permit, isLoading } = useQuery<Permit>({
     queryKey: [`/api/permits/${permitId}`],
     enabled: !!permitId,
+  });
+
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
   });
 
   const formatDateTime = (date: Date | string | null) => {
@@ -33,244 +41,65 @@ export default function PermitDetails() {
     });
   };
 
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return 'Nicht angegeben';
+    return new Date(date).toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: 'long', 
+      day: 'numeric',
+    });
+  };
+
   const getPermitTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      'confined_space': 'Enger Raum Zutritt',
-      'hot_work': 'Heißarbeiten',
-      'electrical': 'Elektrische Arbeiten',
-      'chemical': 'Chemische Arbeiten',
-      'height': 'Höhenarbeiten',
+      'general': 'Allgemeiner Erlaubnisschein',
+      'hot_work': 'Heißarbeiten (Schweißen, Schneiden, Löten)',
+      'height_work': 'Arbeiten in der Höhe (>2m Absturzgefahr)',
+      'confined_space': 'Arbeiten in engen Räumen/Behältern',
+      'electrical_work': 'Elektrische Arbeiten (Schaltanlagen, Kabel)',
+      'chemical_work': 'Arbeiten mit Gefahrstoffen',
+      'machinery_work': 'Arbeiten an Maschinen/Anlagen',
+      'excavation': 'Erdarbeiten/Grabungen',
+      'maintenance': 'Instandhaltungsarbeiten',
     };
     return typeMap[type] || type;
   };
 
-  const handlePrint = () => {
-    if (!permit) return;
+  const getRiskLevelLabel = (level: string) => {
+    const levelMap: Record<string, { label: string; color: string }> = {
+      'niedrig': { label: 'Niedrig', color: 'bg-green-100 text-green-800' },
+      'mittel': { label: 'Mittel', color: 'bg-yellow-100 text-yellow-800' },
+      'hoch': { label: 'Hoch', color: 'bg-red-100 text-red-800' },
+    };
+    return levelMap[level] || { label: level, color: 'bg-gray-100 text-gray-800' };
+  };
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const hazardCategories = [
-      { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
-      { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
-      { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
-      { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
-      { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
-      { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
-      { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
-      { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
-      { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
-      { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
-      { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
-    ];
-
-    let selectedHazardsHtml = '';
-    if (permit.selectedHazards && permit.selectedHazards.length > 0) {
-      selectedHazardsHtml = permit.selectedHazards.map((hazardId: string) => {
-        const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
-        const category = hazardCategories.find(c => c.id === categoryId);
-        const hazard = category?.hazards[hazardIndex];
-        
-        if (!category || !hazard) return '';
-        
-        return `
-          <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;">
-            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">${category.category}</div>
-            <div style="color: #666;">${hazard}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    let hazardNotesHtml = '';
-    if (permit.hazardNotes && permit.hazardNotes !== '{}') {
-      try {
-        const notes = JSON.parse(permit.hazardNotes);
-        hazardNotesHtml = Object.entries(notes).map(([hazardId, note]) => {
-          if (!note) return '';
-          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
-          const category = hazardCategories.find(c => c.id === categoryId);
-          const hazard = category?.hazards[hazardIndex];
-          
-          return `
-            <div style="margin-bottom: 10px;">
-              <span style="font-weight: bold; color: #2563eb;">${hazard}:</span>
-              <span style="color: #666; margin-left: 10px;">${note}</span>
-            </div>
-          `;
-        }).join('');
-      } catch (e) {
-        console.error('Error parsing hazard notes:', e);
-      }
-    }
-
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Arbeitserlaubnis - ${permit.permitId}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 15px; }
-            .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-            .permit-id { font-size: 18px; color: #666; }
-            .section { margin-bottom: 20px; }
-            .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-            .field-row { display: flex; margin-bottom: 8px; }
-            .field-label { width: 150px; font-weight: bold; color: #555; }
-            .field-value { flex: 1; color: #333; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .signatures { display: flex; justify-content: space-between; margin-top: 40px; }
-            .signature-box { border: 1px solid #ccc; padding: 15px; width: 30%; text-align: center; }
-            @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="title">ARBEITSERLAUBNIS</div>
-            <div class="permit-id">${permit.permitId}</div>
-          </div>
-
-          <div class="grid">
-            <div>
-              <div class="section">
-                <div class="section-title">ALLGEMEINE INFORMATIONEN</div>
-                <div class="field-row">
-                  <div class="field-label">Typ:</div>
-                  <div class="field-value">${getPermitTypeLabel(permit.type)}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Standort:</div>
-                  <div class="field-value">${permit.location}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Beschreibung:</div>
-                  <div class="field-value">${permit.description}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Abteilung:</div>
-                  <div class="field-value">${permit.department}</div>
-                </div>
-              </div>
-
-              <div class="section">
-                <div class="section-title">KONTAKTINFORMATIONEN</div>
-                <div class="field-row">
-                  <div class="field-label">Antragsteller:</div>
-                  <div class="field-value">${permit.requestorName}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Kontaktnummer:</div>
-                  <div class="field-value">${permit.contactNumber}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Notfallkontakt:</div>
-                  <div class="field-value">${permit.emergencyContact}</div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div class="section">
-                <div class="section-title">ZEITPLAN</div>
-                <div class="field-row">
-                  <div class="field-label">Startdatum:</div>
-                  <div class="field-value">${formatDateTime(permit.startDate)}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Enddatum:</div>
-                  <div class="field-value">${formatDateTime(permit.endDate)}</div>
-                </div>
-              </div>
-
-              <div class="section">
-                <div class="section-title">GENEHMIGUNGEN</div>
-                <div class="field-row">
-                  <div class="field-label">Abteilungsleiter:</div>
-                  <div class="field-value">${permit.departmentHead}</div>
-                </div>
-                <div class="field-row">
-                  <div class="field-label">Wartungsgenehmiger:</div>
-                  <div class="field-value">${permit.maintenanceApprover}</div>
-                </div>
-                ${permit.safetyOfficer ? `
-                <div class="field-row">
-                  <div class="field-label">Sicherheitsbeauftragter:</div>
-                  <div class="field-value">${permit.safetyOfficer}</div>
-                </div>` : ''}
-              </div>
-            </div>
-          </div>
-
-          ${selectedHazardsHtml ? `
-          <div class="section">
-            <div class="section-title">TRBS GEFÄHRDUNGSBEURTEILUNG</div>
-            ${selectedHazardsHtml}
-          </div>` : ''}
-
-          ${hazardNotesHtml ? `
-          <div class="section">
-            <div class="section-title">ZUSÄTZLICHE NOTIZEN ZU GEFAHREN</div>
-            ${hazardNotesHtml}
-          </div>` : ''}
-
-          ${permit.additionalComments ? `
-          <div class="section">
-            <div class="section-title">ZUSÄTZLICHE KOMMENTARE</div>
-            <div class="field-value">${permit.additionalComments}</div>
-          </div>` : ''}
-
-          <div class="signatures">
-            <div class="signature-box">
-              <div>Abteilungsleiter</div>
-              <div style="margin-top: 20px; font-size: 10px;">
-                ${permit.departmentHeadApproval ? `Genehmigt: ${permit.departmentHeadApprovalDate ? formatDateTime(permit.departmentHeadApprovalDate) : ''}` : 'Ausstehend'}
-              </div>
-            </div>
-            <div class="signature-box">
-              <div>Sicherheitsbeauftragter</div>
-              <div style="margin-top: 20px; font-size: 10px;">
-                ${permit.safetyOfficerApproval ? `Genehmigt: ${permit.safetyOfficerApprovalDate ? formatDateTime(permit.safetyOfficerApprovalDate) : ''}` : 'Ausstehend'}
-              </div>
-            </div>
-            <div class="signature-box">
-              <div>Technik</div>
-              <div style="margin-top: 20px; font-size: 10px;">
-                ${permit.maintenanceApproval ? `Genehmigt: ${permit.maintenanceApprovalDate ? formatDateTime(permit.maintenanceApprovalDate) : ''}` : 'Ausstehend'}
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  const handleWorkflowAction = async (action: string, nextStatus: string) => {
+    // This will be handled by the WorkflowButtons component
+    console.log('Workflow action triggered:', action, nextStatus);
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">Lade Genehmigungsdetails...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-industrial-gray mx-auto mb-4"></div>
+          <div>Lade Genehmigungsdetails...</div>
+        </div>
       </div>
     );
   }
 
   if (!permit) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Genehmigung nicht gefunden</h2>
           <p className="text-gray-600 mb-6">Die angeforderte Genehmigung konnte nicht gefunden werden.</p>
-          <Link href="/">
+          <Link href="/permits">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück zum Dashboard
+              Zurück zur Übersicht
             </Button>
           </Link>
         </div>
@@ -278,287 +107,428 @@ export default function PermitDetails() {
     );
   }
 
+  const riskLevel = getRiskLevelLabel(permit.overallRisk || 'niedrig');
+
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{permit.permitId}</h1>
-            <p className="text-gray-600">{getPermitTypeLabel(permit.type)}</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-4">
+              <Link href="/permits">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-industrial-gray">{permit.permitId}</h1>
+                <p className="text-secondary-gray">{getPermitTypeLabel(permit.type)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <PermitStatusBadge status={permit.status} />
+              <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Bearbeiten
+              </Button>
+              <Button variant="outline" size="sm">
+                <Printer className="h-4 w-4 mr-2" />
+                Drucken
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <PermitStatusBadge status={permit.status} />
-          <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Bearbeiten
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Drucken
-          </Button>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content - Left Side */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Grundinformationen */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Grundinformationen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Arbeitstyp</div>
+                    <div className="text-industrial-gray font-medium">{getPermitTypeLabel(permit.type)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Arbeitsort</div>
+                    <div className="text-industrial-gray">{permit.location}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Abteilung</div>
+                    <div className="text-industrial-gray">{permit.department}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Gesamtrisiko</div>
+                    <Badge className={riskLevel.color}>{riskLevel.label}</Badge>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Status</div>
+                    <PermitStatusBadge status={permit.status} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Eingereicht von</div>
+                    <div className="text-industrial-gray">{permit.submittedBy ? `Benutzer ID: ${permit.submittedBy}` : 'Nicht angegeben'}</div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <div className="text-sm font-medium text-secondary-gray mb-2">Beschreibung der Arbeiten</div>
+                  <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
+                    {permit.description || 'Keine Beschreibung angegeben'}
+                  </div>
+                </div>
+
+
+
+                {permit.additionalComments && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray mb-2">Zusätzliche Kommentare</div>
+                      <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
+                        {permit.additionalComments}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Zeitplan */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Zeitplan</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Geplanter Beginn</div>
+                    <div className="text-industrial-gray">{formatDateTime(permit.startDate)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Geplantes Ende</div>
+                    <div className="text-industrial-gray">{formatDateTime(permit.endDate)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Gültig bis</div>
+                    <div className="text-industrial-gray">{formatDate(permit.endDate)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Erstellt am</div>
+                    <div className="text-industrial-gray">{formatDateTime(permit.createdAt)}</div>
+                  </div>
+                </div>
+
+                {(permit.workStartedAt || permit.workCompletedAt) && (
+                  <>
+                    <Separator />
+                    <div className="bg-blue-50 p-4 rounded-md">
+                      <h4 className="font-medium text-blue-900 mb-3">Durchführung</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {permit.workStartedAt && (
+                          <div>
+                            <div className="text-sm font-medium text-blue-700">Arbeit begonnen am</div>
+                            <div className="text-blue-900">{formatDateTime(permit.workStartedAt)}</div>
+                          </div>
+                        )}
+                        {permit.workCompletedAt && (
+                          <div>
+                            <div className="text-sm font-medium text-blue-700">Arbeit abgeschlossen am</div>
+                            <div className="text-blue-900">{formatDateTime(permit.workCompletedAt)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Kontaktinformationen */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Verantwortliche Personen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Antragsteller</div>
+                    <div className="text-industrial-gray font-medium">{permit.requestorName}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Kontaktnummer</div>
+                    <div className="text-industrial-gray">{permit.contactNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Notfallkontakt</div>
+                    <div className="text-industrial-gray">{permit.emergencyContact}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Durchführende Person</div>
+                    <div className="text-industrial-gray">{permit.performerName || 'Nicht angegeben'}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sicherheitsinformationen */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Sicherheitsinformationen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Schutzausrüstung erforderlich</div>
+                    <div className="text-industrial-gray">
+                      {permit.ppeRequired ? (
+                        Array.isArray(permit.ppeRequired) ? permit.ppeRequired.join(', ') : permit.ppeRequired
+                      ) : 'Keine Angabe'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Isolierung erforderlich</div>
+                    <div className="text-industrial-gray">
+                      {permit.isolationRequired ? 'Ja' : 'Nein'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Feuerwache erforderlich</div>
+                    <div className="text-industrial-gray">
+                      {permit.fireWatchRequired ? 'Ja' : 'Nein'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-secondary-gray">Gasmessung erforderlich</div>
+                    <div className="text-industrial-gray">
+                      {permit.gasTestRequired ? 'Ja' : 'Nein'}
+                    </div>
+                  </div>
+                </div>
+
+                {permit.specialPrecautions && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray mb-2">Besondere Vorsichtsmaßnahmen</div>
+                      <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
+                        {permit.specialPrecautions}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {permit.emergencyProcedures && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray mb-2">Notfallverfahren</div>
+                      <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
+                        {permit.emergencyProcedures}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Genehmigungen */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Genehmigungen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray">Abteilungsleiter</div>
+                      <div className="text-industrial-gray">{permit.departmentHead || 'Nicht zugewiesen'}</div>
+                    </div>
+                    <div className="text-right">
+                      {permit.departmentHeadApproval ? (
+                        <div>
+                          <Badge className="bg-green-100 text-green-800">Genehmigt</Badge>
+                          <div className="text-xs text-secondary-gray mt-1">
+                            {formatDateTime(permit.departmentHeadApprovalDate)}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Ausstehend</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray">Sicherheitsbeauftragter</div>
+                      <div className="text-industrial-gray">{permit.safetyOfficer || 'Nicht zugewiesen'}</div>
+                    </div>
+                    <div className="text-right">
+                      {permit.safetyOfficerApproval ? (
+                        <div>
+                          <Badge className="bg-green-100 text-green-800">Genehmigt</Badge>
+                          <div className="text-xs text-secondary-gray mt-1">
+                            {formatDateTime(permit.safetyOfficerApprovalDate)}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Ausstehend</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray">Wartungsgenehmiger</div>
+                      <div className="text-industrial-gray">{permit.maintenanceApprover || 'Nicht zugewiesen'}</div>
+                    </div>
+                    <div className="text-right">
+                      {permit.maintenanceApproval ? (
+                        <div>
+                          <Badge className="bg-green-100 text-green-800">Genehmigt</Badge>
+                          <div className="text-xs text-secondary-gray mt-1">
+                            {formatDateTime(permit.maintenanceApprovalDate)}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Ausstehend</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* KI-Vorschläge */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  KI-Vorschläge
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AiSuggestions permitId={permit.id} disabled={permit.status !== 'draft'} />
+              </CardContent>
+            </Card>
+
+            {/* Anhänge */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Datei-Anhänge
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PermitAttachments permitId={permit.id} />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar - Right Side */}
+          <div className="space-y-6">
+            
+            {/* Status & Workflow */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Status-Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <StatusIndicator status={permit.status} />
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-3">Verfügbare Aktionen</h4>
+                  {currentUser && (
+                    <WorkflowButtons 
+                      permit={permit} 
+                      currentUser={currentUser} 
+                      onAction={handleWorkflowAction}
+                      isLoading={false}
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Workflow Visualization */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5" />
+                  Workflow-Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WorkflowVisualization currentStatus={permit.status} />
+              </CardContent>
+            </Card>
+
+            {/* Quick Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Schnellinfo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-secondary-gray">Permit-ID:</span>
+                  <span className="font-mono font-medium">{permit.permitId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary-gray">Status:</span>
+                  <PermitStatusBadge status={permit.status} />
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary-gray">Risiko:</span>
+                  <Badge className={riskLevel.color}>{riskLevel.label}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary-gray">Erstellt:</span>
+                  <span>{formatDate(permit.createdAt)}</span>
+                </div>
+                {permit.updatedAt && (
+                  <div className="flex justify-between">
+                    <span className="text-secondary-gray">Aktualisiert:</span>
+                    <span>{formatDate(permit.updatedAt)}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Grundinformationen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Arbeitsort</div>
-                <div className="text-industrial-gray">{permit.location}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Abteilung</div>
-                <div className="text-industrial-gray">{permit.department}</div>
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-secondary-gray">Beschreibung</div>
-              <div className="text-industrial-gray">{permit.description}</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Kontaktinformationen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Antragsteller</div>
-                <div className="text-industrial-gray">{permit.requestorName}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Kontaktnummer</div>
-                <div className="text-industrial-gray">{permit.contactNumber}</div>
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-secondary-gray">Notfallkontakt</div>
-              <div className="text-industrial-gray">{permit.emergencyContact}</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Zeitplan</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Startdatum</div>
-                <div className="text-industrial-gray">{formatDateTime(permit.startDate)}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray">Enddatum</div>
-                <div className="text-industrial-gray">{formatDateTime(permit.endDate)}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* TRBS Hazard Assessment */}
-        {permit.selectedHazards && permit.selectedHazards.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>TRBS Gefährdungsbeurteilung</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {permit.selectedHazards.map((hazardId: string) => {
-                const categories = [
-                  { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
-                  { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
-                  { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
-                  { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
-                  { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
-                  { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
-                  { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
-                  { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
-                  { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
-                  { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
-                  { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
-                ];
-                
-                const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
-                const category = categories.find(c => c.id === categoryId);
-                const hazard = category?.hazards[hazardIndex];
-                
-                if (!category || !hazard) return null;
-                
-                return (
-                  <div key={hazardId} className="border rounded-lg p-4 bg-blue-50">
-                    <div className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded border-2 bg-safety-green border-safety-green flex items-center justify-center mt-1">
-                        <span className="text-white text-xs">✓</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-sm text-industrial-gray">
-                          {category.category}
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {hazard}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {permit.hazardNotes && permit.hazardNotes !== '{}' && (
-                <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
-                  <h4 className="font-medium text-sm text-industrial-gray mb-2">Zusätzliche Notizen:</h4>
-                  {Object.entries(JSON.parse(permit.hazardNotes)).map(([hazardId, note]) => {
-                    if (!note) return null;
-                    
-                    const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
-                    const categories = [
-                      { id: 1, category: "Mechanische Gefährdungen", hazards: ["Quetschung durch bewegte Teile", "Schneiden an scharfen Kanten", "Stoß durch herunterfallende Gegenstände", "Sturz durch ungesicherte Öffnungen"] },
-                      { id: 2, category: "Elektrische Gefährdungen", hazards: ["Stromschlag durch defekte Geräte", "Lichtbogen bei Schalthandlungen", "Statische Entladung", "Induktive Kopplung"] },
-                      { id: 3, category: "Gefahrstoffe", hazards: ["Hautkontakt mit Gefahrstoffen", "Einatmen von Gefahrstoffen", "Verschlucken von Gefahrstoffen", "Hautkontakt mit unter Druck stehenden Flüssigkeiten"] },
-                      { id: 4, category: "Biologische Arbeitsstoffe", hazards: ["Infektionsgefährdung", "sensibilisierende Wirkung", "toxische Wirkung"] },
-                      { id: 5, category: "Brand- und Explosionsgefährdungen", hazards: ["brennbare Feststoffe, Flüssigkeiten, Gase", "explosionsfähige Atmosphäre", "Explosivstoffe"] },
-                      { id: 6, category: "Thermische Gefährdungen", hazards: ["heiße Medien/Oberflächen", "kalte Medien/Oberflächen", "Brand, Explosion"] },
-                      { id: 7, category: "Gefährdungen durch spezielle physikalische Einwirkungen", hazards: ["Lärm", "Ultraschall, Infraschall", "Ganzkörpervibrationen", "Hand-Arm-Vibrationen", "optische Strahlung", "ionisierende Strahlung", "elektromagnetische Felder", "Unter- oder Überdruck"] },
-                      { id: 8, category: "Gefährdungen durch Arbeitsumgebungsbedingungen", hazards: ["Klima (Hitze, Kälte)", "unzureichende Beleuchtung", "Lärm", "unzureichende Verkehrswege", "Sturz, Ausgleiten", "unzureichende Flucht- und Rettungswege"] },
-                      { id: 9, category: "Physische Belastung/Arbeitsschwere", hazards: ["schwere dynamische Arbeit", "einseitige dynamische Arbeit", "Haltungsarbeit/Zwangshaltungen", "Fortbewegung/ungünstige Körperhaltung", "Kombination körperlicher Belastungsfaktoren"] },
-                      { id: 10, category: "Psychische Faktoren", hazards: ["unzureichend gestaltete Arbeitsaufgabe", "unzureichend gestaltete Arbeitsorganisation", "unzureichend gestaltete soziale Bedingungen", "unzureichend gestaltete Arbeitsplatz- und Arbeitsumgebungsfaktoren"] },
-                      { id: 11, category: "Sonstige Gefährdungen", hazards: ["durch Menschen (körperliche Gewalt)", "durch Tiere", "durch Pflanzen und pflanzliche Produkte", "Absturz in/durch Behälter, Becken, Gruben"] }
-                    ];
-                    const category = categories.find(c => c.id === categoryId);
-                    const hazard = category?.hazards[hazardIndex];
-                    
-                    if (!hazard) return null;
-                    
-                    return (
-                      <div key={hazardId} className="text-sm mb-2">
-                        <span className="font-medium text-blue-700">{hazard}:</span>
-                        <span className="text-gray-600 ml-2">{note}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Hazards and Comments */}
-        {(permit.identifiedHazards || permit.additionalComments) && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Gefahren und Kommentare</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {permit.identifiedHazards && (
-                <div>
-                  <div className="text-sm font-medium text-secondary-gray mb-2">Identifizierte Gefahren</div>
-                  <div className="text-industrial-gray">{permit.identifiedHazards}</div>
-                </div>
-              )}
-              {permit.additionalComments && (
-                <div>
-                  <div className="text-sm font-medium text-secondary-gray mb-2">Zusätzliche Kommentare</div>
-                  <div className="text-industrial-gray">{permit.additionalComments}</div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Approvals */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Genehmigungen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Department Head */}
-              <div className="text-center p-4 border rounded-lg">
-                <div className="font-medium text-gray-900 mb-2">Abteilungsleiter</div>
-                <div className="text-sm text-gray-600 mb-3">{permit.departmentHead}</div>
-                <div className="flex items-center justify-center mb-2">
-                  {permit.departmentHeadApproval ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      Genehmigt
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Ausstehend</Badge>
-                  )}
-                </div>
-                {permit.departmentHeadApprovalDate && (
-                  <div className="text-xs text-gray-500">
-                    {formatDateTime(permit.departmentHeadApprovalDate)}
-                  </div>
-                )}
-              </div>
-
-              {/* Safety Officer */}
-              <div className="text-center p-4 border rounded-lg">
-                <div className="font-medium text-gray-900 mb-2">Sicherheitsbeauftragter</div>
-                <div className="text-sm text-gray-600 mb-3">{permit.safetyOfficer || 'Nicht zugewiesen'}</div>
-                <div className="flex items-center justify-center mb-2">
-                  {permit.safetyOfficerApproval ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      Genehmigt
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Ausstehend</Badge>
-                  )}
-                </div>
-                {permit.safetyOfficerApprovalDate && (
-                  <div className="text-xs text-gray-500">
-                    {formatDateTime(permit.safetyOfficerApprovalDate)}
-                  </div>
-                )}
-              </div>
-
-              {/* Maintenance Approver */}
-              <div className="text-center p-4 border rounded-lg">
-                <div className="font-medium text-gray-900 mb-2">Technik</div>
-                <div className="text-sm text-gray-600 mb-3">{permit.maintenanceApprover}</div>
-                <div className="flex items-center justify-center mb-2">
-                  {permit.maintenanceApproval ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      Genehmigt
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Ausstehend</Badge>
-                  )}
-                </div>
-                {permit.maintenanceApprovalDate && (
-                  <div className="text-xs text-gray-500">
-                    {formatDateTime(permit.maintenanceApprovalDate)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AI Suggestions - only show in edit mode */}
-        {isEditModalOpen && <AiSuggestions permitId={permit.id} />}
-      </div>
-
-      <EditPermitModalUnified
+      {/* Edit Modal */}
+      <EditPermitModalUnified 
         permit={permit}
-        open={isEditModalOpen}
+        open={isEditModalOpen} 
         onOpenChange={setIsEditModalOpen}
+        mode="edit"
       />
     </div>
   );
