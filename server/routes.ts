@@ -682,16 +682,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Maintenance Approver: ${currentPermit.maintenanceApprover}`);
         
         // Check specific assignment first, then fall back to role-based approval
-        if (currentPermit.departmentHead === user.username) {
-          console.log('Setting department head approval');
+        if (currentPermit.departmentHead === user.fullName) {
+          console.log('Setting department head approval by name match');
           updates.departmentHeadApproval = true;
           updates.departmentHeadApprovalDate = new Date();
-        } else if (currentPermit.safetyOfficer === user.username) {
-          console.log('Setting safety officer approval');
+        } else if (currentPermit.safetyOfficer === user.fullName) {
+          console.log('Setting safety officer approval by name match');
           updates.safetyOfficerApproval = true;
           updates.safetyOfficerApprovalDate = new Date();
-        } else if (currentPermit.maintenanceApprover === user.username) {
-          console.log('Setting maintenance approval');
+        } else if (currentPermit.maintenanceApprover === user.fullName) {
+          console.log('Setting maintenance approval by name match');
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
         } else if (user.role === 'department_head' && 
@@ -704,13 +704,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                    (!currentPermit.maintenanceApprover || currentPermit.maintenanceApprover === '') && 
                    !currentPermit.maintenanceApproval) {
           // Maintenance user can approve based on role if no specific maintenance approver is assigned
+          console.log('Setting maintenance approval by role');
           updates.maintenanceApproval = true;
           updates.maintenanceApprovalDate = new Date();
         } else if (user.role === 'safety_officer' && 
-                   currentPermit.safetyOfficer && 
                    (!currentPermit.safetyOfficer || currentPermit.safetyOfficer === '') && 
                    !currentPermit.safetyOfficerApproval) {
-          // Safety officer can approve based on role if safety officer is required but no specific one is assigned
+          // Safety officer can approve based on role if no specific safety officer is assigned
+          console.log('Setting safety officer approval by role');
           updates.safetyOfficerApproval = true;
           updates.safetyOfficerApprovalDate = new Date();
         } else if (user.role === 'admin') {
