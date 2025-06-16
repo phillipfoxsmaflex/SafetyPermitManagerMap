@@ -257,6 +257,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   // Check if permit can be edited
   const canEdit = mode === 'create' || (currentPermit?.status === 'draft');
+  const canEditExecution = currentPermit?.status === 'active'; // Only active permits can edit execution
+  const canStartAiAnalysis = mode === 'create' || (currentPermit?.status === 'draft'); // AI analysis only for drafts
   const isLoading = submitMutation.isPending || workflowMutation.isPending;
 
   // Sync form with permit data in edit mode
@@ -969,7 +971,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                       <CardTitle>Arbeitsdurchführung</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {mode === 'edit' && permit?.status === "active" ? (
+                      {canEditExecution ? (
                         <>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
@@ -979,7 +981,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 <FormItem>
                                   <FormLabel>Arbeit begonnen am</FormLabel>
                                   <FormControl>
-                                    <Input type="datetime-local" disabled={!canEdit} {...field} />
+                                    <Input type="datetime-local" disabled={!canEditExecution} {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -993,7 +995,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 <FormItem>
                                   <FormLabel>Arbeit abgeschlossen am</FormLabel>
                                   <FormControl>
-                                    <Input type="datetime-local" disabled={!canEdit} {...field} />
+                                    <Input type="datetime-local" disabled={!canEditExecution} {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1004,7 +1006,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <SignaturePad
                             onSignatureChange={(signature) => form.setValue("performerSignature", signature)}
                             existingSignature={form.watch("performerSignature")}
-                            disabled={!canEdit}
+                            disabled={!canEditExecution}
                           />
 
                           <Alert>
@@ -1046,7 +1048,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         </Alert>
                       )}
                       {mode === 'edit' && permit && (
-                        <AiSuggestions permitId={permit.id} disabled={!canEdit} />
+                        <AiSuggestions permitId={permit.id} disabled={!canStartAiAnalysis} />
                       )}
                     </CardContent>
                   </Card>
@@ -1122,21 +1124,22 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
                 <Button
                   type="submit"
-                  disabled={!canEdit || isLoading}
+                  disabled={(!canEdit && !canEditExecution) || isLoading}
                   className="bg-industrial-gray hover:bg-industrial-gray/90 disabled:opacity-50"
-                  title={!canEdit ? "Kann nur bei Entwürfen bearbeitet werden" : ""}
+                  title={(!canEdit && !canEditExecution) ? "Kann nur bei Entwürfen oder aktiven Genehmigungen (Durchführung) bearbeitet werden" : ""}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {mode === 'create' ? 'Erstellen' : 'Speichern'}
                 </Button>
               </div>
 
-              {!canEdit && mode === 'edit' && (
+              {!canEdit && !canEditExecution && mode === 'edit' && (
                 <Alert className="mt-4">
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    Diese Genehmigung kann nicht bearbeitet werden, da sie sich nicht im Entwurfsstatus befindet. 
-                    Verwenden Sie die Workflow-Aktionen, um sie zurück auf "Entwurf" zu setzen.
+                    Diese Genehmigung kann nicht vollständig bearbeitet werden. 
+                    Entwürfe können vollständig bearbeitet werden, aktive Genehmigungen nur im Durchführung-Tab.
+                    Verwenden Sie die Workflow-Aktionen, um den Status zu ändern.
                   </AlertDescription>
                 </Alert>
               )}
