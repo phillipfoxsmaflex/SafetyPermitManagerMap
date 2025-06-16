@@ -35,6 +35,67 @@
   --light-gray: 206 18% 62%; /* #90A4AE */
 }
 
+/* Print styles */
+@media print {
+  /* Hide non-essential elements during print */
+  .print-hide,
+  button:not(.print-show),
+  nav,
+  .navigation-header,
+  .sticky {
+    display: none !important;
+  }
+  
+  /* Optimize page layout for print */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .min-h-screen {
+    min-height: auto;
+  }
+  
+  /* Ensure proper page breaks */
+  .print-page-break {
+    page-break-before: always;
+  }
+  
+  .print-avoid-break {
+    page-break-inside: avoid;
+  }
+  
+  /* Adjust margins and spacing for print */
+  .max-w-7xl {
+    max-width: 100%;
+    margin: 0;
+    padding: 1rem;
+  }
+  
+  /* Style headers for print */
+  h1, h2, h3 {
+    color: #000 !important;
+  }
+  
+  /* Ensure backgrounds and borders show in print */
+  .bg-gray-50,
+  .bg-white {
+    background-color: white !important;
+  }
+  
+  .border,
+  .border-b,
+  .border-gray-200 {
+    border-color: #000 !important;
+  }
+  
+  /* Make text readable in print */
+  .text-secondary-gray,
+  .text-industrial-gray {
+    color: #000 !important;
+  }
+}
+
 .dark {
   --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;

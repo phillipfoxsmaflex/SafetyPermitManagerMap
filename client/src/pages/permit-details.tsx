@@ -263,6 +263,10 @@ export default function PermitDetails() {
     await workflowMutation.mutateAsync({ actionId, nextStatus });
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -317,7 +321,7 @@ export default function PermitDetails() {
                 <Edit className="h-4 w-4 mr-2" />
                 Bearbeiten
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
                 Drucken
               </Button>
@@ -333,7 +337,7 @@ export default function PermitDetails() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Grundinformationen */}
-            <Card>
+            <Card className="print-avoid-break">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
