@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { HardHat, ChevronDown } from "lucide-react";
+import { HardHat, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 
 export function NavigationHeader() {
   const [location, setLocation] = useLocation();
