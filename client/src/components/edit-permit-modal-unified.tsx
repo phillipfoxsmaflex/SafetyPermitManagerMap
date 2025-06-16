@@ -95,6 +95,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
+  const [confirmAction, setConfirmAction] = useState<any>(null);
 
   // Dropdown data queries
   const { data: workLocations = [] } = useQuery<WorkLocation[]>({
@@ -259,7 +260,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   // Sync form with permit data in edit mode
   React.useEffect(() => {
-    if (mode === 'edit' && currentPermit && open) {
+    if (mode === 'edit' && currentPermit && open && !workflowMutation.isPending) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
 
       const formatDate = (date: string | Date | null): string => {
@@ -350,6 +351,42 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       ...prev,
       [hazardId]: note
     }));
+  };
+
+  const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
+    console.log("Modal: Handling workflow action:", actionId, nextStatus);
+    
+    // For critical actions, require confirmation
+    if (['approve', 'reject', 'activate', 'complete'].includes(actionId)) {
+      const action = {
+        id: actionId,
+        nextStatus,
+        label: actionId === 'activate' ? 'Aktivieren' : 
+               actionId === 'approve' ? 'Genehmigen' :
+               actionId === 'reject' ? 'Ablehnen' : 'Abschließen'
+      };
+      setConfirmAction(action);
+      return;
+    }
+    
+    // Execute action directly for non-critical actions
+    await workflowMutation.mutateAsync({ actionId, nextStatus });
+  };
+
+  const executeConfirmedAction = async () => {
+    if (!confirmAction) return;
+    
+    console.log("Modal: Executing confirmed action:", confirmAction);
+    try {
+      await workflowMutation.mutateAsync({ 
+        actionId: confirmAction.id, 
+        nextStatus: confirmAction.nextStatus 
+      });
+      setConfirmAction(null);
+    } catch (error) {
+      console.error("Modal: Confirmed action failed:", error);
+      setConfirmAction(null);
+    }
   };
 
   if (mode === 'edit' && !permit) return null;
@@ -1079,16 +1116,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <WorkflowButtons 
                                 permit={currentPermit || permit} 
                                 currentUser={user} 
-                                onAction={async (actionId: string, nextStatus: string) => {
-                                  const targetPermit = currentPermit || permit;
-                                  console.log('Unified modal workflow action:', { 
-                                    actionId, 
-                                    nextStatus, 
-                                    permitId: targetPermit.id,
-                                    currentStatus: targetPermit.status 
-                                  });
-                                  workflowMutation.mutate({ actionId, nextStatus });
-                                }}
+                                onAction={handleWorkflowAction}
                                 isLoading={workflowMutation.isPending}
                               />
                             </div>
