@@ -211,60 +211,66 @@ export default function Dashboard() {
                 Überwachung und Verwaltung von Permit to work für enge Räume und chemische Umgebungen
               </p>
             </div>
-            <div className="flex flex-col lg:flex-row gap-3">
-              <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
-                  <Input
-                    placeholder="Genehmigung suchen..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <DatePicker
-                    date={dateFrom}
-                    onDateChange={setDateFrom}
-                    placeholder="Von Datum"
-                    className="w-40"
-                  />
-                  <DatePicker
-                    date={dateTo}
-                    onDateChange={setDateTo}
-                    placeholder="Bis Datum"
-                    className="w-40"
-                  />
-                  {(dateFrom || dateTo) && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        setDateFrom(undefined);
-                        setDateTo(undefined);
-                      }}
-                      className="h-10 w-10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+            <div className="w-full">
+              {/* Search and filters row */}
+              <div className="flex flex-col lg:flex-row gap-3 mb-3">
+                <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                  <div className="relative flex-shrink-0">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+                    <Input
+                      placeholder="Genehmigung suchen..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full sm:w-64"
+                    />
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <DatePicker
+                      date={dateFrom}
+                      onDateChange={setDateFrom}
+                      placeholder="Von Datum"
+                      className="w-full sm:w-36"
+                    />
+                    <DatePicker
+                      date={dateTo}
+                      onDateChange={setDateTo}
+                      placeholder="Bis Datum"
+                      className="w-full sm:w-36"
+                    />
+                    {(dateFrom || dateTo) && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          setDateFrom(undefined);
+                          setDateTo(undefined);
+                        }}
+                        className="h-10 w-10 flex-shrink-0"
+                        title="Filter zurücksetzen"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-3">
+              
+              {/* Action buttons row */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-end">
                 <Button 
                   onClick={handleExportReport}
                   variant="outline"
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   <Download className="w-4 h-4" />
-                  Bericht exportieren
+                  <span className="whitespace-nowrap">Bericht exportieren</span>
                 </Button>
                 <Button 
                   onClick={() => setCreateModalOpen(true)}
-                  className="bg-safety-blue text-white hover:bg-blue-700"
+                  className="bg-safety-blue text-white hover:bg-blue-700 flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Neue Genehmigung
+                  <Plus className="w-4 h-4" />
+                  <span className="whitespace-nowrap">Neue Genehmigung</span>
                 </Button>
               </div>
             </div>
