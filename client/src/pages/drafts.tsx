@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { NavigationHeader } from "@/components/navigation-header";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
-import { CreatePermitModal } from "@/components/create-permit-modal";
 import { 
   FileText, 
   Edit3, 
@@ -363,9 +362,11 @@ export default function Drafts() {
         />
 
         {/* Create Modal */}
-        <CreatePermitModal 
+        <EditPermitModalUnified 
+          permit={null}
           open={createModalOpen} 
-          onOpenChange={setCreateModalOpen} 
+          onOpenChange={setCreateModalOpen}
+          mode="create"
         />
 
         {/* Template Creation Modal */}

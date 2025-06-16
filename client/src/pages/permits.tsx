@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Filter, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
-import { CreatePermitModal } from "@/components/create-permit-modal";
+import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 
 import { PermitTable } from "@/components/permit-table-clean";
 import { Button } from "@/components/ui/button";
