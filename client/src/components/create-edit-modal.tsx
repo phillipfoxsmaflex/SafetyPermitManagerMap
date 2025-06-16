@@ -162,39 +162,66 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
 
   // Update form with permit data in edit mode
   useEffect(() => {
-    if (mode === 'edit' && currentPermit && open) {
+    if (mode === 'edit' && open && (currentPermit || permit)) {
+      const permitData = currentPermit || permit;
+      if (!permitData) return;
+      
       const formatDate = (date: string | Date | null): string => {
         if (!date) return "";
         const d = typeof date === 'string' ? new Date(date) : date;
         return d.toISOString().slice(0, 16);
       };
 
+      // Find work location ID by name
+      const findWorkLocationId = (locationName: string | null): number | undefined => {
+        if (!locationName || !workLocations.length) return undefined;
+        const location = workLocations.find(loc => loc.name === locationName);
+        return location?.id;
+      };
+      
+      // Find user ID by full name
+      const findUserIdByName = (userName: string | null, userList: any[]): number | undefined => {
+        if (!userName || !userList.length) return undefined;
+        const user = userList.find(u => u.fullName === userName || u.username === userName);
+        return user?.id;
+      };
+
       form.reset({
-        type: currentPermit.type || "",
-        workDescription: currentPermit.description || "",
-        location: currentPermit.location || "",
-        requestedBy: currentPermit.requestorName || "",
-        department: currentPermit.department || "",
-        plannedStartDate: formatDate(currentPermit.startDate),
-        plannedEndDate: formatDate(currentPermit.endDate),
-        emergencyContact: currentPermit.emergencyContact || "",
-        identifiedHazards: currentPermit.identifiedHazards || "",
-        selectedHazards: currentPermit.selectedHazards || [],
-        hazardNotes: currentPermit.hazardNotes || "",
-        completedMeasures: currentPermit.completedMeasures || [],
-        status: currentPermit.status || "draft",
-        performerName: currentPermit.performerName || "",
-        additionalComments: currentPermit.additionalComments || "",
-        immediateActions: currentPermit.immediateActions || "",
-        beforeWorkStarts: currentPermit.beforeWorkStarts || "",
-        complianceNotes: currentPermit.complianceNotes || "",
-        overallRisk: currentPermit.overallRisk || "",
+        type: permitData.type || "",
+        workDescription: permitData.description || "",
+        location: permitData.location || "",
+        workLocationId: findWorkLocationId(permitData.location),
+        requestedBy: permitData.requestorName || "",
+        department: permitData.department || "",
+        plannedStartDate: formatDate(permitData.startDate),
+        plannedEndDate: formatDate(permitData.endDate),
+        emergencyContact: permitData.emergencyContact || "",
+        departmentHeadApproval: permitData.departmentHeadApproval || false,
+        safetyOfficerApproval: permitData.safetyOfficerApproval || false,
+        maintenanceApproval: permitData.maintenanceApproval || false,
+        departmentHeadId: findUserIdByName(permitData.departmentHead, departmentHeads),
+        safetyOfficerId: findUserIdByName(permitData.safetyOfficer, safetyOfficers),
+        maintenanceApproverId: findUserIdByName(permitData.maintenanceApprover, maintenanceApprovers),
+        identifiedHazards: permitData.identifiedHazards || "",
+        selectedHazards: permitData.selectedHazards || [],
+        hazardNotes: permitData.hazardNotes || "",
+        completedMeasures: permitData.completedMeasures || [],
+        status: permitData.status || "draft",
+        performerName: permitData.performerName || "",
+        additionalComments: permitData.additionalComments || "",
+        immediateActions: permitData.immediateActions || "",
+        beforeWorkStarts: permitData.beforeWorkStarts || "",
+        complianceNotes: permitData.complianceNotes || "",
+        overallRisk: permitData.overallRisk || "",
       });
 
       // Parse hazard notes if they exist
-      if (currentPermit.hazardNotes) {
+      if (permitData.hazardNotes) {
         try {
-          setHazardNotes(JSON.parse(currentPermit.hazardNotes));
+          const notes = typeof permitData.hazardNotes === 'string' 
+            ? JSON.parse(permitData.hazardNotes) 
+            : permitData.hazardNotes;
+          setHazardNotes(notes);
         } catch {
           setHazardNotes({});
         }
@@ -203,7 +230,7 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
       form.reset();
       setHazardNotes({});
     }
-  }, [currentPermit, open, mode, form]);
+  }, [currentPermit, permit, open, mode, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers]);
 
   // Submit mutation
   const submitMutation = useMutation({
@@ -527,10 +554,14 @@ export function CreateEditModal({ permit, open, onOpenChange, mode = 'edit' }: C
                                               placeholder="Spezifische Anmerkungen oder Maßnahmen für diese Gefährdung..."
                                               className="mt-1"
                                               value={hazardNotes[hazardId] || ""}
-                                              onChange={(e) => setHazardNotes(prev => ({
-                                                ...prev,
-                                                [hazardId]: e.target.value
-                                              }))}
+                                              onChange={(e) => {
+                                                const newNotes = {
+                                                  ...hazardNotes,
+                                                  [hazardId]: e.target.value
+                                                };
+                                                setHazardNotes(newNotes);
+                                                form.setValue("hazardNotes", JSON.stringify(newNotes));
+                                              }}
                                             />
                                           </div>
                                         )}

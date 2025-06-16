@@ -167,7 +167,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   React.useEffect(() => {
     if (mode === 'edit' && currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
-      
+
       // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
         if (!date) return "";
@@ -178,7 +178,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         }
         return date.toISOString().slice(0, 16);
       };
-      
+
       form.reset({
         type: currentPermit.type || "",
         workDescription: currentPermit.description || "",
@@ -214,7 +214,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         complianceNotes: currentPermit.complianceNotes || "",
         overallRisk: currentPermit.overallRisk || "",
       });
-      
+
       // Update hazard notes state
       if (currentPermit.hazardNotes) {
         try {
@@ -347,12 +347,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       workCompletedAt: data.workCompletedAt,
       status: data.status
     };
-    
+
     // Remove undefined fields to avoid validation issues
     const cleanedData = Object.fromEntries(
       Object.entries(mappedData).filter(([_, value]) => value !== undefined)
     );
-    
+
     updateMutation.mutate(cleanedData);
   };
 
@@ -628,7 +628,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               .map((hazard, hazardIndex) => {
                               const hazardId = `${category.id}-${hazardIndex}`;
                               const isSelected = form.watch('selectedHazards')?.includes(hazardId);
-                              
+
                               return (
                                 <div key={hazardIndex} className="space-y-3">
                                   <FormField
@@ -657,7 +657,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                       </FormItem>
                                     )}
                                   />
-                                  
+
                                   {/* Kleines Freitextfeld für jede TRBS-Gefährdung */}
                                   {isSelected && (
                                     <div className="ml-6 mt-2">
@@ -685,7 +685,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                                 onChange={(e) => {
                                                   const currentNotes = field.value;
                                                   let notesObj = {};
-                                                  
+
                                                   if (typeof currentNotes === 'string') {
                                                     try {
                                                       notesObj = JSON.parse(currentNotes);
@@ -695,7 +695,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                                   } else if (currentNotes) {
                                                     notesObj = currentNotes;
                                                   }
-                                                  
+
                                                   notesObj[hazardId] = e.target.value;
                                                   field.onChange(JSON.stringify(notesObj));
                                                 }}
@@ -714,11 +714,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         </CardContent>
                       </Card>
                     ))}
-                    
+
                     {/* Allgemeine Maßnahmen */}
                     <div className="space-y-4 mt-6">
                       <h4 className="text-lg font-semibold text-gray-900">Allgemeine Sicherheitsmaßnahmen</h4>
-                      
+
                       <FormField
                         control={form.control}
                         name="immediateActions"
@@ -856,7 +856,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 <SelectContent>
                                   {departmentHeads.map((head) => (
                                     <SelectItem key={head.id} value={head.id.toString()}>
-                                      {head.username} - {head.role}
+                                      {head.fullName || head.username} - {head.role}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -888,7 +888,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 <SelectContent>
                                   {safetyOfficers.map((officer) => (
                                     <SelectItem key={officer.id} value={officer.id.toString()}>
-                                      {officer.username} - {officer.role}
+                                      {officer.fullName || officer.username} - {officer.role}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -920,7 +920,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 <SelectContent>
                                   {maintenanceApprovers.map((approver) => (
                                     <SelectItem key={approver.id} value={approver.id.toString()}>
-                                      {approver.username} - {approver.role}
+                                      {approver.fullName || approver.username} - {approver.role}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -1043,7 +1043,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         <h4 className="font-semibold mb-3">Aktueller Status</h4>
                         <StatusIndicator status={currentPermit?.status || permit.status} />
                       </div>
-                      
+
                       <div>
                         <h4 className="font-semibold mb-3">Verfügbare Aktionen</h4>
                         <WorkflowButtons 
@@ -1080,7 +1080,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                   Abbrechen
                 </Button>
-                
+
                 <Button
                   type="submit"
                   disabled={updateMutation.isPending}
