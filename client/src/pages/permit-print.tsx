@@ -132,10 +132,11 @@ export default function PermitPrint() {
     return category ? category.category : `Kategorie ${categoryId}`;
   };
 
-  const getUserName = (userId: number | null) => {
-    if (!userId) return 'Nicht zugewiesen';
-    const user = users.find(u => u.id === userId);
-    return user ? (user.fullName || user.username) : `User ID: ${userId}`;
+  const getUserName = (userIdOrName: number | string | null) => {
+    if (!userIdOrName) return 'Nicht zugewiesen';
+    if (typeof userIdOrName === 'string') return userIdOrName;
+    const user = users.find(u => u.id === userIdOrName);
+    return user ? (user.fullName || user.username) : `User ID: ${userIdOrName}`;
   };
 
   if (isLoading) {
@@ -242,7 +243,7 @@ export default function PermitPrint() {
           <div className="mt-2">
             <strong className="text-xs">Arbeitsbeschreibung:</strong><br />
             <div className="text-xs mt-1 p-2 bg-gray-100 border">
-              {permit.workDescription || permit.description || 'Keine Beschreibung angegeben'}
+              {permit.description || 'Keine Beschreibung angegeben'}
             </div>
           </div>
         </div>
@@ -253,11 +254,11 @@ export default function PermitPrint() {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <strong>Geplanter Start:</strong><br />
-              {permit.plannedStartDate ? formatDateTime(permit.plannedStartDate) : 'Nicht angegeben'}
+              {permit.startDate ? formatDateTime(permit.startDate) : 'Nicht angegeben'}
             </div>
             <div>
               <strong>Geplantes Ende:</strong><br />
-              {permit.plannedEndDate ? formatDateTime(permit.plannedEndDate) : 'Nicht angegeben'}
+              {permit.endDate ? formatDateTime(permit.endDate) : 'Nicht angegeben'}
             </div>
             <div>
               <strong>Tatsächlicher Start:</strong><br />
@@ -275,7 +276,7 @@ export default function PermitPrint() {
           <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">3. GEFÄHRDUNGSBEURTEILUNG (TRBS)</h3>
           {selectedHazards.length > 0 ? (
             <div className="text-xs space-y-2">
-              {selectedHazards.map((hazardId, index) => {
+              {selectedHazards.map((hazardId: string, index: number) => {
                 const [categoryId] = hazardId.split('-');
                 return (
                   <div key={index} className="border-l-2 border-red-500 pl-2">
@@ -305,13 +306,13 @@ export default function PermitPrint() {
           <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">4. GENEHMIGUNGEN</h3>
           <div className="grid grid-cols-1 gap-2 text-xs">
             <div>
-              <strong>Abteilungsleiter:</strong> {getUserName(permit.departmentHeadId)}
+              <strong>Abteilungsleiter:</strong> {getUserName(permit.departmentHead)}
             </div>
             <div>
-              <strong>Sicherheitsbeauftragte/r:</strong> {getUserName(permit.safetyOfficerId)}
+              <strong>Sicherheitsbeauftragte/r:</strong> {getUserName(permit.safetyOfficer)}
             </div>
             <div>
-              <strong>Wartungsverantwortliche/r:</strong> {getUserName(permit.maintenanceApproverId)}
+              <strong>Wartungsverantwortliche/r:</strong> {getUserName(permit.maintenanceApprover)}
             </div>
           </div>
         </div>
@@ -329,7 +330,7 @@ export default function PermitPrint() {
               <div>
                 <strong>Abgeschlossene Schutzmaßnahmen:</strong>
                 <ul className="list-disc list-inside ml-2 mt-1">
-                  {completedMeasures.map((measure, index) => (
+                  {completedMeasures.map((measure: string, index: number) => (
                     <li key={index} className="flex items-center gap-1">
                       <CheckCircle className="h-3 w-3 text-green-500" />
                       {measure}
@@ -405,27 +406,7 @@ export default function PermitPrint() {
             )}
           </div>
           
-          {/* Signature Areas */}
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            <div className="text-center">
-              <div className="border-t border-black pt-2 mt-12">
-                <div className="text-xs font-medium">Antragsteller</div>
-                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-t border-black pt-2 mt-12">
-                <div className="text-xs font-medium">Sicherheitsbeauftragte/r</div>
-                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-t border-black pt-2 mt-12">
-                <div className="text-xs font-medium">Abteilungsleiter/in</div>
-                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
