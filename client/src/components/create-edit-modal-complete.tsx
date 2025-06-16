@@ -360,7 +360,7 @@ export function CreateEditModalComplete({ permit, open, onOpenChange, mode = 'ed
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[75vh] overflow-y-auto pr-2">
+        <div className="max-h-[50vh] overflow-y-auto pr-2 border border-red-500">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
