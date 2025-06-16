@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { WorkLocationManagement } from "@/components/work-location-management";
@@ -479,16 +479,18 @@ export default function Settings() {
 
   // Fetch system settings
   const { data: currentSystemSettings } = useQuery({
-    queryKey: ["/api/system-settings"],
-    onSuccess: (data) => {
-      if (data) {
-        setSystemSettings({
-          applicationTitle: data.applicationTitle || "Arbeitserlaubnis",
-          headerIcon: data.headerIcon || null
-        });
-      }
-    }
+    queryKey: ["/api/system-settings"]
   });
+
+  // Update local state when API data is loaded
+  useEffect(() => {
+    if (currentSystemSettings) {
+      setSystemSettings({
+        applicationTitle: (currentSystemSettings as any).applicationTitle || "Arbeitserlaubnis",
+        headerIcon: (currentSystemSettings as any).headerIcon || null
+      });
+    }
+  }, [currentSystemSettings]);
 
   const updatePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string }) => {
@@ -550,6 +552,72 @@ export default function Settings() {
       });
     }
   });
+
+  // System Settings Mutations
+  const uploadIconMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('icon', file);
+      
+      const response = await fetch('/api/system-settings/upload-icon', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload icon');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSystemSettings(prev => ({ ...prev, headerIcon: data.headerIcon }));
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+      toast({
+        title: "Icon hochgeladen",
+        description: "Das Header-Icon wurde erfolgreich aktualisiert.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Icon konnte nicht hochgeladen werden.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const saveSystemSettingsMutation = useMutation({
+    mutationFn: async (settings: typeof systemSettings) => {
+      return apiRequest("/api/system-settings", "PATCH", settings);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+      toast({
+        title: "Einstellungen gespeichert",
+        description: "Die System-Einstellungen wurden erfolgreich aktualisiert.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Einstellungen konnten nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadIconMutation.mutate(file);
+    }
+  };
+
+  const handleSaveSystemSettings = () => {
+    saveSystemSettingsMutation.mutate(systemSettings);
+  };
 
   const handleSaveProfile = () => {
     saveProfileMutation.mutate({
