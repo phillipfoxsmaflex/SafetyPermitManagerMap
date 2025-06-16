@@ -110,13 +110,7 @@ export default function PermitPrint() {
     }
   };
 
-  const parseCompletedMeasures = (measuresStr: string | any[]) => {
-    try {
-      return Array.isArray(measuresStr) ? measuresStr : JSON.parse(measuresStr || '[]');
-    } catch {
-      return [];
-    }
-  };
+
 
   const getHazardText = (hazardId: string) => {
     const [categoryId, hazardIndex] = hazardId.split('-');
@@ -169,7 +163,6 @@ export default function PermitPrint() {
   const riskLevel = getRiskLevel(permit.overallRisk || 'niedrig');
   const selectedHazards = parseSelectedHazards(permit.selectedHazards || []);
   const hazardNotes = parseHazardNotes(permit.hazardNotes || '{}');
-  const completedMeasures = parseCompletedMeasures(permit.completedMeasures || []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -326,19 +319,7 @@ export default function PermitPrint() {
               {permit.performerName || 'Nicht angegeben'}
             </div>
             
-            {completedMeasures.length > 0 && (
-              <div>
-                <strong>Abgeschlossene Schutzmaßnahmen:</strong>
-                <ul className="list-disc list-inside ml-2 mt-1">
-                  {completedMeasures.map((measure: string, index: number) => (
-                    <li key={index} className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3 text-green-500" />
-                      {measure}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+
 
             {permit.beforeWorkStarts && (
               <div>
