@@ -273,11 +273,14 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         return user?.id;
       };
 
-      form.reset({
+      // Ensure workLocationId is properly formatted as string
+      const workLocationIdStr = currentPermit.workLocationId ? currentPermit.workLocationId.toString() : "";
+
+      const formData = {
         type: currentPermit.type || "",
         workDescription: currentPermit.description || "",
         location: currentPermit.location || "",
-        workLocationId: currentPermit.workLocationId?.toString() || "",
+        workLocationId: workLocationIdStr,
         requestedBy: currentPermit.requestorName || "",
         department: currentPermit.department || "",
         plannedStartDate: formatDate(currentPermit.startDate),
@@ -300,7 +303,15 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         beforeWorkStarts: currentPermit.beforeWorkStarts || "",
         complianceNotes: currentPermit.complianceNotes || "",
         overallRisk: currentPermit.overallRisk || "",
+      };
+
+      console.log("Form data being set:", {
+        type: formData.type,
+        workLocationId: formData.workLocationId,
+        overallRisk: formData.overallRisk
       });
+
+      form.reset(formData);
 
       setSelectedHazards(currentPermit.selectedHazards || []);
 
@@ -316,7 +327,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         }
       }
     }
-  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
+  }, [currentPermit, open, form, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
 
   const onSubmit = (data: PermitFormData) => {
     submitMutation.mutate(data);
