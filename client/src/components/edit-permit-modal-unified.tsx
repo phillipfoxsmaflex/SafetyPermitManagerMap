@@ -341,7 +341,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-6xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-industrial-gray flex items-center gap-2">
             <Activity className="h-5 w-5" />
@@ -355,6 +355,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
           </DialogDescription>
         </DialogHeader>
 
+        <div className="max-h-[50vh] overflow-y-auto pr-2 border border-red-500">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
             <Tabs defaultValue="basic" className="h-full flex flex-col">
@@ -1100,6 +1101,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
             </Tabs>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );
