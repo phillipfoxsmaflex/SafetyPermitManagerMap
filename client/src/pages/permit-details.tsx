@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { AiSuggestions } from "@/components/ai-suggestions";
 import { WorkflowButtons } from "@/components/workflow-buttons";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { PermitAttachments } from "@/components/permit-attachments";
 import { StatusIndicator } from "@/components/status-indicator";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
@@ -20,6 +22,8 @@ export default function PermitDetails() {
   const [match, params] = useRoute("/permit/:id");
   const permitId = params?.id;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: permit, isLoading } = useQuery<Permit>({
     queryKey: [`/api/permits/${permitId}`],
@@ -228,9 +232,35 @@ export default function PermitDetails() {
     return user ? user.fullName || user.username : `Benutzer ID: ${submittedById}`;
   };
 
-  const handleWorkflowAction = async (action: string, nextStatus: string) => {
-    // This will be handled by the WorkflowButtons component
-    console.log('Workflow action triggered:', action, nextStatus);
+  // Workflow mutation
+  const workflowMutation = useMutation({
+    mutationFn: async ({ actionId, nextStatus }: { actionId: string; nextStatus: string }) => {
+      if (!permit) throw new Error("No permit selected");
+      return apiRequest(`/api/permits/${permit.id}/workflow`, "POST", { action: actionId, nextStatus });
+    },
+    onSuccess: () => {
+      if (permit) {
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
+        queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      }
+      toast({
+        title: "Erfolg",
+        description: "Status erfolgreich aktualisiert.",
+      });
+    },
+    onError: (error: Error) => {
+      const errorMessage = error.message || "Fehler beim Status-Update.";
+      toast({
+        title: "Fehler",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
+    console.log('Permit Details: Handling workflow action:', actionId, nextStatus);
+    await workflowMutation.mutateAsync({ actionId, nextStatus });
   };
 
   if (isLoading) {
@@ -622,7 +652,7 @@ export default function PermitDetails() {
                       permit={permit} 
                       currentUser={currentUser} 
                       onAction={handleWorkflowAction}
-                      isLoading={false}
+                      isLoading={workflowMutation.isPending}
                     />
                   )}
                 </div>
