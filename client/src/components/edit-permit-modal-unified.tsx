@@ -227,12 +227,16 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   // Workflow mutation for edit mode
   const workflowMutation = useMutation({
     mutationFn: async ({ actionId, nextStatus }: { actionId: string; nextStatus: string }) => {
-      if (!permit) throw new Error("No permit selected");
-      return apiRequest(`/api/permits/${permit.id}/workflow`, "POST", { action: actionId, nextStatus });
+      const targetPermit = mode === 'edit' ? currentPermit : permit;
+      if (!targetPermit) throw new Error("No permit selected");
+      return apiRequest(`/api/permits/${targetPermit.id}/workflow`, "POST", { action: actionId, nextStatus });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit!.id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      const targetPermit = mode === 'edit' ? currentPermit : permit;
+      if (targetPermit) {
+        queryClient.invalidateQueries({ queryKey: [`/api/permits/${targetPermit.id}`] });
+        queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      }
       toast({
         title: "Erfolg",
         description: "Status erfolgreich aktualisiert.",
@@ -1076,7 +1080,13 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 permit={currentPermit || permit} 
                                 currentUser={user} 
                                 onAction={async (actionId: string, nextStatus: string) => {
-                                  console.log('Unified modal workflow action:', { actionId, nextStatus, permitId: permit.id });
+                                  const targetPermit = currentPermit || permit;
+                                  console.log('Unified modal workflow action:', { 
+                                    actionId, 
+                                    nextStatus, 
+                                    permitId: targetPermit.id,
+                                    currentStatus: targetPermit.status 
+                                  });
                                   workflowMutation.mutate({ actionId, nextStatus });
                                 }}
                                 isLoading={workflowMutation.isPending}
