@@ -355,11 +355,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[50vh] overflow-y-auto pr-2 border border-red-500">
+        <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 140px)' }}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
             <Tabs defaultValue="basic" className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="basic" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Grunddaten
@@ -379,6 +379,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                 <TabsTrigger value="ai-suggestions" className="flex items-center gap-2">
                   <Brain className="h-4 w-4" />
                   KI-Vorschläge
+                </TabsTrigger>
+                <TabsTrigger value="attachments" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Anhänge
                 </TabsTrigger>
                 <TabsTrigger value="workflow" className="flex items-center gap-2">
                   <GitBranch className="h-4 w-4" />
@@ -1015,6 +1019,22 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                   </Card>
                 </TabsContent>
 
+                <TabsContent value="attachments" className="space-y-6 mt-0">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Datei-Anhänge
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {mode === 'edit' && permit && (
+                        <PermitAttachments permitId={permit.id} />
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
                 <TabsContent value="workflow" className="space-y-6 mt-0">
                   <Card>
                     <CardHeader>
@@ -1065,28 +1085,20 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                 </TabsContent>
               </div>
 
-              <div className="flex justify-between items-center pt-6 border-t bg-background">
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => onOpenChange(false)}>
-                    Abbrechen
-                  </Button>
+              <div className="flex justify-end gap-3 pt-3 border-t">
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Abbrechen
+                </Button>
 
-                  <Button
-                    type="submit"
-                    disabled={!canEdit || isLoading}
-                    className="bg-industrial-gray hover:bg-industrial-gray/90 disabled:opacity-50"
-                    title={!canEdit ? "Kann nur bei Entwürfen bearbeitet werden" : ""}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {mode === 'create' ? 'Erstellen' : 'Speichern'}
-                  </Button>
-                </div>
-
-                {mode === 'edit' && permit && (
-                  <div>
-                    <PermitAttachments permitId={permit.id} />
-                  </div>
-                )}
+                <Button
+                  type="submit"
+                  disabled={!canEdit || isLoading}
+                  className="bg-industrial-gray hover:bg-industrial-gray/90 disabled:opacity-50"
+                  title={!canEdit ? "Kann nur bei Entwürfen bearbeitet werden" : ""}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {mode === 'create' ? 'Erstellen' : 'Speichern'}
+                </Button>
               </div>
 
               {!canEdit && mode === 'edit' && (
