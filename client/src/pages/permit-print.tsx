@@ -298,14 +298,41 @@ export default function PermitPrint() {
         <div className="mb-4 print-avoid-break">
           <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">4. GENEHMIGUNGEN</h3>
           <div className="grid grid-cols-1 gap-2 text-xs">
-            <div>
+            <div className="border-l-2 border-blue-500 pl-2">
               <strong>Abteilungsleiter:</strong> {getUserName(permit.departmentHead)}
+              <div className="ml-2 mt-1 text-gray-600">
+                {permit.departmentHeadApproval ? (
+                  <span className="text-green-600">
+                    ✓ Genehmigt {permit.departmentHeadApprovalDate ? `am ${formatDateTime(permit.departmentHeadApprovalDate)}` : ''}
+                  </span>
+                ) : (
+                  <span className="text-orange-600">⏳ Ausstehend</span>
+                )}
+              </div>
             </div>
-            <div>
+            <div className="border-l-2 border-blue-500 pl-2">
               <strong>Sicherheitsbeauftragte/r:</strong> {getUserName(permit.safetyOfficer)}
+              <div className="ml-2 mt-1 text-gray-600">
+                {permit.safetyOfficerApproval ? (
+                  <span className="text-green-600">
+                    ✓ Genehmigt {permit.safetyOfficerApprovalDate ? `am ${formatDateTime(permit.safetyOfficerApprovalDate)}` : ''}
+                  </span>
+                ) : (
+                  <span className="text-orange-600">⏳ Ausstehend</span>
+                )}
+              </div>
             </div>
-            <div>
+            <div className="border-l-2 border-blue-500 pl-2">
               <strong>Wartungsverantwortliche/r:</strong> {getUserName(permit.maintenanceApprover)}
+              <div className="ml-2 mt-1 text-gray-600">
+                {permit.maintenanceApproval ? (
+                  <span className="text-green-600">
+                    ✓ Genehmigt {permit.maintenanceApprovalDate ? `am ${formatDateTime(permit.maintenanceApprovalDate)}` : ''}
+                  </span>
+                ) : (
+                  <span className="text-orange-600">⏳ Ausstehend</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -364,15 +391,40 @@ export default function PermitPrint() {
           </div>
         </div>
 
-        {/* Additional Comments */}
-        {permit.additionalComments && (
-          <div className="mb-4 print-avoid-break">
-            <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">6. ZUSÄTZLICHE KOMMENTARE</h3>
-            <div className="text-xs p-2 bg-gray-100 border">
-              {permit.additionalComments}
+        {/* Additional Information Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">6. ZUSÄTZLICHE INFORMATIONEN</h3>
+          
+          {/* Compliance Notes */}
+          {permit.complianceNotes && (
+            <div className="mb-2">
+              <strong className="text-xs">Relevante Vorschriften und Normen:</strong>
+              <div className="text-xs p-2 bg-gray-100 border mt-1">
+                {permit.complianceNotes}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Identified Hazards */}
+          {permit.identifiedHazards && (
+            <div className="mb-2">
+              <strong className="text-xs">Zusätzliche Gefahren und Kommentare:</strong>
+              <div className="text-xs p-2 bg-gray-100 border mt-1">
+                {permit.identifiedHazards}
+              </div>
+            </div>
+          )}
+
+          {/* Additional Comments */}
+          {permit.additionalComments && (
+            <div className="mb-2">
+              <strong className="text-xs">Weitere Kommentare:</strong>
+              <div className="text-xs p-2 bg-gray-100 border mt-1">
+                {permit.additionalComments}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Document Footer */}
         <div className="mt-6 pt-4 border-t-2 border-black text-xs">
