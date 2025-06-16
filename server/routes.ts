@@ -318,6 +318,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // Separate multer configuration for icon uploads (uses memory storage)
+  const iconUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 2 * 1024 * 1024, // 2MB limit for icons
+    },
+    fileFilter: (req, file, cb) => {
+      // Only allow image files for icons
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed for icons'));
+      }
+    }
+  });
   
   // Get permit statistics (must come before /api/permits/:id)
   app.get("/api/permits/stats", requireAuth, async (req, res) => {

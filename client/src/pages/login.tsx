@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,6 +30,11 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { login } = useAuth();
+
+  // Fetch system settings for customizable title and icon
+  const { data: systemSettings } = useQuery({
+    queryKey: ["/api/system-settings"]
+  });
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -88,11 +93,19 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="bg-white p-4 rounded-full shadow-lg">
-              <HardHat className="w-12 h-12 text-safety-blue" />
+              {(systemSettings as any)?.headerIcon ? (
+                <img 
+                  src={(systemSettings as any).headerIcon} 
+                  alt="Header Icon" 
+                  className="w-12 h-12 object-contain"
+                />
+              ) : (
+                <HardHat className="w-12 h-12 text-safety-blue" />
+              )}
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            Arbeitserlaubnis
+            {(systemSettings as any)?.applicationTitle || "Arbeitserlaubnis"}
           </h1>
           <p className="text-blue-100">
             Digitales Genehmigungssystem für sichere Arbeitsplätze

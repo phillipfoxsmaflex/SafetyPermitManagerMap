@@ -16,6 +16,11 @@ export function NavigationHeader() {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
 
+  // Fetch system settings for customizable title and icon
+  const { data: systemSettings } = useQuery({
+    queryKey: ["/api/system-settings"]
+  });
+
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
     if (path !== "/" && location.startsWith(path)) return true;
@@ -53,8 +58,18 @@ export function NavigationHeader() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <HardHat className="text-safety-blue text-2xl" />
-              <h1 className="text-xl font-bold text-industrial-gray">Arbeitserlaubnis</h1>
+              {(systemSettings as any)?.headerIcon ? (
+                <img 
+                  src={(systemSettings as any).headerIcon} 
+                  alt="Header Icon" 
+                  className="w-8 h-8 object-contain"
+                />
+              ) : (
+                <HardHat className="text-safety-blue text-2xl" />
+              )}
+              <h1 className="text-xl font-bold text-industrial-gray">
+                {(systemSettings as any)?.applicationTitle || "Arbeitserlaubnis"}
+              </h1>
             </div>
             <nav className="hidden md:flex space-x-6">
               <Link href="/" className={`font-medium pb-2 border-b-2 ${
