@@ -47,7 +47,7 @@ import { WorkflowButtons } from "@/components/workflow-buttons";
 import trbsData from "@/data/trbs_complete_hazards.json";
 import { WORKFLOW_CONFIG } from "@/lib/workflow-config";
 import { canEditPermit } from "@/lib/permissions";
-import { AlertTriangle, Info, Save, Activity } from "lucide-react";
+import { AlertTriangle, Info, Save, Activity, FileText, Users, Settings, Brain, GitBranch } from "lucide-react";
 
 interface EditPermitModalUnifiedProps {
   permit: Permit | null;
@@ -56,8 +56,7 @@ interface EditPermitModalUnifiedProps {
   mode?: 'edit' | 'create';
 }
 
-// Verwende das gleiche Schema wie das Create Modal
-const editPermitSchema = z.object({
+const permitSchema = z.object({
   type: z.string().min(1, "Arbeitstyp ist erforderlich"),
   workDescription: z.string().min(1, "Arbeitsumfang ist erforderlich"),
   location: z.string().optional(),
@@ -86,7 +85,7 @@ const editPermitSchema = z.object({
   overallRisk: z.string().optional(),
 });
 
-type EditPermitFormData = z.infer<typeof editPermitSchema>;
+type PermitFormData = z.infer<typeof permitSchema>;
 
 export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edit' }: EditPermitModalUnifiedProps) {
   const { toast } = useToast();
@@ -97,7 +96,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
 
-  // Verwende die gleichen Dropdown-Datenquellen wie das Create Modal
+  // Dropdown data queries
   const { data: workLocations = [] } = useQuery<WorkLocation[]>({
     queryKey: ["/api/work-locations/active"],
   });
@@ -118,14 +117,14 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     queryKey: ["/api/users"],
   });
 
-  // Get current permit data
+  // Get current permit data for edit mode
   const { data: currentPermit } = useQuery<Permit>({
     queryKey: [`/api/permits/${permit?.id}`],
-    enabled: !!permit?.id,
+    enabled: !!permit?.id && mode === 'edit',
   });
 
-  const form = useForm<EditPermitFormData>({
-    resolver: zodResolver(editPermitSchema),
+  const form = useForm<PermitFormData>({
+    resolver: zodResolver(permitSchema),
     defaultValues: {
       type: "",
       workDescription: "",
@@ -156,69 +155,43 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
   });
 
-  // Update/Create form mutation - vereinheitlicht mit Create Modal
-  const updateMutation = useMutation({
-    mutationFn: async (data: EditPermitFormData) => {
+  // Create/Update mutation
+  const submitMutation = useMutation({
+    mutationFn: async (data: PermitFormData) => {
+      const submitData = {
+        type: data.type,
+        description: data.workDescription,
+        location: data.location,
+        workLocationId: data.workLocationId ? parseInt(data.workLocationId) : undefined,
+        requestorName: data.requestedBy,
+        department: data.department,
+        startDate: data.plannedStartDate,
+        endDate: data.plannedEndDate,
+        emergencyContact: data.emergencyContact,
+        identifiedHazards: data.identifiedHazards,
+        additionalComments: data.additionalComments,
+        immediateActions: data.immediateActions,
+        beforeWorkStarts: data.beforeWorkStarts,
+        complianceNotes: data.complianceNotes,
+        overallRisk: data.overallRisk,
+        selectedHazards: selectedHazards,
+        hazardNotes: JSON.stringify(hazardNotes),
+        completedMeasures: data.completedMeasures || [],
+        performerName: data.performerName,
+        departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
+        safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
+        maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
+        performerSignature: data.performerSignature,
+        workStartedAt: data.workStartedAt,
+        workCompletedAt: data.workCompletedAt,
+        status: mode === 'create' ? "draft" : data.status,
+      };
+
       if (mode === 'create') {
-        // Verwende die gleiche Datentransformation wie das Create Modal
-        const submitData = {
-          type: data.type,
-          description: data.workDescription,
-          location: data.location,
-          requestorName: data.requestedBy,
-          department: data.department,
-          startDate: data.plannedStartDate,
-          endDate: data.plannedEndDate,
-          emergencyContact: data.emergencyContact,
-          identifiedHazards: data.identifiedHazards,
-          additionalComments: data.additionalComments,
-          immediateActions: data.immediateActions,
-          beforeWorkStarts: data.beforeWorkStarts,
-          complianceNotes: data.complianceNotes,
-          overallRisk: data.overallRisk,
-          selectedHazards: selectedHazards,
-          hazardNotes: JSON.stringify(hazardNotes),
-          completedMeasures: data.completedMeasures || [],
-          performerName: data.performerName,
-          departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
-          safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
-          maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
-          status: "draft",
-        };
         return apiRequest("/api/permits", "POST", submitData);
       } else {
         if (!permit?.id) throw new Error("Permit ID fehlt");
-        
-        // Verwende die gleiche Datentransformation für Updates
-        const updateData = {
-          type: data.type,
-          description: data.workDescription,
-          location: data.location,
-          requestorName: data.requestedBy,
-          department: data.department,
-          startDate: data.plannedStartDate,
-          endDate: data.plannedEndDate,
-          emergencyContact: data.emergencyContact,
-          identifiedHazards: data.identifiedHazards,
-          additionalComments: data.additionalComments,
-          immediateActions: data.immediateActions,
-          beforeWorkStarts: data.beforeWorkStarts,
-          complianceNotes: data.complianceNotes,
-          overallRisk: data.overallRisk,
-          selectedHazards: selectedHazards,
-          hazardNotes: JSON.stringify(hazardNotes),
-          completedMeasures: data.completedMeasures || [],
-          performerName: data.performerName,
-          performerSignature: data.performerSignature,
-          workStartedAt: data.workStartedAt,
-          workCompletedAt: data.workCompletedAt,
-          departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
-          safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
-          maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
-          status: data.status
-        };
-        
-        return apiRequest(`/api/permits/${permit.id}`, "PATCH", updateData);
+        return apiRequest(`/api/permits/${permit.id}`, "PATCH", submitData);
       }
     },
     onSuccess: () => {
@@ -251,7 +224,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
   });
 
-  // Workflow mutation
+  // Workflow mutation for edit mode
   const workflowMutation = useMutation({
     mutationFn: async ({ actionId, nextStatus }: { actionId: string; nextStatus: string }) => {
       if (!permit) throw new Error("No permit selected");
@@ -276,16 +249,15 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
   });
 
-  // Check if permit can be edited (only drafts can be edited)
-  const canEdit = currentPermit?.status === 'draft';
-  const isLoading = updateMutation.isPending || workflowMutation.isPending;
+  // Check if permit can be edited
+  const canEdit = mode === 'create' || (currentPermit?.status === 'draft');
+  const isLoading = submitMutation.isPending || workflowMutation.isPending;
 
-  // Sync form with latest permit data - vereinheitlicht mit Create Modal Datenstruktur
+  // Sync form with permit data in edit mode
   React.useEffect(() => {
     if (mode === 'edit' && currentPermit && open) {
       console.log("Syncing form with latest permit data:", currentPermit.id);
 
-      // Format dates properly for datetime-local input
       const formatDate = (date: string | Date | null): string => {
         if (!date) return "";
         if (typeof date === 'string') {
@@ -295,7 +267,6 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         return date.toISOString().slice(0, 16);
       };
 
-      // Find user ID by full name - gleiche Logik wie Create Modal
       const findUserIdByName = (fullName: string | null, userList: any[]): number | undefined => {
         if (!fullName) return undefined;
         const user = userList.find(u => u.fullName === fullName || u.username === fullName);
@@ -331,10 +302,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         overallRisk: currentPermit.overallRisk || "",
       });
 
-      // Set selectedHazards state - gleiche Logik wie Create Modal
       setSelectedHazards(currentPermit.selectedHazards || []);
 
-      // Update hazard notes state - gleiche Logik wie Create Modal
       if (currentPermit.hazardNotes) {
         try {
           const notes = typeof currentPermit.hazardNotes === 'string' 
@@ -347,13 +316,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         }
       }
     }
-  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers]);
+  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
 
-  const onSubmit = (data: EditPermitFormData) => {
-    updateMutation.mutate(data);
+  const onSubmit = (data: PermitFormData) => {
+    submitMutation.mutate(data);
   };
 
-  // Hazard functions - gleiche Logik wie Create Modal
   const toggleHazard = (hazardId: string) => {
     setSelectedHazards(prev => 
       prev.includes(hazardId) 
@@ -373,8 +341,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
           <DialogTitle className="text-industrial-gray flex items-center gap-2">
             <Activity className="h-5 w-5" />
             {mode === 'create' ? 'Neue Arbeitserlaubnis erstellen' : `Arbeitserlaubnis bearbeiten - ${permit?.permitId}`}
@@ -388,18 +356,36 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
             <Tabs defaultValue="basic" className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
-                <TabsTrigger value="basic">Grunddaten</TabsTrigger>
-                <TabsTrigger value="hazards">Gefährdungen</TabsTrigger>
-                <TabsTrigger value="approvals">Genehmigungen</TabsTrigger>
-                <TabsTrigger value="execution">Durchführung</TabsTrigger>
-                <TabsTrigger value="ai-suggestions">KI-Vorschläge</TabsTrigger>
-                <TabsTrigger value="workflow">Status</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="basic" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Grunddaten
+                </TabsTrigger>
+                <TabsTrigger value="hazards" className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Gefährdungen
+                </TabsTrigger>
+                <TabsTrigger value="approvals" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Genehmigungen
+                </TabsTrigger>
+                <TabsTrigger value="execution" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Durchführung
+                </TabsTrigger>
+                <TabsTrigger value="ai-suggestions" className="flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  KI-Vorschläge
+                </TabsTrigger>
+                <TabsTrigger value="workflow" className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Status
+                </TabsTrigger>
               </TabsList>
 
-              <div className="flex-1 overflow-y-auto p-1">
+              <div className="flex-1 overflow-y-auto p-6">
                 <TabsContent value="basic" className="space-y-6 mt-0">
                   <Card>
                     <CardHeader>
@@ -1078,7 +1064,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                 </TabsContent>
               </div>
 
-              <div className="flex justify-between pt-6 border-t flex-shrink-0">
+              <div className="flex justify-between items-center pt-6 border-t bg-background">
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => onOpenChange(false)}>
                     Abbrechen
