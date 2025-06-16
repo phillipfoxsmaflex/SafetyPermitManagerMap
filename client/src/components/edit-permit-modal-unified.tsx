@@ -161,35 +161,39 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   // Create/Update mutation
   const submitMutation = useMutation({
     mutationFn: async (data: PermitFormData) => {
+      console.log("Processing submit data:", data);
+      
       const submitData = {
         type: data.type,
         description: data.workDescription,
-        location: data.location,
+        location: data.location || "",
         workLocationId: data.workLocationId ? parseInt(data.workLocationId) : undefined,
         requestorName: data.requestedBy,
         department: data.department,
-        contactNumber: data.contactNumber,
+        contactNumber: data.contactNumber || "",
         startDate: data.plannedStartDate,
         endDate: data.plannedEndDate,
-        emergencyContact: data.emergencyContact,
-        identifiedHazards: data.identifiedHazards,
-        additionalComments: data.additionalComments,
-        immediateActions: data.immediateActions,
-        beforeWorkStarts: data.beforeWorkStarts,
-        complianceNotes: data.complianceNotes,
-        overallRisk: data.overallRisk,
+        emergencyContact: data.emergencyContact || "",
+        identifiedHazards: data.identifiedHazards || "",
+        additionalComments: data.additionalComments || "",
+        immediateActions: data.immediateActions || "",
+        beforeWorkStarts: data.beforeWorkStarts || "",
+        complianceNotes: data.complianceNotes || "",
+        overallRisk: data.overallRisk || "",
         selectedHazards: selectedHazards,
         hazardNotes: JSON.stringify(hazardNotes),
         completedMeasures: data.completedMeasures || [],
-        performerName: data.performerName,
+        performerName: data.performerName || "",
         departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
         safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
         maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
-        performerSignature: data.performerSignature,
+        performerSignature: data.performerSignature || "",
         workStartedAt: data.workStartedAt || null,
         workCompletedAt: data.workCompletedAt || null,
         status: mode === 'create' ? "draft" : data.status,
       };
+
+      console.log("Final submit data:", submitData);
 
       if (mode === 'create') {
         return apiRequest("/api/permits", "POST", submitData);
@@ -341,6 +345,9 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   }, [currentPermit, open, form, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
 
   const onSubmit = (data: PermitFormData) => {
+    console.log("Form submission data:", data);
+    console.log("Selected hazards:", selectedHazards);
+    console.log("Hazard notes:", hazardNotes);
     submitMutation.mutate(data);
   };
 
