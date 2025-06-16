@@ -41,7 +41,7 @@ export default function Approvals() {
     queryKey: ["/api/permits"],
   });
 
-  const { data: currentUser } = useQuery<{ role: string }>({
+  const { data: currentUser } = useQuery<{ role: string; fullName: string; username: string }>({
     queryKey: ["/api/auth/user"],
   });
 
@@ -117,9 +117,9 @@ export default function Approvals() {
       if (permit.status !== 'pending') return false;
       
       // Check if current user is specifically assigned to this permit
-      const isAssignedDepartmentHead = permit.departmentHead === currentUser.username && !permit.departmentHeadApproval;
-      const isAssignedSafetyOfficer = permit.safetyOfficer === currentUser.username && !permit.safetyOfficerApproval;
-      const isAssignedMaintenanceApprover = permit.maintenanceApprover === currentUser.username && !permit.maintenanceApproval;
+      const isAssignedDepartmentHead = permit.departmentHead === currentUser.fullName && !permit.departmentHeadApproval;
+      const isAssignedSafetyOfficer = permit.safetyOfficer === currentUser.fullName && !permit.safetyOfficerApproval;
+      const isAssignedMaintenanceApprover = permit.maintenanceApprover === currentUser.fullName && !permit.maintenanceApproval;
       
       // Check role-based approval rights when not specifically assigned
       const canApproveDepartmentByRole = currentUser.role === 'department_head' && !permit.departmentHeadApproval;
