@@ -421,6 +421,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedData.endDate = isDraft ? undefined : null;
       }
       
+      // Handle work started/completed dates
+      if (processedData.workStartedAt === "" || processedData.workStartedAt === null) {
+        delete processedData.workStartedAt;
+      }
+      if (processedData.workCompletedAt === "" || processedData.workCompletedAt === null) {
+        delete processedData.workCompletedAt;
+      }
+      
       // Check if end date is after start date
       if (processedData.startDate && processedData.endDate) {
         const start = new Date(processedData.startDate);

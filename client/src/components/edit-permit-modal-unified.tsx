@@ -182,8 +182,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
         maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
         performerSignature: data.performerSignature,
-        workStartedAt: data.workStartedAt,
-        workCompletedAt: data.workCompletedAt,
+        workStartedAt: data.workStartedAt || null,
+        workCompletedAt: data.workCompletedAt || null,
         status: mode === 'create' ? "draft" : data.status,
       };
 
