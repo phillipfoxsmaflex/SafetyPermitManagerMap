@@ -141,8 +141,10 @@ export function WorkflowButtons({
     console.log('WorkflowButtons: Executing action:', action);
     console.log('WorkflowButtons: Permit ID:', permit.id);
     console.log('WorkflowButtons: Current status:', permit.status);
+    console.log('WorkflowButtons: Next status:', action.nextStatus);
     try {
       await onAction(action.id, action.nextStatus);
+      console.log('WorkflowButtons: Action completed successfully');
       setConfirmAction(null);
     } catch (error) {
       console.error('WorkflowButtons: Action failed:', error);
