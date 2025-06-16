@@ -172,11 +172,7 @@ export default function UserManagement() {
   // App Settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return apiRequest("/api/settings", "PUT", formData, {
-        headers: {
-          // Don't set Content-Type for FormData, let browser set it
-        }
-      });
+      return apiRequest("/api/settings", "PUT", formData);
     },
     onSuccess: () => {
       toast({
@@ -331,11 +327,25 @@ export default function UserManagement() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-industrial-gray">Benutzerverwaltung</h1>
+          <h1 className="text-3xl font-bold text-industrial-gray">Einstellungen</h1>
           <p className="mt-2 text-secondary-gray">
-            Verwalten Sie Benutzerkonten, Rollen und Berechtigungen im System
+            Verwalten Sie Benutzerkonten und App-Einstellungen
           </p>
         </div>
+
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Benutzerverwaltung
+            </TabsTrigger>
+            <TabsTrigger value="app-settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              App-Einstellungen
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="mt-6">
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
