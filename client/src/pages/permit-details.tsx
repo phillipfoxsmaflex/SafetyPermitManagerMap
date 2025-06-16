@@ -264,7 +264,7 @@ export default function PermitDetails() {
   };
 
   const handlePrint = () => {
-    window.print();
+    window.location.href = `/permit/${permit?.id}/print`;
   };
 
   if (isLoading) {

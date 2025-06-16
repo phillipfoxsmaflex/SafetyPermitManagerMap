@@ -10,6 +10,7 @@ import Permits from "@/pages/permits";
 import Drafts from "@/pages/drafts";
 import Settings from "@/pages/settings";
 import PermitDetails from "@/pages/permit-details";
+import PermitPrint from "@/pages/permit-print";
 import UserManagement from "@/pages/user-management";
 import Approvals from "@/pages/approvals";
 import Login from "@/pages/login";
@@ -36,6 +37,11 @@ function Router() {
       <Route path="/permit/:id">
         <ProtectedRoute>
           <PermitDetails />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/permit/:id/print">
+        <ProtectedRoute>
+          <PermitPrint />
         </ProtectedRoute>
       </Route>
       <Route path="/approvals">
