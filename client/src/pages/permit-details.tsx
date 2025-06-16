@@ -594,18 +594,7 @@ export default function PermitDetails() {
 
 
 
-            {/* Anhänge */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Datei-Anhänge
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PermitAttachments permitId={permit.id} />
-              </CardContent>
-            </Card>
+
           </div>
 
           {/* Sidebar - Right Side */}
