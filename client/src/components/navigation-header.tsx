@@ -139,9 +139,9 @@ export function NavigationHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {user?.role === 'admin' && (
-                  <DropdownMenuItem onClick={() => setLocation("/settings")}>
+                  <DropdownMenuItem onClick={() => setLocation("/user-management")}>
                     <Settings className="h-4 w-4 mr-2" />
-                    App-Einstellungen
+                    Einstellungen
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleLogout}>Abmelden</DropdownMenuItem>
