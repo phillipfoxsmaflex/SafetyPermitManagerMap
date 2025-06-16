@@ -163,6 +163,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
   });
 
+  // Check if permit can be edited (only drafts can be edited)
+  const canEdit = currentPermit?.status === 'draft';
+  const isLoading = updateMutation.isPending || workflowMutation.isPending;
+
   // Sync form with latest permit data whenever currentPermit changes (only in edit mode)
   React.useEffect(() => {
     if (mode === 'edit' && currentPermit && open) {
@@ -179,12 +183,25 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         return date.toISOString().slice(0, 16);
       };
 
+      // Find work location ID by name
+      const findWorkLocationId = (locationName: string | null): number | undefined => {
+        if (!locationName) return undefined;
+        const location = workLocations.find(loc => loc.name === locationName);
+        return location?.id;
+      };
+
+      // Find user ID by full name
+      const findUserIdByName = (fullName: string | null, userList: any[]): number | undefined => {
+        if (!fullName) return undefined;
+        const user = userList.find(u => u.fullName === fullName || u.username === fullName);
+        return user?.id;
+      };
+
       form.reset({
         type: currentPermit.type || "",
         workDescription: currentPermit.description || "",
         location: currentPermit.location || "",
-        workLocationId: currentPermit.location ? 
-          workLocations.find(loc => loc.name === currentPermit.location)?.id?.toString() : "",
+        workLocationId: findWorkLocationId(currentPermit.location),
         requestedBy: currentPermit.requestorName || "",
         department: currentPermit.department || "",
         plannedStartDate: formatDate(currentPermit.startDate),
@@ -193,12 +210,9 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         departmentHeadApproval: currentPermit.departmentHeadApproval || false,
         safetyOfficerApproval: currentPermit.safetyOfficerApproval || false,
         maintenanceApproval: currentPermit.maintenanceApproval || false,
-        departmentHeadId: currentPermit.departmentHead ? 
-          departmentHeads.find(head => head.fullName === currentPermit.departmentHead)?.id : undefined,
-        safetyOfficerId: currentPermit.safetyOfficer ? 
-          safetyOfficers.find(officer => officer.fullName === currentPermit.safetyOfficer)?.id : undefined,
-        maintenanceApproverId: currentPermit.maintenanceApprover ? 
-          maintenanceApprovers.find(approver => approver.fullName === currentPermit.maintenanceApprover)?.id : undefined,
+        departmentHeadId: findUserIdByName(currentPermit.departmentHead, departmentHeads),
+        safetyOfficerId: findUserIdByName(currentPermit.safetyOfficer, safetyOfficers),
+        maintenanceApproverId: findUserIdByName(currentPermit.maintenanceApprover, maintenanceApprovers),
         identifiedHazards: currentPermit.identifiedHazards || "",
         selectedHazards: currentPermit.selectedHazards || [],
         hazardNotes: currentPermit.hazardNotes || "",
@@ -228,7 +242,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         }
       }
     }
-  }, [currentPermit, open, form]);
+  }, [currentPermit, open, form, workLocations, departmentHeads, safetyOfficers, maintenanceApprovers]);
 
   // Update/Create form mutation
   const updateMutation = useMutation({
@@ -399,7 +413,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Genehmigungstyp</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Genehmigungstyp auswählen..." />
@@ -427,7 +441,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormItem>
                             <FormLabel>Abteilung</FormLabel>
                             <FormControl>
-                              <Input placeholder="Abteilung eingeben" {...field} />
+                              <Input placeholder="Abteilung eingeben" disabled={!canEdit} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -444,6 +458,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormControl>
                             <Textarea 
                               placeholder="Detaillierte Beschreibung der durchzuführenden Arbeiten..." 
+                              disabled={!canEdit}
                               {...field} 
                             />
                           </FormControl>
@@ -460,7 +475,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormItem>
                             <FormLabel>Geplantes Startdatum</FormLabel>
                             <FormControl>
-                              <Input type="datetime-local" {...field} />
+                              <Input type="datetime-local" disabled={!canEdit} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -474,7 +489,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormItem>
                             <FormLabel>Geplantes Enddatum</FormLabel>
                             <FormControl>
-                              <Input type="datetime-local" {...field} />
+                              <Input type="datetime-local" disabled={!canEdit} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -489,7 +504,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Beantragt von</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Antragsteller auswählen..." />
@@ -515,7 +530,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormItem>
                             <FormLabel>Notfallkontakt</FormLabel>
                             <FormControl>
-                              <Input placeholder="Notfallkontakt (optional)" {...field} />
+                              <Input placeholder="Notfallkontakt (optional)" disabled={!canEdit} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -533,6 +548,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                             <Select 
                               onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
                               value={field.value?.toString() || ""}
+                              disabled={!canEdit}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -559,7 +575,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           <FormItem>
                             <FormLabel>Spezifischer Ort (optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Detaillierte Ortsangabe..." {...field} />
+                              <Input placeholder="Detaillierte Ortsangabe..." disabled={!canEdit} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -639,7 +655,9 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                         <FormControl>
                                           <Checkbox
                                             checked={field.value?.includes(hazardId) || false}
+                                            disabled={!canEdit}
                                             onCheckedChange={(checked) => {
+                                              if (!canEdit) return;
                                               const current = field.value || [];
                                               if (checked) {
                                                 field.onChange([...current, hazardId]);
@@ -670,6 +688,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                               <Textarea
                                                 placeholder="Zusätzliche Notizen zu dieser Gefährdung..."
                                                 className="min-h-[60px] text-sm"
+                                                disabled={!canEdit}
                                                 value={(() => {
                                                   const notes = field.value;
                                                   if (typeof notes === 'string') {
@@ -683,6 +702,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                                   return notes?.[hazardId] || '';
                                                 })()}
                                                 onChange={(e) => {
+                                                  if (!canEdit) return;
                                                   const currentNotes = field.value;
                                                   let notesObj = {};
 
@@ -729,6 +749,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <Textarea 
                                 placeholder="PSAgA-Ausrüstung prüfen, Wetterbedingungen bewerten, Absperrung errichten, Notfallplan aktivieren, Kommunikation etablieren"
                                 className="min-h-[100px]"
+                                disabled={!canEdit}
                                 {...field}
                               />
                             </FormControl>
@@ -750,6 +771,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 • Kommunikationsverbindung nach außen etablieren
 • Rettungsmannschaft in Bereitschaft versetzen"
                                 className="min-h-[100px]"
+                                disabled={!canEdit}
                                 {...field}
                               />
                             </FormControl>
@@ -773,7 +795,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Risikokategorie</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <Select onValueChange={field.onChange} value={field.value || ""} disabled={!canEdit}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Risikokategorie auswählen..." />
@@ -801,6 +823,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                             <Textarea 
                               placeholder="Absturzgefahr, rutschige Oberflächen, Witterungseinflüsse"
                               className="min-h-[120px]"
+                              disabled={!canEdit}
                               {...field}
                             />
                           </FormControl>
@@ -819,6 +842,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                             <Textarea 
                               placeholder="Auffanggurt und Sicherungsseil erforderlich. Nur bei trockener Witterung arbeiten."
                               className="min-h-[100px]"
+                              disabled={!canEdit}
                               {...field}
                             />
                           </FormControl>
@@ -847,6 +871,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <Select 
                                 onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
                                 value={field.value?.toString() || ""}
+                                disabled={!canEdit}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -879,6 +904,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <Select 
                                 onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
                                 value={field.value?.toString() || ""}
+                                disabled={!canEdit}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -911,6 +937,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <Select 
                                 onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} 
                                 value={field.value?.toString() || ""}
+                                disabled={!canEdit}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -952,7 +979,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                             <FormItem>
                               <FormLabel>Name des Durchführers</FormLabel>
                               <FormControl>
-                                <Input placeholder="Vollständiger Name der Person, die die Arbeit durchführt" {...field} />
+                                <Input placeholder="Vollständiger Name der Person, die die Arbeit durchführt" disabled={!canEdit} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -967,7 +994,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <FormItem>
                                 <FormLabel>Arbeit begonnen am</FormLabel>
                                 <FormControl>
-                                  <Input type="datetime-local" {...field} />
+                                  <Input type="datetime-local" disabled={!canEdit} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -981,7 +1008,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               <FormItem>
                                 <FormLabel>Arbeit abgeschlossen am</FormLabel>
                                 <FormControl>
-                                  <Input type="datetime-local" {...field} />
+                                  <Input type="datetime-local" disabled={!canEdit} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1024,7 +1051,16 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <AiSuggestions permitId={permit.id} />
+                    {!canEdit && (
+                      <Alert className="mb-4">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          KI-Analyse ist nur bei Genehmigungen im Entwurfsstatus verfügbar. 
+                          Setzen Sie die Genehmigung zurück auf "Entwurf", um Änderungen vorzunehmen.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <AiSuggestions permitId={permit.id} disabled={!canEdit} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1083,8 +1119,9 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
                 <Button
                   type="submit"
-                  disabled={updateMutation.isPending}
-                  className="bg-industrial-gray hover:bg-industrial-gray/90"
+                  disabled={!canEdit || isLoading}
+                  className="bg-industrial-gray hover:bg-industrial-gray/90 disabled:opacity-50"
+                  title={!canEdit ? "Kann nur bei Entwürfen bearbeitet werden" : ""}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Speichern
@@ -1095,6 +1132,16 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                 <PermitAttachments permitId={permit.id} />
               </div>
             </div>
+
+            {!canEdit && mode === 'edit' && (
+              <Alert className="mt-4">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Diese Genehmigung kann nicht bearbeitet werden, da sie sich nicht im Entwurfsstatus befindet. 
+                  Verwenden Sie die Workflow-Aktionen, um sie zurück auf "Entwurf" zu setzen.
+                </AlertDescription>
+              </Alert>
+            )}
           </form>
         </Form>
       </DialogContent>

@@ -65,12 +65,12 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       setAnalysisStage('checking');
-      
+
       // Check if webhook is configured before starting analysis
       const response = await fetch('/api/webhook-configs');
       const webhookConfigs = await response.json();
       const activeWebhook = webhookConfigs.find((config: any) => config.isActive);
-      
+
       if (!activeWebhook) {
         throw new Error('Keine aktive Webhook-Konfiguration gefunden. Bitte konfigurieren Sie eine n8n Webhook-URL in den Einstellungen.');
       }
@@ -86,7 +86,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       // Poll for new suggestions with proper completion detection
       const pollInterval = setInterval(async () => {
         queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
-        
+
         // Check if suggestions have been received
         const currentSuggestions = queryClient.getQueryData([`/api/permits/${permitId}/suggestions`]) as any[];
         if (currentSuggestions && currentSuggestions.length > 0) {
@@ -132,10 +132,10 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
-      
+
       // Force refetch permit data immediately
       queryClient.refetchQueries({ queryKey: [`/api/permits/${permitId}`] });
-      
+
       toast({
         title: "Vorschlag übernommen",
         description: data?.message || "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
@@ -193,32 +193,32 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const handleApplyAll = () => {
     console.log(`Applying all suggestions for permit ${permitId} via iframe`);
-    
+
     toast({
       title: "Alle Vorschläge werden übernommen...",
       description: "Bitte warten Sie einen Moment.",
     });
-    
+
     // Create hidden iframe to make the request without leaving the page
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     iframe.src = `/api/permits/${permitId}/suggestions/apply-all?redirect=/success`;
-    
+
     iframe.onload = () => {
       // Request completed, refresh the suggestions and permit data
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
-      
+
       toast({
         title: "Alle Vorschläge übernommen",
         description: "Alle AI-Vorschläge wurden erfolgreich übernommen.",
       });
-      
+
       // Clean up
       document.body.removeChild(iframe);
     };
-    
+
     iframe.onerror = () => {
       toast({
         title: "Fehler",
@@ -227,7 +227,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       });
       document.body.removeChild(iframe);
     };
-    
+
     document.body.appendChild(iframe);
   };
 
@@ -330,32 +330,32 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
 
   const handleApplySuggestion = async (suggestionId: number) => {
     console.log(`Applying suggestion ${suggestionId} via iframe`);
-    
+
     toast({
       title: "Vorschlag wird übernommen...",
       description: "Bitte warten Sie einen Moment.",
     });
-    
+
     // Create hidden iframe to make the request without leaving the page
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     iframe.src = `/api/suggestions/${suggestionId}/apply?redirect=/success`;
-    
+
     iframe.onload = () => {
       // Request completed, refresh the suggestions and permit data
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
-      
+
       toast({
         title: "Vorschlag übernommen",
         description: "Der AI-Vorschlag wurde erfolgreich in die Genehmigung übernommen.",
       });
-      
+
       // Clean up
       document.body.removeChild(iframe);
     };
-    
+
     iframe.onerror = () => {
       toast({
         title: "Fehler",
@@ -364,7 +364,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
       });
       document.body.removeChild(iframe);
     };
-    
+
     document.body.appendChild(iframe);
   };
 
@@ -446,7 +446,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           {isAnalyzing ? 'Analysiert...' : 'AI-Analyse starten'}
         </Button>
       </div>
-      
+
       {suggestions.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           <Button
@@ -458,7 +458,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
             <CheckCircle className="h-4 w-4 mr-2" />
             Alle übernehmen
           </Button>
-          
+
           <Button
             onClick={() => rejectAllMutation.mutate()}
             disabled={rejectAllMutation.isPending}
@@ -473,7 +473,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
             )}
             Alle ablehnen
           </Button>
-          
+
           <Button
             onClick={() => deleteAllMutation.mutate()}
             disabled={deleteAllMutation.isPending}
@@ -490,7 +490,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
           </Button>
         </div>
       )}
-      
+
       <div>
         {isLoading ? (
           <div className="text-center py-8">
@@ -551,7 +551,7 @@ export function AiSuggestions({ permitId }: AiSuggestionsProps) {
                       <p className="text-sm text-gray-600 font-mono">{suggestion.originalValue}</p>
                     </div>
                   )}
-                  
+
                   <div className="bg-blue-50 p-3 rounded">
                     <p className="text-sm font-medium text-blue-700 mb-1">Vorgeschlagene Verbesserung:</p>
                     <p className="text-sm text-blue-600">{suggestion.suggestedValue}</p>

@@ -751,15 +751,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Handle other workflow actions
         console.log(`Executing workflow action: ${action} -> ${nextStatus} for permit ${permitId}`);
-        const updatedPermit = await storage.updatePermitStatus(permitId, nextStatus, userId, comment);
         
-        if (!updatedPermit) {
-          console.error(`Failed to update permit ${permitId} status to ${nextStatus}`);
-          return res.status(500).json({ message: "Failed to update permit status" });
+        // Special handling for withdraw action - reset all approvals
+        if (action === 'withdraw' && nextStatus === 'draft') {
+          console.log(`Withdrawing permit ${permitId} to draft - resetting all approvals`);
+          
+          // Reset all approval fields
+          const resetData = {
+            status: 'draft',
+            departmentHeadApproval: false,
+            departmentHeadApprovalDate: null,
+            safetyOfficerApproval: false,
+            safetyOfficerApprovalDate: null,
+            maintenanceApproval: false,
+            maintenanceApprovalDate: null,
+            updatedAt: new Date()
+          };
+          
+          const updatedPermit = await storage.updatePermit(permitId, resetData);
+          
+          if (!updatedPermit) {
+            console.error(`Failed to withdraw permit ${permitId} to draft`);
+            return res.status(500).json({ message: "Failed to withdraw permit to draft" });
+          }
+          
+          // Add status history entry
+          await storage.addStatusHistoryEntry(permitId, 'draft', userId, comment || 'Genehmigung zurückgezogen - alle Freigaben zurückgesetzt');
+          
+          console.log(`Successfully withdrew permit ${permitId} to draft and reset approvals`);
+          res.json(updatedPermit);
+        } else {
+          // Regular status update
+          const updatedPermit = await storage.updatePermitStatus(permitId, nextStatus, userId, comment);
+          
+          if (!updatedPermit) {
+            console.error(`Failed to update permit ${permitId} status to ${nextStatus}`);
+            return res.status(500).json({ message: "Failed to update permit status" });
+          }
+          
+          console.log(`Successfully updated permit ${permitId} status to ${nextStatus}`);
+          res.json(updatedPermit);
         }
-        
-        console.log(`Successfully updated permit ${permitId} status to ${nextStatus}`);
-        res.json(updatedPermit);
       }
     } catch (error) {
       console.error("Error processing workflow action:", error);

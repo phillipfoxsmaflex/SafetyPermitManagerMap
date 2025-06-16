@@ -87,12 +87,12 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
     availableActions: [
       {
         id: 'withdraw',
-        label: 'Zurückziehen',
+        label: 'Zurück zu Entwurf',
         icon: ArrowLeft,
         variant: 'outline',
         nextStatus: 'draft',
         requiresConfirmation: true,
-        confirmationMessage: 'Möchten Sie diese Genehmigung zurückziehen? Sie wird wieder als Entwurf gespeichert.',
+        confirmationMessage: 'Möchten Sie diese Genehmigung zurückziehen? Alle Freigaben werden zurückgesetzt und sie wird wieder als Entwurf gespeichert.',
         permissions: ['any']
       },
       {
@@ -125,6 +125,16 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
         requiresConfirmation: true,
         confirmationMessage: 'Möchten Sie diese Genehmigung als abgeschlossen markieren?',
         permissions: ['supervisor', 'performer', 'admin']
+      },
+      {
+        id: 'withdraw',
+        label: 'Zurück zu Entwurf',
+        icon: ArrowLeft,
+        variant: 'outline',
+        nextStatus: 'draft',
+        requiresConfirmation: true,
+        confirmationMessage: 'Möchten Sie diese Genehmigung zurückziehen? Alle Freigaben werden zurückgesetzt.',
+        permissions: ['admin']
       }
     ]
   },
@@ -136,7 +146,18 @@ export const WORKFLOW_CONFIG: Record<string, WorkflowState> = {
     textColor: 'text-green-800',
     isEditable: false,
     description: 'Genehmigung wurde erfolgreich abgeschlossen',
-    availableActions: []
+    availableActions: [
+      {
+        id: 'withdraw',
+        label: 'Zurück zu Entwurf',
+        icon: ArrowLeft,
+        variant: 'outline',
+        nextStatus: 'draft',
+        requiresConfirmation: true,
+        confirmationMessage: 'Möchten Sie diese abgeschlossene Genehmigung wieder öffnen? Alle Freigaben werden zurückgesetzt.',
+        permissions: ['admin']
+      }
+    ]
   },
   expired: {
     status: 'expired',

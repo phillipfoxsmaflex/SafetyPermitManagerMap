@@ -110,6 +110,24 @@ export function WorkflowButtons({
             icon: Play,
             variant: 'default' as const,
             nextStatus: 'active'
+          },
+          {
+            id: 'withdraw',
+            label: 'Zurück zu Entwurf',
+            icon: ArrowLeft,
+            variant: 'outline' as const,
+            nextStatus: 'draft'
+          }
+        ];
+
+      case 'completed':
+        return [
+          {
+            id: 'withdraw',
+            label: 'Zurück zu Entwurf',
+            icon: ArrowLeft,
+            variant: 'outline' as const,
+            nextStatus: 'draft'
           }
         ];
       
