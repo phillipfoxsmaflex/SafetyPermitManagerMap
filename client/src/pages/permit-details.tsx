@@ -73,13 +73,143 @@ export default function PermitDetails() {
     return typeMap[type] || type;
   };
 
-  const getRiskLevelLabel = (level: string) => {
+  const getRiskLevel = (level: string) => {
     const levelMap: Record<string, { label: string; color: string }> = {
       'niedrig': { label: 'Niedrig', color: 'bg-green-100 text-green-800' },
       'mittel': { label: 'Mittel', color: 'bg-yellow-100 text-yellow-800' },
       'hoch': { label: 'Hoch', color: 'bg-red-100 text-red-800' },
     };
     return levelMap[level] || { label: level, color: 'bg-gray-100 text-gray-800' };
+  };
+
+  // TRBS-konforme Gefährdungsstruktur 
+  const hazardCategories = {
+    1: {
+      name: "Mechanische Gefährdungen",
+      hazards: [
+        "Quetschung durch bewegte Teile",
+        "Schneiden an scharfen Kanten", 
+        "Stoßen an Gegenstände",
+        "Erfasst werden von rotierenden Teilen",
+        "Sturz durch rutschige Oberflächen"
+      ]
+    },
+    2: {
+      name: "Elektrische Gefährdungen",
+      hazards: [
+        "Stromschlag durch defekte Isolierung",
+        "Lichtbogen bei Schalthandlungen",
+        "Elektrostatische Aufladung", 
+        "Blitzschlag bei Außenarbeiten",
+        "Überspannung in Anlagen"
+      ]
+    },
+    3: {
+      name: "Gefahrstoffe",
+      hazards: [
+        "Einatmen von Dämpfen",
+        "Hautkontakt mit Chemikalien",
+        "Verschlucken von Substanzen",
+        "Brand- und Explosionsgefahr",
+        "Allergische Reaktionen"
+      ]
+    },
+    4: {
+      name: "Biologische Arbeitsstoffe",
+      hazards: [
+        "Infektionsgefahr durch Bakterien",
+        "Virale Kontamination",
+        "Pilzsporen in der Luft",
+        "Parasitärer Befall",
+        "Allergene biologische Stoffe"
+      ]
+    },
+    5: {
+      name: "Brand- und Explosionsgefährdungen",
+      hazards: [
+        "Entzündung brennbarer Stoffe",
+        "Gasexplosion in Behältern",
+        "Staubexplosion",
+        "Selbstentzündung von Materialien",
+        "Heiße Oberflächen"
+      ]
+    },
+    6: {
+      name: "Thermische Gefährdungen",
+      hazards: [
+        "Verbrennungen durch heiße Oberflächen",
+        "Erfrierungen durch Kälte",
+        "Hitzschlag bei hohen Temperaturen",
+        "Unterkühlung in kalter Umgebung",
+        "Strahlungswärme"
+      ]
+    },
+    7: {
+      name: "Gefährdungen durch spezielle physikalische Einwirkungen",
+      hazards: [
+        "Lärm über Grenzwerten",
+        "Vibration durch Maschinen",
+        "Ionisierende Strahlung",
+        "Nichtionisierende Strahlung",
+        "Unter- oder Überdruck"
+      ]
+    },
+    8: {
+      name: "Gefährdungen durch Arbeitsumgebungsbedingungen",
+      hazards: [
+        "Unzureichende Beleuchtung",
+        "Klimatische Belastung",
+        "Unzureichende Verkehrswege",
+        "Absturzgefahr",
+        "Ertrinkungsgefahr"
+      ]
+    },
+    9: {
+      name: "Physische Belastung/Arbeitsschwere",
+      hazards: [
+        "Schweres Heben und Tragen",
+        "Ungünstige Körperhaltung",
+        "Repetitive Bewegungen",
+        "Einseitige Belastung",
+        "Zeitdruck bei körperlicher Arbeit"
+      ]
+    },
+    10: {
+      name: "Psychische Faktoren",
+      hazards: [
+        "Stress durch Zeitdruck",
+        "Überforderung bei komplexen Aufgaben",
+        "Monotone Tätigkeiten",
+        "Soziale Isolation",
+        "Verantwortungsdruck"
+      ]
+    }
+  };
+
+  const getHazardDescription = (hazardId: string): { category: string; description: string; note?: string } => {
+    const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+    const category = hazardCategories[categoryId as keyof typeof hazardCategories];
+    
+    if (!category || !category.hazards[hazardIndex]) {
+      return { category: `Kategorie ${categoryId}`, description: `Unbekannte Gefährdung ${hazardIndex + 1}` };
+    }
+
+    // Notiz für diese Gefährdung extrahieren
+    let note: string | undefined;
+    if (permit?.hazardNotes && permit.hazardNotes !== '{}') {
+      try {
+        const notes = JSON.parse(permit.hazardNotes);
+        note = notes[hazardId];
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+
+    return {
+      category: category.name,
+      description: category.hazards[hazardIndex],
+      note
+    };
   };
 
   const getWorkLocationName = (workLocationId: number | null) => {
@@ -131,7 +261,7 @@ export default function PermitDetails() {
     );
   }
 
-  const riskLevel = getRiskLevelLabel(permit.overallRisk || 'niedrig');
+  const riskLevel = getRiskLevel(permit.overallRisk || 'niedrig');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -342,16 +472,30 @@ export default function PermitDetails() {
                     <Separator />
                     <div>
                       <div className="text-sm font-medium text-secondary-gray mb-3">Ausgewählte Gefährdungen</div>
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
                         {permit.selectedHazards.map((hazardId: string, index: number) => {
-                          // Parse hazard ID to get category and hazard index
-                          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                          const hazardInfo = getHazardDescription(hazardId);
                           return (
-                            <div key={index} className="bg-orange-50 border border-orange-200 p-3 rounded-md">
-                              <div className="text-sm text-orange-800">
-                                <span className="font-medium">Kategorie {categoryId}:</span> Gefährdung {hazardIndex + 1}
+                            <div key={index} className="bg-orange-50 border border-orange-200 p-4 rounded-md">
+                              <div className="mb-2">
+                                <div className="text-sm font-medium text-orange-900 mb-1">
+                                  {hazardInfo.category}
+                                </div>
+                                <div className="text-sm text-orange-800 font-medium">
+                                  {hazardInfo.description}
+                                </div>
                               </div>
-                              <div className="text-xs text-orange-600 mt-1">
+                              {hazardInfo.note && (
+                                <div className="mt-3 pt-2 border-t border-orange-200">
+                                  <div className="text-xs font-medium text-orange-700 mb-1">
+                                    Schutzmaßnahmen:
+                                  </div>
+                                  <div className="text-xs text-orange-700 bg-orange-25 p-2 rounded">
+                                    {hazardInfo.note}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="text-xs text-orange-600 mt-2 opacity-75">
                                 ID: {hazardId}
                               </div>
                             </div>
@@ -374,33 +518,7 @@ export default function PermitDetails() {
                   </>
                 )}
 
-                {permit.hazardNotes && permit.hazardNotes !== '{}' && (
-                  <>
-                    <Separator />
-                    <div>
-                      <div className="text-sm font-medium text-secondary-gray mb-2">Notizen zu Gefährdungen</div>
-                      <div className="text-industrial-gray bg-blue-50 p-3 rounded-md">
-                        <div className="text-sm">
-                          {(() => {
-                            try {
-                              const notes = JSON.parse(permit.hazardNotes);
-                              return Object.entries(notes).map(([hazardId, note]: [string, any]) => (
-                                note ? (
-                                  <div key={hazardId} className="mb-2 last:mb-0">
-                                    <span className="font-medium text-blue-800">Gefährdung {hazardId}:</span>
-                                    <span className="ml-2 text-blue-700">{note}</span>
-                                  </div>
-                                ) : null
-                              ));
-                            } catch {
-                              return 'Fehler beim Laden der Notizen';
-                            }
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+
               </CardContent>
             </Card>
 
