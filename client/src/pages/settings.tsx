@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { WorkLocationManagement } from "@/components/work-location-management";
@@ -437,6 +437,9 @@ export default function Settings() {
     confirmPassword: ""
   });
 
+  const iconInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
   const [settings, setSettings] = useState({
     // User Settings
     fullName: currentUser?.fullName || "Hans Mueller",
@@ -467,6 +470,24 @@ export default function Settings() {
     enableTLS: true,
     fromAddress: "noreply@company.com",
     fromName: "TRBS Permit System"
+  });
+
+  const [systemSettings, setSystemSettings] = useState({
+    applicationTitle: "Arbeitserlaubnis",
+    headerIcon: null as string | null
+  });
+
+  // Fetch system settings
+  const { data: currentSystemSettings } = useQuery({
+    queryKey: ["/api/system-settings"],
+    onSuccess: (data) => {
+      if (data) {
+        setSystemSettings({
+          applicationTitle: data.applicationTitle || "Arbeitserlaubnis",
+          headerIcon: data.headerIcon || null
+        });
+      }
+    }
   });
 
   const updatePasswordMutation = useMutation({
@@ -824,6 +845,65 @@ export default function Settings() {
                     checked={settings.maintenanceMode}
                     onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
                   />
+                </div>
+
+                <Separator />
+
+                {/* Application Customization */}
+                <div>
+                  <Label className="text-base font-semibold">Anwendungsanpassung</Label>
+                  <p className="text-sm text-secondary-gray mb-4">
+                    Passen Sie das Erscheinungsbild der Anwendung an
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="app-title">Anwendungstitel</Label>
+                      <Input
+                        id="app-title"
+                        placeholder="Arbeitserlaubnis"
+                        value={systemSettings.applicationTitle}
+                        onChange={(e) => setSystemSettings({ ...systemSettings, applicationTitle: e.target.value })}
+                        className="max-w-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="header-icon">Header-Icon</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        {systemSettings.headerIcon && (
+                          <div className="w-10 h-10 border rounded-md overflow-hidden bg-gray-50">
+                            <img 
+                              src={systemSettings.headerIcon} 
+                              alt="Header Icon" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIconUpload}
+                          className="hidden"
+                          ref={iconInputRef}
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={() => iconInputRef.current?.click()}
+                          disabled={uploadIconMutation.isPending}
+                        >
+                          {uploadIconMutation.isPending ? "Lade hoch..." : "Icon auswählen"}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-secondary-gray mt-1">
+                        Empfohlene Größe: 40x40px, Format: PNG, JPG, SVG
+                      </p>
+                    </div>
+                    
+                    <Button onClick={handleSaveSystemSettings} disabled={saveSystemSettingsMutation.isPending}>
+                      {saveSystemSettingsMutation.isPending ? "Speichere..." : "Einstellungen speichern"}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -2344,6 +2344,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // System Settings routes
+  app.get("/api/system-settings", requireAuth, async (req, res) => {
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json(settings || { applicationTitle: "Arbeitserlaubnis", headerIcon: null });
+    } catch (error) {
+      console.error("Error fetching system settings:", error);
+      res.status(500).json({ message: "Failed to fetch system settings" });
+    }
+  });
+
+  app.patch("/api/system-settings", requireAuth, async (req, res) => {
+    try {
+      const updates = req.body;
+      const settings = await storage.updateSystemSettings(updates);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating system settings:", error);
+      res.status(500).json({ message: "Failed to update system settings" });
+    }
+  });
+
+  app.post("/api/system-settings/upload-icon", requireAuth, upload.single('icon'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Validate file type
+      if (!req.file.mimetype.startsWith('image/')) {
+        return res.status(400).json({ message: "Only image files are allowed" });
+      }
+
+      // Convert to base64
+      const base64Icon = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      // Update system settings with new icon
+      const settings = await storage.updateSystemSettings({ headerIcon: base64Icon });
+      
+      res.json({ 
+        message: "Icon uploaded successfully",
+        headerIcon: base64Icon,
+        settings 
+      });
+    } catch (error) {
+      console.error("Error uploading icon:", error);
+      res.status(500).json({ message: "Failed to upload icon" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
