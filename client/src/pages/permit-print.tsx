@@ -3,10 +3,11 @@ import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Printer, ArrowLeft } from "lucide-react";
+import { FileText, Printer, ArrowLeft, AlertTriangle, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { Permit, User, WorkLocation } from "@shared/schema";
+import trbsData from "@/data/trbs_complete_hazards.json";
 
 export default function PermitPrint() {
   const [match, params] = useRoute("/permit/:id/print");
@@ -92,6 +93,51 @@ export default function PermitPrint() {
     window.print();
   };
 
+  // Helper functions for TRBS data
+  const parseSelectedHazards = (hazardsStr: string | any[]) => {
+    try {
+      return Array.isArray(hazardsStr) ? hazardsStr : JSON.parse(hazardsStr || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  const parseHazardNotes = (notesStr: string) => {
+    try {
+      return JSON.parse(notesStr || '{}');
+    } catch {
+      return {};
+    }
+  };
+
+  const parseCompletedMeasures = (measuresStr: string | any[]) => {
+    try {
+      return Array.isArray(measuresStr) ? measuresStr : JSON.parse(measuresStr || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  const getHazardText = (hazardId: string) => {
+    const [categoryId, hazardIndex] = hazardId.split('-');
+    const category = trbsData.categories.find(cat => cat.id === categoryId);
+    if (category && category.hazards[parseInt(hazardIndex)]) {
+      return category.hazards[parseInt(hazardIndex)].hazard;
+    }
+    return hazardId;
+  };
+
+  const getCategoryName = (categoryId: string) => {
+    const category = trbsData.categories.find(cat => cat.id === categoryId);
+    return category ? category.category : `Kategorie ${categoryId}`;
+  };
+
+  const getUserName = (userId: number | null) => {
+    if (!userId) return 'Nicht zugewiesen';
+    const user = users.find(u => u.id === userId);
+    return user ? (user.fullName || user.username) : `User ID: ${userId}`;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -120,6 +166,9 @@ export default function PermitPrint() {
   }
 
   const riskLevel = getRiskLevel(permit.overallRisk || 'niedrig');
+  const selectedHazards = parseSelectedHazards(permit.selectedHazards || []);
+  const hazardNotes = parseHazardNotes(permit.hazardNotes || '{}');
+  const completedMeasures = parseCompletedMeasures(permit.completedMeasures || []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -144,142 +193,236 @@ export default function PermitPrint() {
         </div>
       </div>
 
-      {/* Print Content */}
-      <div className="max-w-4xl mx-auto p-8">
+      {/* Print Content - Optimized for A4 */}
+      <div className="max-w-[210mm] mx-auto p-6 text-sm leading-tight">
         {/* Document Header */}
-        <div className="text-center mb-8 border-b-2 border-gray-300 pb-6">
-          <h1 className="text-3xl font-bold text-industrial-gray mb-2">
-            Arbeitserlaubnis / Permit to Work
+        <div className="text-center mb-4 border-b-2 border-black pb-3">
+          <h1 className="text-xl font-bold text-black mb-1">
+            ARBEITSERLAUBNIS / PERMIT TO WORK
           </h1>
-          <h2 className="text-xl text-secondary-gray mb-4">
+          <h2 className="text-base font-semibold text-gray-800 mb-2">
             {getPermitTypeLabel(permit.type)}
           </h2>
-          <div className="flex justify-center items-center gap-4">
-            <div className="text-lg font-mono font-bold">{permit.permitId}</div>
-            <PermitStatusBadge status={permit.status} />
+          <div className="flex justify-center items-center gap-6 text-xs">
+            <div><strong>Permit-ID:</strong> {permit.permitId}</div>
+            <div><strong>Status:</strong> {permit.status}</div>
+            <div><strong>Risiko:</strong> {riskLevel.label}</div>
           </div>
         </div>
 
-        {/* Basic Information */}
-        <Card className="mb-6 print-avoid-break">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Grundinformationen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Arbeitstyp</div>
-                <div className="text-industrial-gray font-medium">{getPermitTypeLabel(permit.type)}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Arbeitsort</div>
-                <div className="text-industrial-gray">{getWorkLocationName(permit.workLocationId || '')}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Abteilung</div>
-                <div className="text-industrial-gray">{permit.department}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Gesamtrisiko</div>
-                <Badge className={riskLevel.color}>{riskLevel.label}</Badge>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Eingereicht von</div>
-                <div className="text-industrial-gray">{getSubmittedByName(permit.submittedBy || null)}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Kontaktnummer</div>
-                <div className="text-industrial-gray">{permit.contactNumber || 'Nicht angegeben'}</div>
-              </div>
+        {/* Basic Information Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">1. GRUNDDATEN</h3>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div>
+              <strong>Arbeitstyp:</strong><br />
+              {getPermitTypeLabel(permit.type)}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Work Description */}
-        <Card className="mb-6 print-avoid-break">
-          <CardHeader>
-            <CardTitle>Beschreibung der Arbeiten</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-50 p-4 rounded-md">
-              {permit.description || 'Keine Beschreibung angegeben'}
+            <div>
+              <strong>Arbeitsort:</strong><br />
+              {getWorkLocationName(permit.workLocationId || '')}
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <strong>Abteilung:</strong><br />
+              {permit.department}
+            </div>
+            <div>
+              <strong>Antragsteller:</strong><br />
+              {permit.requestorName || 'Nicht angegeben'}
+            </div>
+            <div>
+              <strong>Kontaktnummer:</strong><br />
+              {permit.contactNumber || 'Nicht angegeben'}
+            </div>
+            <div>
+              <strong>Notfallkontakt:</strong><br />
+              {permit.emergencyContact || 'Nicht angegeben'}
+            </div>
+          </div>
+          <div className="mt-2">
+            <strong className="text-xs">Arbeitsbeschreibung:</strong><br />
+            <div className="text-xs mt-1 p-2 bg-gray-100 border">
+              {permit.workDescription || permit.description || 'Keine Beschreibung angegeben'}
+            </div>
+          </div>
+        </div>
 
-        {/* Schedule */}
-        <Card className="mb-6 print-avoid-break">
-          <CardHeader>
-            <CardTitle>Zeitplan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-6">
+        {/* Schedule Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">2. ZEITPLAN</h3>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <strong>Geplanter Start:</strong><br />
+              {permit.plannedStartDate ? formatDateTime(permit.plannedStartDate) : 'Nicht angegeben'}
+            </div>
+            <div>
+              <strong>Geplantes Ende:</strong><br />
+              {permit.plannedEndDate ? formatDateTime(permit.plannedEndDate) : 'Nicht angegeben'}
+            </div>
+            <div>
+              <strong>Tatsächlicher Start:</strong><br />
+              {permit.workStartedAt ? formatDateTime(permit.workStartedAt) : 'Noch nicht begonnen'}
+            </div>
+            <div>
+              <strong>Tatsächliches Ende:</strong><br />
+              {permit.workCompletedAt ? formatDateTime(permit.workCompletedAt) : 'Noch nicht abgeschlossen'}
+            </div>
+          </div>
+        </div>
+
+        {/* Hazards Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">3. GEFÄHRDUNGSBEURTEILUNG (TRBS)</h3>
+          {selectedHazards.length > 0 ? (
+            <div className="text-xs space-y-2">
+              {selectedHazards.map((hazardId, index) => {
+                const [categoryId] = hazardId.split('-');
+                return (
+                  <div key={index} className="border-l-2 border-red-500 pl-2">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3 text-red-500" />
+                      <strong>{getCategoryName(categoryId)}</strong>
+                    </div>
+                    <div className="ml-5">
+                      {getHazardText(hazardId)}
+                    </div>
+                    {hazardNotes[hazardId] && (
+                      <div className="ml-5 mt-1 text-gray-600 italic">
+                        Schutzmaßnahme: {hazardNotes[hazardId]}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-600">Keine spezifischen Gefährdungen identifiziert</div>
+          )}
+        </div>
+
+        {/* Approvals Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">4. GENEHMIGUNGEN</h3>
+          <div className="grid grid-cols-1 gap-2 text-xs">
+            <div>
+              <strong>Abteilungsleiter:</strong> {getUserName(permit.departmentHeadId)}
+            </div>
+            <div>
+              <strong>Sicherheitsbeauftragte/r:</strong> {getUserName(permit.safetyOfficerId)}
+            </div>
+            <div>
+              <strong>Wartungsverantwortliche/r:</strong> {getUserName(permit.maintenanceApproverId)}
+            </div>
+          </div>
+        </div>
+
+        {/* Execution Section */}
+        <div className="mb-4 print-avoid-break">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">5. DURCHFÜHRUNG</h3>
+          <div className="text-xs space-y-2">
+            <div>
+              <strong>Ausführende Person:</strong><br />
+              {permit.performerName || 'Nicht angegeben'}
+            </div>
+            
+            {completedMeasures.length > 0 && (
               <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Startdatum</div>
-                <div className="text-industrial-gray">
-                  {permit.startDate ? formatDateTime(permit.startDate) : 'Nicht angegeben'}
+                <strong>Abgeschlossene Schutzmaßnahmen:</strong>
+                <ul className="list-disc list-inside ml-2 mt-1">
+                  {completedMeasures.map((measure, index) => (
+                    <li key={index} className="flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3 text-green-500" />
+                      {measure}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {permit.beforeWorkStarts && (
+              <div>
+                <strong>Vor Arbeitsbeginn:</strong><br />
+                <div className="p-2 bg-gray-100 border mt-1">
+                  {permit.beforeWorkStarts}
                 </div>
               </div>
+            )}
+
+            {permit.immediateActions && (
               <div>
-                <div className="text-sm font-medium text-secondary-gray mb-1">Enddatum</div>
-                <div className="text-industrial-gray">
-                  {permit.endDate ? formatDateTime(permit.endDate) : 'Nicht angegeben'}
+                <strong>Sofortmaßnahmen:</strong><br />
+                <div className="p-2 bg-gray-100 border mt-1">
+                  {permit.immediateActions}
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+
+            {permit.complianceNotes && (
+              <div>
+                <strong>Compliance-Hinweise:</strong><br />
+                <div className="p-2 bg-gray-100 border mt-1">
+                  {permit.complianceNotes}
+                </div>
+              </div>
+            )}
+
+            {/* Signature */}
+            {permit.performerSignature && (
+              <div>
+                <strong>Unterschrift Ausführende/r:</strong><br />
+                <div className="mt-1 border p-2 bg-gray-50">
+                  <img 
+                    src={permit.performerSignature} 
+                    alt="Unterschrift" 
+                    className="max-h-16 w-auto"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Additional Comments */}
         {permit.additionalComments && (
-          <Card className="mb-6 print-avoid-break">
-            <CardHeader>
-              <CardTitle>Zusätzliche Kommentare</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 p-4 rounded-md">
-                {permit.additionalComments}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-4 print-avoid-break">
+            <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">6. ZUSÄTZLICHE KOMMENTARE</h3>
+            <div className="text-xs p-2 bg-gray-100 border">
+              {permit.additionalComments}
+            </div>
+          </div>
         )}
 
         {/* Document Footer */}
-        <div className="mt-12 pt-8 border-t-2 border-gray-300">
-          <div className="grid grid-cols-2 gap-8">
+        <div className="mt-6 pt-4 border-t-2 border-black text-xs">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <div className="text-sm font-medium text-secondary-gray mb-2">Erstellt am</div>
-              <div className="text-industrial-gray">{formatDateTime(permit.createdAt)}</div>
+              <strong>Erstellt:</strong> {formatDateTime(permit.createdAt)}
             </div>
             {permit.updatedAt && (
               <div>
-                <div className="text-sm font-medium text-secondary-gray mb-2">Zuletzt aktualisiert</div>
-                <div className="text-industrial-gray">{formatDateTime(permit.updatedAt)}</div>
+                <strong>Aktualisiert:</strong> {formatDateTime(permit.updatedAt)}
               </div>
             )}
           </div>
           
           {/* Signature Areas */}
-          <div className="grid grid-cols-3 gap-8 mt-12">
+          <div className="grid grid-cols-3 gap-4 mt-8">
             <div className="text-center">
-              <div className="border-t border-gray-400 pt-2 mt-16">
-                <div className="text-sm font-medium">Antragsteller</div>
-                <div className="text-xs text-secondary-gray">Unterschrift / Datum</div>
+              <div className="border-t border-black pt-2 mt-12">
+                <div className="text-xs font-medium">Antragsteller</div>
+                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
               </div>
             </div>
             <div className="text-center">
-              <div className="border-t border-gray-400 pt-2 mt-16">
-                <div className="text-sm font-medium">Sicherheitsbeauftragte/r</div>
-                <div className="text-xs text-secondary-gray">Unterschrift / Datum</div>
+              <div className="border-t border-black pt-2 mt-12">
+                <div className="text-xs font-medium">Sicherheitsbeauftragte/r</div>
+                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
               </div>
             </div>
             <div className="text-center">
-              <div className="border-t border-gray-400 pt-2 mt-16">
-                <div className="text-sm font-medium">Abteilungsleiter/in</div>
-                <div className="text-xs text-secondary-gray">Unterschrift / Datum</div>
+              <div className="border-t border-black pt-2 mt-12">
+                <div className="text-xs font-medium">Abteilungsleiter/in</div>
+                <div className="text-xs text-gray-600">Unterschrift / Datum</div>
               </div>
             </div>
           </div>
