@@ -2382,7 +2382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/system-settings/upload-icon", requireAuth, upload.single('icon'), async (req, res) => {
+  app.post("/api/system-settings/upload-icon", requireAuth, iconUpload.single('icon'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
