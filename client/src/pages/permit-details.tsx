@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Edit, Printer, FileText, Users, Settings, Brain, GitBranch, Activity } from "lucide-react";
+import { ArrowLeft, Edit, Printer, FileText, Users, Settings, Brain, GitBranch, Activity, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { PermitStatusBadge } from "@/components/permit-status-badge";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
@@ -286,60 +286,93 @@ export default function PermitDetails() {
               </CardContent>
             </Card>
 
-            {/* Sicherheitsinformationen */}
+            {/* Gefährdungsbeurteilung */}
             <Card>
               <CardHeader>
-                <CardTitle>Sicherheitsinformationen</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  TRBS-konforme Gefährdungsbeurteilung
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm font-medium text-secondary-gray">Schutzausrüstung erforderlich</div>
+                    <div className="text-sm font-medium text-secondary-gray">Risikokategorie</div>
                     <div className="text-industrial-gray">
-                      {permit.ppeRequired ? (
-                        Array.isArray(permit.ppeRequired) ? permit.ppeRequired.join(', ') : permit.ppeRequired
-                      ) : 'Keine Angabe'}
+                      <Badge className={riskLevel.color}>{riskLevel.label}</Badge>
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-secondary-gray">Isolierung erforderlich</div>
+                    <div className="text-sm font-medium text-secondary-gray">Gefährdungen identifiziert</div>
                     <div className="text-industrial-gray">
-                      {permit.isolationRequired ? 'Ja' : 'Nein'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-secondary-gray">Feuerwache erforderlich</div>
-                    <div className="text-industrial-gray">
-                      {permit.fireWatchRequired ? 'Ja' : 'Nein'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-secondary-gray">Gasmessung erforderlich</div>
-                    <div className="text-industrial-gray">
-                      {permit.gasTestRequired ? 'Ja' : 'Nein'}
+                      {permit.selectedHazards && permit.selectedHazards.length > 0 
+                        ? `${permit.selectedHazards.length} Gefährdung(en) ausgewählt`
+                        : 'Keine Gefährdungen ausgewählt'
+                      }
                     </div>
                   </div>
                 </div>
 
-                {permit.specialPrecautions && (
+                {permit.selectedHazards && permit.selectedHazards.length > 0 && (
                   <>
                     <Separator />
                     <div>
-                      <div className="text-sm font-medium text-secondary-gray mb-2">Besondere Vorsichtsmaßnahmen</div>
-                      <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
-                        {permit.specialPrecautions}
+                      <div className="text-sm font-medium text-secondary-gray mb-3">Ausgewählte Gefährdungen</div>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {permit.selectedHazards.map((hazardId: string, index: number) => {
+                          // Parse hazard ID to get category and hazard index
+                          const [categoryId, hazardIndex] = hazardId.split('-').map(Number);
+                          return (
+                            <div key={index} className="bg-orange-50 border border-orange-200 p-3 rounded-md">
+                              <div className="text-sm text-orange-800">
+                                <span className="font-medium">Kategorie {categoryId}:</span> Gefährdung {hazardIndex + 1}
+                              </div>
+                              <div className="text-xs text-orange-600 mt-1">
+                                ID: {hazardId}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </>
                 )}
 
-                {permit.emergencyProcedures && (
+                {permit.identifiedHazards && (
                   <>
                     <Separator />
                     <div>
-                      <div className="text-sm font-medium text-secondary-gray mb-2">Notfallverfahren</div>
+                      <div className="text-sm font-medium text-secondary-gray mb-2">Zusätzliche Gefahren und Kommentare</div>
                       <div className="text-industrial-gray bg-gray-50 p-3 rounded-md">
-                        {permit.emergencyProcedures}
+                        {permit.identifiedHazards}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {permit.hazardNotes && permit.hazardNotes !== '{}' && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-sm font-medium text-secondary-gray mb-2">Notizen zu Gefährdungen</div>
+                      <div className="text-industrial-gray bg-blue-50 p-3 rounded-md">
+                        <div className="text-sm">
+                          {(() => {
+                            try {
+                              const notes = JSON.parse(permit.hazardNotes);
+                              return Object.entries(notes).map(([hazardId, note]: [string, any]) => (
+                                note ? (
+                                  <div key={hazardId} className="mb-2 last:mb-0">
+                                    <span className="font-medium text-blue-800">Gefährdung {hazardId}:</span>
+                                    <span className="ml-2 text-blue-700">{note}</span>
+                                  </div>
+                                ) : null
+                              ));
+                            } catch {
+                              return 'Fehler beim Laden der Notizen';
+                            }
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </>
@@ -417,18 +450,7 @@ export default function PermitDetails() {
               </CardContent>
             </Card>
 
-            {/* KI-Vorschläge */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  KI-Vorschläge
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AiSuggestions permitId={permit.id} disabled={permit.status !== 'draft'} />
-              </CardContent>
-            </Card>
+
 
             {/* Anhänge */}
             <Card>
