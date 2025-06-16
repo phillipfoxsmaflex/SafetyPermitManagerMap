@@ -19,7 +19,7 @@ export function WorkflowButtons({
   isLoading = false, 
   className 
 }: WorkflowButtonsProps) {
-  const [confirmAction, setConfirmAction] = useState<any>(null);
+
 
   // Direkte Status-basierte Buttons ohne komplexe Konfiguration
   const getButtonsForStatus = () => {
@@ -153,14 +153,8 @@ export function WorkflowButtons({
 
   const executeAction = async (action: any) => {
     console.log('WorkflowButtons: executeAction called with:', action);
-    // Für wichtige Aktionen Bestätigung anfordern
-    if (['approve', 'reject', 'activate', 'complete'].includes(action.id)) {
-      console.log('WorkflowButtons: Setting confirmation action:', action.id);
-      setConfirmAction(action);
-    } else {
-      console.log('WorkflowButtons: Executing action directly:', action.id);
-      await handleAction(action);
-    }
+    // Execute all actions directly
+    await handleAction(action);
   };
 
   const availableButtons = getButtonsForStatus();

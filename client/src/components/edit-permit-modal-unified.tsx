@@ -17,16 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -105,7 +96,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
-  const [confirmAction, setConfirmAction] = useState<any>(null);
+
 
   // Dropdown data queries
   const { data: workLocations = [] } = useQuery<WorkLocation[]>({
@@ -366,38 +357,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
     console.log("Modal: Handling workflow action:", actionId, nextStatus);
     
-    // For critical actions, require confirmation
-    if (['approve', 'reject', 'activate', 'complete'].includes(actionId)) {
-      const action = {
-        id: actionId,
-        nextStatus,
-        label: actionId === 'activate' ? 'Aktivieren' : 
-               actionId === 'approve' ? 'Genehmigen' :
-               actionId === 'reject' ? 'Ablehnen' : 'Abschließen'
-      };
-      setConfirmAction(action);
-      return;
-    }
-    
-    // Execute action directly for non-critical actions
+    // Execute all actions directly without confirmation
     await workflowMutation.mutateAsync({ actionId, nextStatus });
   };
 
-  const executeConfirmedAction = async () => {
-    if (!confirmAction) return;
-    
-    console.log("Modal: Executing confirmed action:", confirmAction);
-    try {
-      await workflowMutation.mutateAsync({ 
-        actionId: confirmAction.id, 
-        nextStatus: confirmAction.nextStatus 
-      });
-      setConfirmAction(null);
-    } catch (error) {
-      console.error("Modal: Confirmed action failed:", error);
-      setConfirmAction(null);
-    }
-  };
+
 
   if (mode === 'edit' && !permit) return null;
 
@@ -1181,30 +1145,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         </Form>
         </div>
       </DialogContent>
-      
-      {/* Central Confirmation Dialog */}
-      {confirmAction && (
-        <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
-          <AlertDialogContent className="z-[200]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Workflow-Aktion bestätigen</AlertDialogTitle>
-              <AlertDialogDescription>
-                Möchten Sie diese Aktion wirklich ausführen: <strong>{confirmAction.label}</strong>?
-                <br />
-                Status wechselt von "{(currentPermit || permit)?.status}" zu "{confirmAction.nextStatus}".
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setConfirmAction(null)}>
-                Abbrechen
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={executeConfirmedAction}>
-                Bestätigen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+
     </Dialog>
   );
 }
