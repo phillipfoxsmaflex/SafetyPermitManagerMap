@@ -152,6 +152,14 @@ export const permitAttachments = pgTable("permit_attachments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  headerIcon: text("header_icon"), // Base64 encoded image or file path
+  applicationTitle: text("application_title").notNull().default("Arbeitserlaubnis"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -240,6 +248,12 @@ export const insertSessionSchema = createInsertSchema(sessions).omit({
   createdAt: true,
 });
 
+export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -258,3 +272,5 @@ export type InsertPermitAttachment = z.infer<typeof insertPermitAttachmentSchema
 export type PermitAttachment = typeof permitAttachments.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
+export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
+export type SystemSettings = typeof systemSettings.$inferSelect;

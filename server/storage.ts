@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, systemSettings, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type SystemSettings, type InsertSystemSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt } from "drizzle-orm";
 
@@ -90,6 +90,11 @@ export interface IStorage {
   // Workflow operations
   updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined>;
   addStatusHistoryEntry(permitId: number, status: string, userId: number, comment?: string): Promise<void>;
+
+  // System Settings operations
+  getSystemSettings(): Promise<SystemSettings | undefined>;
+  updateSystemSettings(settings: Partial<SystemSettings>): Promise<SystemSettings | undefined>;
+  createSystemSettings(settings: InsertSystemSettings): Promise<SystemSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1313,6 +1318,46 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(permits.id, permitId));
+  }
+
+  // System Settings operations
+  async getSystemSettings(): Promise<SystemSettings | undefined> {
+    const [settings] = await db.select().from(systemSettings).limit(1);
+    return settings || undefined;
+  }
+
+  async updateSystemSettings(updates: Partial<SystemSettings>): Promise<SystemSettings | undefined> {
+    const existing = await this.getSystemSettings();
+    
+    if (!existing) {
+      // Create default settings if none exist
+      const defaultSettings: InsertSystemSettings = {
+        applicationTitle: updates.applicationTitle || "Arbeitserlaubnis",
+        headerIcon: updates.headerIcon || null
+      };
+      return await this.createSystemSettings(defaultSettings);
+    }
+
+    const [updated] = await db
+      .update(systemSettings)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(systemSettings.id, existing.id))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  async createSystemSettings(insertSettings: InsertSystemSettings): Promise<SystemSettings> {
+    const [settings] = await db
+      .insert(systemSettings)
+      .values({
+        ...insertSettings,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+
+    return settings;
   }
 }
 
