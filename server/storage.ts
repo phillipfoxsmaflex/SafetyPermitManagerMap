@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, appSettings, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type AppSettings, type InsertAppSettings } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt } from "drizzle-orm";
 
@@ -90,11 +90,6 @@ export interface IStorage {
   // Workflow operations
   updatePermitStatus(id: number, status: string, userId: number, comment?: string): Promise<Permit | undefined>;
   addStatusHistoryEntry(permitId: number, status: string, userId: number, comment?: string): Promise<void>;
-
-  // App Settings operations
-  getAppSettings(): Promise<AppSettings | undefined>;
-  updateAppSettings(updates: Partial<AppSettings>): Promise<AppSettings | undefined>;
-  createAppSettings(settings: InsertAppSettings): Promise<AppSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1318,36 +1313,6 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(permits.id, permitId));
-  }
-
-  // App Settings operations
-  async getAppSettings(): Promise<AppSettings | undefined> {
-    const [settings] = await db.select().from(appSettings).limit(1);
-    return settings || undefined;
-  }
-
-  async updateAppSettings(updates: Partial<AppSettings>): Promise<AppSettings | undefined> {
-    const existingSettings = await this.getAppSettings();
-    
-    if (existingSettings) {
-      const [updated] = await db
-        .update(appSettings)
-        .set({ ...updates, updatedAt: new Date() })
-        .where(eq(appSettings.id, existingSettings.id))
-        .returning();
-      return updated || undefined;
-    } else {
-      // Create new settings if none exist
-      return await this.createAppSettings(updates as InsertAppSettings);
-    }
-  }
-
-  async createAppSettings(settings: InsertAppSettings): Promise<AppSettings> {
-    const [newSettings] = await db
-      .insert(appSettings)
-      .values({ ...settings, updatedAt: new Date() })
-      .returning();
-    return newSettings;
   }
 }
 

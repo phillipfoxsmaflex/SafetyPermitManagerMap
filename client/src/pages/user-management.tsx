@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -22,19 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Shield, AlertTriangle, Plus, Eye, Edit, Key, Upload, Save, Palette, Settings } from "lucide-react";
+import { Users, Shield, AlertTriangle, Plus, Eye, Edit, Key } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-
-interface AppSettings {
-  id?: number;
-  appName: string;
-  logoPath: string | null;
-  headerBackgroundColor: string;
-  headerTextColor: string;
-}
 
 export default function UserManagement() {
   const { toast } = useToast();
@@ -57,33 +48,9 @@ export default function UserManagement() {
     confirmPassword: ""
   });
 
-  // App Settings state
-  const [appName, setAppName] = useState("");
-  const [headerBgColor, setHeaderBgColor] = useState("#ffffff");
-  const [headerTextColor, setHeaderTextColor] = useState("#000000");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
-
-  // Fetch app settings
-  const { data: settings } = useQuery<AppSettings>({
-    queryKey: ["/api/settings"]
-  });
-
-  // Update state when settings are loaded
-  useEffect(() => {
-    if (settings) {
-      setAppName(settings.appName || "Arbeitserlaubnis");
-      setHeaderBgColor(settings.headerBackgroundColor || "#ffffff");
-      setHeaderTextColor(settings.headerTextColor || "#000000");
-      if (settings.logoPath) {
-        setLogoPreview(settings.logoPath);
-      }
-    }
-  }, [settings]);
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: { username: string; password: string; role: string }) => {
@@ -164,27 +131,6 @@ export default function UserManagement() {
       toast({
         title: "Fehler",
         description: "Benutzerrolle konnte nicht aktualisiert werden",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // App Settings mutation
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return apiRequest("/api/settings", "PUT", formData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Erfolg",
-        description: "App-Einstellungen wurden erfolgreich gespeichert",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Speichern der Einstellungen",
         variant: "destructive",
       });
     },
@@ -274,78 +220,17 @@ export default function UserManagement() {
     });
   };
 
-  // App Settings handlers
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Fehler",
-          description: "Nur JPEG, PNG, GIF und WebP Dateien sind erlaubt",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Fehler", 
-          description: "Datei ist zu groß. Maximum 5MB erlaubt",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setLogoPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveSettings = () => {
-    const formData = new FormData();
-    formData.append('appName', appName);
-    formData.append('headerBackgroundColor', headerBgColor);
-    formData.append('headerTextColor', headerTextColor);
-    
-    if (logoFile) {
-      formData.append('logo', logoFile);
-    }
-
-    updateSettingsMutation.mutate(formData);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <NavigationHeader />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-industrial-gray">Einstellungen</h1>
+          <h1 className="text-3xl font-bold text-industrial-gray">Benutzerverwaltung</h1>
           <p className="mt-2 text-secondary-gray">
-            Verwalten Sie Benutzerkonten und App-Einstellungen
+            Verwalten Sie Benutzerkonten, Rollen und Berechtigungen im System
           </p>
         </div>
-
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Benutzerverwaltung
-            </TabsTrigger>
-            <TabsTrigger value="app-settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              App-Einstellungen
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users" className="mt-6">
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
