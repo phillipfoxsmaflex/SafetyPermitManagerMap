@@ -537,13 +537,20 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Antragsteller</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Name des Antragstellers..."
-                                  disabled={!canEdit}
-                                  {...field}
-                                />
-                              </FormControl>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Antragsteller auswählen..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {allUsers.map((user) => (
+                                    <SelectItem key={user.id} value={user.fullName}>
+                                      {user.fullName} ({user.department})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
