@@ -152,6 +152,16 @@ export const permitAttachments = pgTable("permit_attachments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  appName: text("app_name").notNull().default("Arbeitserlaubnis"),
+  logoPath: text("logo_path"), // Path to uploaded logo file
+  headerBackgroundColor: text("header_background_color").default("#ffffff"),
+  headerTextColor: text("header_text_color").default("#000000"),
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
@@ -240,6 +250,11 @@ export const insertSessionSchema = createInsertSchema(sessions).omit({
   createdAt: true,
 });
 
+export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPermit = z.infer<typeof insertPermitSchema>;
@@ -258,3 +273,5 @@ export type InsertPermitAttachment = z.infer<typeof insertPermitAttachmentSchema
 export type PermitAttachment = typeof permitAttachments.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
+export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
+export type AppSettings = typeof appSettings.$inferSelect;
