@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { NavigationHeader } from "@/components/navigation-header";
-import { EditPermitModal } from "@/components/edit-permit-modal";
+import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { CreatePermitModal } from "@/components/create-permit-modal";
 import { 
   FileText, 
