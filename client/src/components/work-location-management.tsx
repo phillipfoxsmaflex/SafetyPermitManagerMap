@@ -94,6 +94,7 @@ export function WorkLocationManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-locations/active"] });
       setIsEditDialogOpen(false);
       setEditingLocation(null);
       resetForm();
@@ -117,6 +118,7 @@ export function WorkLocationManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-locations/active"] });
       toast({
         title: "Arbeitsort gelöscht",
         description: "Der Arbeitsort wurde erfolgreich gelöscht.",
