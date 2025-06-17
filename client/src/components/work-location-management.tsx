@@ -71,6 +71,7 @@ export function WorkLocationManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-locations/active"] });
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
@@ -187,7 +188,7 @@ export function WorkLocationManagement() {
     }
   };
 
-  const LocationFormFields = () => (
+  const renderLocationFormFields = () => (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="name" className="text-right">
@@ -196,7 +197,7 @@ export function WorkLocationManagement() {
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
           className="col-span-3"
           placeholder="z.B. Produktionshalle A"
         />
@@ -208,7 +209,7 @@ export function WorkLocationManagement() {
         <Input
           id="building"
           value={formData.building}
-          onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, building: e.target.value }))}
           className="col-span-3"
           placeholder="z.B. Gebäude 1"
         />
@@ -220,7 +221,7 @@ export function WorkLocationManagement() {
         <Input
           id="area"
           value={formData.area}
-          onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
           className="col-span-3"
           placeholder="z.B. Lager, Produktion"
         />
@@ -232,7 +233,7 @@ export function WorkLocationManagement() {
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           className="col-span-3"
           placeholder="Zusätzliche Informationen zum Arbeitsort"
         />
@@ -244,7 +245,7 @@ export function WorkLocationManagement() {
         <Switch
           id="isActive"
           checked={formData.isActive}
-          onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
         />
       </div>
     </div>
@@ -277,7 +278,7 @@ export function WorkLocationManagement() {
                 Erstellen Sie einen neuen Arbeitsort für die Genehmigungserstellung.
               </DialogDescription>
             </DialogHeader>
-            <LocationFormFields />
+            {renderLocationFormFields()}
             <DialogFooter>
               <Button type="submit" onClick={handleSubmitCreate} disabled={createMutation.isPending}>
                 {createMutation.isPending ? "Erstelle..." : "Erstellen"}
@@ -365,7 +366,7 @@ export function WorkLocationManagement() {
               Bearbeiten Sie die Details des Arbeitsorts.
             </DialogDescription>
           </DialogHeader>
-          <LocationFormFields />
+          {renderLocationFormFields()}
           <DialogFooter>
             <Button type="submit" onClick={handleSubmitEdit} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Aktualisiere..." : "Speichern"}
