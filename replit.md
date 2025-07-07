@@ -1,0 +1,96 @@
+# Biggs Permit Management System
+
+## Overview
+A cutting-edge digital permit management system designed to streamline safety workflows in industrial environments through advanced AI technologies and intelligent risk management.
+
+## Project Architecture
+
+### Backend (Node.js/Express)
+- **Framework**: Express.js with TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Session-based with secure cookie management
+- **File Storage**: Multer for permit attachments
+- **AI Integration**: TRBS hazard analysis and safety recommendations
+
+### Frontend (React/TypeScript)
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter for client-side routing
+- **State Management**: TanStack Query for server state
+- **UI Components**: Radix UI with Tailwind CSS
+- **Forms**: React Hook Form with Zod validation
+
+### Database Schema
+- **Core Tables**: users, permits, notifications, ai_suggestions
+- **Features**: work_locations, templates, webhook_config, system_settings
+- **Attachments**: permit_attachments with file storage
+- **Sessions**: Secure session management
+
+## Key Features
+
+### Core Functionality
+- Multi-role permit workflow (requestor → department head → safety officer → maintenance)
+- Real-time AI hazard analysis based on complete TRBS standards
+- Dynamic work location management
+- Comprehensive permit attachments with AI analysis
+- Print-ready permit documentation
+
+### Advanced Features
+- Customizable system branding (title, header icon)
+- Multilingual support (German interface)
+- Webhook integration for external systems
+- Status tracking and workflow visualization
+- Notification system for approvals and updates
+
+## Recent Changes
+- **2025-01-07**: Added Docker containerization setup
+  - Created complete Docker Compose configuration
+  - Added PostgreSQL database with health checks
+  - Implemented proper startup sequence with database seeding
+  - Added comprehensive deployment documentation
+- **2025-01-07**: Fixed work location management UI issues
+  - Resolved input field focus loss when typing
+  - Fixed cache invalidation for work location dropdowns
+  - Ensured newly created locations appear in permit edit modal
+- **2025-01-07**: Enhanced system branding customization
+  - Added file upload handling for header icons
+  - Updated navigation and login pages with dynamic branding
+  - Fixed multer configuration for memory storage
+
+## User Preferences
+- **Interface Language**: German (Deutsch)
+- **System Focus**: Industrial safety compliance
+- **Deployment**: Docker containerization preferred
+- **UI/UX**: Clean, professional interface suitable for industrial environments
+
+## Deployment
+
+### Docker Deployment (Recommended)
+```bash
+docker-compose up -d
+```
+
+### Development Setup
+```bash
+npm install
+npm run dev
+```
+
+### Database Operations
+```bash
+npm run db:push  # Push schema changes
+tsx server/seed.ts  # Seed initial data
+```
+
+## Technical Stack
+- **Runtime**: Node.js 20
+- **Database**: PostgreSQL 15
+- **Frontend Build**: Vite
+- **Package Manager**: npm
+- **Containerization**: Docker & Docker Compose
+
+## Security Features
+- Secure session management
+- Role-based access control
+- File upload validation
+- CORS configuration
+- Input sanitization and validation

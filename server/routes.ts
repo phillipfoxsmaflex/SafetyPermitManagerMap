@@ -225,6 +225,15 @@ function formatCompleteTRBSForWebhook(permit: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Health check endpoint (no auth required)
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  });
+  
   // Authentication middleware (unified)
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
