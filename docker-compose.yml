@@ -24,7 +24,9 @@ services:
 
   # Main Application
   app:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile.simple
     container_name: biggs-permit-app
     ports:
       - "3000:5000"
