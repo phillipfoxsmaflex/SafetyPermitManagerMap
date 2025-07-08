@@ -2,8 +2,6 @@
 # This file extends the base docker-compose.yml for development usage
 # Use: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 
-version: '3.8'
-
 services:
   app:
     build:

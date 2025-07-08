@@ -7,6 +7,8 @@
 - At least 4GB RAM available
 - Port 3000 available for the application
 
+**Note:** The Docker Compose files use the modern format without version specification, which is the recommended approach for Docker Compose v2.0+.
+
 ## Quick Start
 
 1. **Clone the repository:**
