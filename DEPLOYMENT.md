@@ -17,14 +17,16 @@
    cd biggs-permit-management
    ```
 
-2. **Start the application:**
+2. **Build and start the application:**
    ```bash
-   docker-compose up -d
+   docker-compose up -d --build
    ```
 
 3. **Access the application:**
    - Web interface: http://localhost:3000
    - Health check: http://localhost:3000/api/health
+
+**Note:** Use `--build` flag to ensure the latest changes are included in the Docker image.
 
 ## Default Credentials
 

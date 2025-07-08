@@ -72,4 +72,4 @@ echo "System initialization complete!"
 
 # Start the application
 echo "Starting application server..."
-exec npm start
+exec tsx server/index.ts
