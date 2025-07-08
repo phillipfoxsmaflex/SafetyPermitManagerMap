@@ -178,33 +178,6 @@ export default function Login() {
               </form>
             </Form>
 
-            {/* Demo Accounts */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-semibold text-industrial-gray mb-3">
-                Demo-Konten zum Testen:
-              </h3>
-              <div className="space-y-2 text-xs text-secondary-gray">
-                <div className="flex justify-between">
-                  <span>Administrator:</span>
-                  <span className="font-mono">admin / password123</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sicherheitsbeauftragter:</span>
-                  <span className="font-mono">safety.officer / password123</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Vorgesetzter:</span>
-                  <span className="font-mono">supervisor / password123</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Mitarbeiter:</span>
-                  <span className="font-mono">employee / password123</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Footer */}
         <div className="text-center mt-8 text-blue-100 text-sm">
           <p>© 2024 Arbeitserlaubnis System</p>
