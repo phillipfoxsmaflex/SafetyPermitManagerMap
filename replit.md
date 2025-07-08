@@ -54,6 +54,8 @@ A cutting-edge digital permit management system designed to streamline safety wo
   - **FINAL FIX**: Fixed Docker entrypoint script usage in production build
   - **FINAL FIX**: Streamlined Docker build process with proper tsx runtime support
   - **FINAL FIX**: Updated deployment documentation with --build flag for fresh builds
+  - **FINAL FIX**: Resolved tsx execution issues in container with direct node_modules/.bin/tsx paths
+  - **FINAL FIX**: Implemented hybrid startup logic (built dist/index.js or tsx fallback)
 - **2025-01-07**: Added Docker containerization setup
   - Created complete Docker Compose configuration
   - Added PostgreSQL database with health checks

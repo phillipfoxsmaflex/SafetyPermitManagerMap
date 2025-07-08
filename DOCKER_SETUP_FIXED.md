@@ -66,3 +66,5 @@ docker-compose down -v
 - ✅ **FINAL**: Absoluter Pfad für Entrypoint-Script (/app/docker-entrypoint.sh)
 - ✅ **FINAL**: Bash-Shell zu Alpine-Image hinzugefügt
 - ✅ **FINAL**: Bessere Docker-Layer-Caching durch korrekte Reihenfolge
+- ✅ **FINAL**: TSX-Verfügbarkeit in Container behoben (direkter node_modules/.bin/tsx Pfad)
+- ✅ **FINAL**: Robuste Application-Startup-Logik (Build-Version oder tsx fallback)

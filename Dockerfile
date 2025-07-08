@@ -14,11 +14,14 @@ RUN apk add --no-cache \
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies first (including dev dependencies for tsx)
+RUN npm ci
 
-# Install tsx for TypeScript execution
-RUN npm install tsx
+# Build the application for production
+RUN npm run build
+
+# Keep tsx available for seeding and development
+RUN npm install --save tsx
 
 # Copy source code
 COPY . .

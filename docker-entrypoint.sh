@@ -47,7 +47,8 @@ fi
 echo "Checking database tables..."
 if ! psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users;" >/dev/null 2>&1; then
   echo "Users table not found, seeding database..."
-  tsx server/seed.ts
+  # Use node_modules/.bin/tsx directly for reliability
+  NODE_ENV=production ./node_modules/.bin/tsx server/seed.ts
   
   # Verify seeding was successful
   if psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users;" >/dev/null 2>&1; then
@@ -72,4 +73,9 @@ echo "System initialization complete!"
 
 # Start the application
 echo "Starting application server..."
-exec tsx server/index.ts
+# Use the built version if available, otherwise use tsx
+if [ -f "dist/index.js" ]; then
+  exec node dist/index.js
+else
+  exec ./node_modules/.bin/tsx server/index.ts
+fi
