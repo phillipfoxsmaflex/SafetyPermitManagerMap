@@ -379,13 +379,13 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
+      <DialogContent className="max-w-6xl max-h-[90vh] w-full sm:w-[95vw] md:w-auto mobile-dialog-content">
         <DialogHeader>
-          <DialogTitle className="text-industrial-gray flex items-center gap-2">
+          <DialogTitle className="text-industrial-gray flex items-center gap-2 text-lg sm:text-xl">
             <Activity className="h-5 w-5" />
             {mode === 'create' ? 'Neue Arbeitserlaubnis erstellen' : `Arbeitserlaubnis bearbeiten - ${permit?.permitId}`}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm sm:text-base">
             {mode === 'create' 
               ? 'Erstellen Sie eine neue Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung.'
               : 'Bearbeiten Sie die Arbeitserlaubnis mit vollständiger TRBS-Gefährdungsbeurteilung und Status-Management.'

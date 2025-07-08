@@ -201,143 +201,139 @@ export default function Dashboard() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Dashboard Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-industrial-gray mb-2">
-                Genehmigungsverwaltung Dashboard
-              </h2>
-              <p className="text-secondary-gray">
-                Überwachung und Verwaltung von Permit to work für enge Räume und chemische Umgebungen
-              </p>
+        <div className="mb-6">
+          <div className="mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-industrial-gray mb-2">
+              Genehmigungsverwaltung Dashboard
+            </h2>
+            <p className="text-secondary-gray text-sm sm:text-base">
+              Überwachung und Verwaltung von Permit to work für enge Räume und chemische Umgebungen
+            </p>
+          </div>
+          
+          {/* Search and filters - Mobile-first layout */}
+          <div className="space-y-3 mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+              <Input
+                placeholder="Genehmigung suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+              />
             </div>
-            <div className="w-full">
-              {/* Search and filters row */}
-              <div className="flex flex-col lg:flex-row gap-3 mb-3">
-                <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                  <div className="relative flex-shrink-0">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
-                    <Input
-                      placeholder="Genehmigung suchen..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full sm:w-64"
-                    />
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <DatePicker
-                      date={dateFrom}
-                      onDateChange={setDateFrom}
-                      placeholder="Von Datum"
-                      className="w-full sm:w-36"
-                    />
-                    <DatePicker
-                      date={dateTo}
-                      onDateChange={setDateTo}
-                      placeholder="Bis Datum"
-                      className="w-full sm:w-36"
-                    />
-                    {(dateFrom || dateTo) && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          setDateFrom(undefined);
-                          setDateTo(undefined);
-                        }}
-                        className="h-10 w-10 flex-shrink-0"
-                        title="Filter zurücksetzen"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Action buttons row */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                <Button 
-                  onClick={handleExportReport}
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <DatePicker
+                date={dateFrom}
+                onDateChange={setDateFrom}
+                placeholder="Von Datum"
+                className="flex-1"
+              />
+              <DatePicker
+                date={dateTo}
+                onDateChange={setDateTo}
+                placeholder="Bis Datum"
+                className="flex-1"
+              />
+              {(dateFrom || dateTo) && (
+                <Button
                   variant="outline"
-                  className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                  size="icon"
+                  onClick={() => {
+                    setDateFrom(undefined);
+                    setDateTo(undefined);
+                  }}
+                  className="h-10 w-10 sm:flex-shrink-0"
+                  title="Filter zurücksetzen"
                 >
-                  <Download className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Bericht exportieren</span>
+                  <X className="h-4 w-4" />
                 </Button>
-                <Button 
-                  onClick={() => setCreateModalOpen(true)}
-                  className="bg-safety-blue text-white hover:bg-blue-700 flex items-center justify-center gap-2 w-full sm:w-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap">Neue Genehmigung</span>
-                </Button>
-              </div>
+              )}
             </div>
+          </div>
+          
+          {/* Action buttons - Stacked on mobile */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={handleExportReport}
+              variant="outline"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4" />
+              <span className="whitespace-nowrap">Bericht exportieren</span>
+            </Button>
+            <Button 
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-safety-blue text-white hover:bg-blue-700 flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="whitespace-nowrap">Neue Genehmigung</span>
+            </Button>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Quick Stats - Mobile optimized */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Aktive Genehmigungen</p>
-                  <p className="text-3xl font-bold text-safety-blue">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-secondary-gray">Aktive Genehmigungen</p>
+                  <p className="text-xl sm:text-3xl font-bold text-safety-blue">
                     {statsLoading ? "..." : stats?.activePermits || 0}
                   </p>
                 </div>
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <FileText className="text-safety-blue text-xl" />
+                <div className="bg-blue-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
+                  <FileText className="text-safety-blue text-lg sm:text-xl" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Genehmigung ausstehend</p>
-                  <p className="text-3xl font-bold text-warning-orange">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-secondary-gray">Genehmigung ausstehend</p>
+                  <p className="text-xl sm:text-3xl font-bold text-warning-orange">
                     {statsLoading ? "..." : stats?.pendingApproval || 0}
                   </p>
                 </div>
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <Clock className="text-warning-orange text-xl" />
+                <div className="bg-orange-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
+                  <Clock className="text-warning-orange text-lg sm:text-xl" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Heute abgelaufen</p>
-                  <p className="text-3xl font-bold text-alert-red">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-secondary-gray">Heute abgelaufen</p>
+                  <p className="text-xl sm:text-3xl font-bold text-alert-red">
                     {statsLoading ? "..." : stats?.expiredToday || 0}
                   </p>
                 </div>
-                <div className="bg-red-50 p-3 rounded-lg">
-                  <AlertTriangle className="text-alert-red text-xl" />
+                <div className="bg-red-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
+                  <AlertTriangle className="text-alert-red text-lg sm:text-xl" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-gray">Abgeschlossen</p>
-                  <p className="text-3xl font-bold text-safety-green">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-secondary-gray">Abgeschlossen</p>
+                  <p className="text-xl sm:text-3xl font-bold text-safety-green">
                     {statsLoading ? "..." : stats?.completed || 0}
                   </p>
                 </div>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <CheckCircle className="text-safety-green text-xl" />
+                <div className="bg-green-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
+                  <CheckCircle className="text-safety-green text-lg sm:text-xl" />
                 </div>
               </div>
             </CardContent>

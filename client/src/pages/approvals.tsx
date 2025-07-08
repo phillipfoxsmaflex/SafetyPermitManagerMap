@@ -207,22 +207,22 @@ export default function Approvals() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-secondary-gray" />
-            <span>{permit.location}</span>
+            <span className="break-all">{permit.location}</span>
           </div>
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-secondary-gray" />
-            <span>{permit.requestorName}</span>
+            <span className="break-all">{permit.requestorName}</span>
           </div>
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4 text-secondary-gray" />
-            <span>{permit.department}</span>
+            <span className="break-all">{permit.department}</span>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-secondary-gray" />
-            <span>
+            <span className="break-all">
               {permit.startDate ? format(new Date(permit.startDate), "dd.MM.yyyy", { locale: de }) : 'N/A'} - 
               {permit.endDate ? format(new Date(permit.endDate), "dd.MM.yyyy", { locale: de }) : 'N/A'}
             </span>
@@ -247,7 +247,7 @@ export default function Approvals() {
 
         <div className="space-y-2">
           <p className="font-medium text-industrial-gray text-sm">Genehmigungs-Status:</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             <div className={`flex items-center gap-2 p-2 rounded ${permit.departmentHeadApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
               {permit.departmentHeadApproval ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />

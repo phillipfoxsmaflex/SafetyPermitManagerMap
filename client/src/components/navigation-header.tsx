@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { HardHat, ChevronDown } from "lucide-react";
+import { HardHat, ChevronDown, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,10 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 export function NavigationHeader() {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch system settings for customizable title and icon
   const { data: systemSettings } = useQuery({
@@ -67,10 +69,11 @@ export function NavigationHeader() {
               ) : (
                 <HardHat className="text-safety-blue text-2xl" />
               )}
-              <h1 className="text-xl font-bold text-industrial-gray">
+              <h1 className="text-lg sm:text-xl font-bold text-industrial-gray">
                 {(systemSettings as any)?.applicationTitle || "Arbeitserlaubnis"}
               </h1>
             </div>
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-6">
               <Link href="/" className={`font-medium pb-2 border-b-2 ${
                 isActive("/") 
@@ -102,7 +105,9 @@ export function NavigationHeader() {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
+          
+          {/* Desktop Right Side */}
+          <div className="hidden md:flex items-center space-x-4">
             <NotificationDropdown />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -125,7 +130,101 @@ export function NavigationHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Mobile Right Side */}
+          <div className="md:hidden flex items-center space-x-2">
+            <NotificationDropdown />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50">
+            <nav className="px-4 py-2 space-y-1">
+              <Link 
+                href="/" 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive("/") 
+                    ? "text-safety-blue bg-blue-50" 
+                    : "text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link 
+                href="/permits" 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive("/permits") 
+                    ? "text-safety-blue bg-blue-50" 
+                    : "text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Genehmigungen
+              </Link>
+              <Link 
+                href="/approvals" 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive("/approvals") 
+                    ? "text-safety-blue bg-blue-50" 
+                    : "text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Freigaben
+              </Link>
+              <Link 
+                href="/drafts" 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive("/drafts") 
+                    ? "text-safety-blue bg-blue-50" 
+                    : "text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Entwürfe
+              </Link>
+              <div className="border-t border-gray-200 pt-2">
+                <div className="flex items-center px-3 py-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" />
+                    <AvatarFallback>
+                      {user?.fullName ? getInitials(user.fullName) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="ml-3 text-sm font-medium text-industrial-gray">
+                    {user?.fullName || "Benutzer"}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => { setLocation("/settings"); setMobileMenuOpen(false); }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                >
+                  Einstellungen
+                </button>
+                <button 
+                  onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-secondary-gray hover:text-industrial-gray hover:bg-gray-50"
+                >
+                  Abmelden
+                </button>
+              </div>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );

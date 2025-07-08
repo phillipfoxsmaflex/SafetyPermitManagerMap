@@ -194,4 +194,69 @@
   .bg-light-gray {
     background-color: hsl(var(--light-gray));
   }
+
+  /* Mobile-specific utility classes */
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-full-screen {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    
+    .mobile-padding {
+      padding: 1rem;
+    }
+    
+    .mobile-text-responsive {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    
+    .mobile-card-spacing {
+      margin-bottom: 1rem;
+    }
+    
+    .mobile-button-stack {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .mobile-button-stack > * {
+      width: 100%;
+    }
+    
+    .mobile-form-spacing {
+      margin-bottom: 1rem;
+    }
+    
+    .mobile-dialog-content {
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      border-radius: 0;
+    }
+    
+    .mobile-table-hide {
+      display: none;
+    }
+    
+    .mobile-card-show {
+      display: block;
+    }
+  }
 }

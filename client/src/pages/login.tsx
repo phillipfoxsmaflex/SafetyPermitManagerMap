@@ -90,35 +90,35 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-safety-blue to-blue-700 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo and Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-white p-4 rounded-full shadow-lg">
+            <div className="bg-white p-3 sm:p-4 rounded-full shadow-lg">
               {(systemSettings as any)?.headerIcon ? (
                 <img 
                   src={(systemSettings as any).headerIcon} 
                   alt="Header Icon" 
-                  className="w-12 h-12 object-contain"
+                  className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
                 />
               ) : (
-                <HardHat className="w-12 h-12 text-safety-blue" />
+                <HardHat className="w-10 h-10 sm:w-12 sm:h-12 text-safety-blue" />
               )}
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             {(systemSettings as any)?.applicationTitle || "Arbeitserlaubnis"}
           </h1>
-          <p className="text-blue-100">
+          <p className="text-blue-100 text-sm sm:text-base px-4">
             Digitales Genehmigungssystem für sichere Arbeitsplätze
           </p>
         </div>
 
         {/* Login Card */}
         <Card className="shadow-2xl border-0">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold text-center text-industrial-gray">
+          <CardHeader className="space-y-1 pb-4 sm:pb-6">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-center text-industrial-gray">
               Anmelden
             </CardTitle>
-            <p className="text-center text-secondary-gray">
+            <p className="text-center text-secondary-gray text-sm sm:text-base">
               Geben Sie Ihre Anmeldedaten ein, um fortzufahren
             </p>
           </CardHeader>

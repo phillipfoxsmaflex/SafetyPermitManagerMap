@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Filter, X, Calendar } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
+
 import { PermitTable } from "@/components/permit-table-clean";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,21 +50,22 @@ export default function Permits() {
         permit.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter((permit) => permit.status === statusFilter);
+      filtered = filtered.filter(permit => permit.status === statusFilter);
     }
-    
+
     // Apply type filter
     if (typeFilter !== "all") {
-      filtered = filtered.filter((permit) => permit.type === typeFilter);
+      filtered = filtered.filter(permit => permit.type === typeFilter);
     }
-    
-    // Apply date range filter
+
+    // Apply date filters
     if (dateFrom || dateTo) {
-      filtered = filtered.filter((permit) => {
-        const permitDate = new Date(permit.startDate);
+      filtered = filtered.filter(permit => {
+        if (!permit.createdAt) return false;
+        const permitDate = new Date(permit.createdAt);
         let includePermit = true;
         
         if (dateFrom) {
@@ -116,77 +118,78 @@ export default function Permits() {
                 placeholder="Suche nach ID, Standort, Antragsteller..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
-
-            {/* Filters - Mobile responsive */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status filtern" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Status</SelectItem>
-                  <SelectItem value="draft">Entwurf</SelectItem>
-                  <SelectItem value="submitted">Eingereicht</SelectItem>
-                  <SelectItem value="approved">Genehmigt</SelectItem>
-                  <SelectItem value="rejected">Abgelehnt</SelectItem>
-                  <SelectItem value="completed">Abgeschlossen</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Typ filtern" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Typen</SelectItem>
-                  <SelectItem value="hot_work">Heißarbeit</SelectItem>
-                  <SelectItem value="confined_space">Beengter Raum</SelectItem>
-                  <SelectItem value="electrical">Elektrische Arbeit</SelectItem>
-                  <SelectItem value="height_work">Höhenarbeit</SelectItem>
-                  <SelectItem value="excavation">Erdarbeiten</SelectItem>
-                  <SelectItem value="maintenance">Instandhaltung</SelectItem>
-                  <SelectItem value="general_permit">Allgemeiner Erlaubnisschein</SelectItem>
-                </SelectContent>
-              </Select>
-
+            
+            {/* Date Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <DatePicker
-                value={dateFrom}
-                onChange={setDateFrom}
+                date={dateFrom}
+                onDateChange={setDateFrom}
                 placeholder="Von Datum"
+                className="flex-1 sm:w-40"
               />
-
               <DatePicker
-                value={dateTo}
-                onChange={setDateTo}
+                date={dateTo}
+                onDateChange={setDateTo}
                 placeholder="Bis Datum"
+                className="flex-1 sm:w-40"
               />
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setDateFrom(undefined);
+                    setDateTo(undefined);
+                  }}
+                  className="h-10 w-10 sm:flex-shrink-0"
+                >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {/* Filter Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                  setTypeFilter("all");
-                  setDateFrom(undefined);
-                  setDateTo(undefined);
-                }}
-                className="flex items-center gap-2 w-full sm:w-auto"
-              >
-                <X className="w-4 h-4" />
-                Filter zurücksetzen
-              </Button>
+            {/* Type/Status Filters and Create Button - Mobile optimized */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between sm:items-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Alle Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Status</SelectItem>
+                    <SelectItem value="pending">Ausstehend</SelectItem>
+                    <SelectItem value="approved">Genehmigt</SelectItem>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="completed">Abgeschlossen</SelectItem>
+                    <SelectItem value="expired">Abgelaufen</SelectItem>
+                    <SelectItem value="rejected">Abgelehnt</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Button
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Alle Typen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Typen</SelectItem>
+                    <SelectItem value="confined_space">Enger Raum</SelectItem>
+                    <SelectItem value="hot_work">Heißarbeiten</SelectItem>
+                    <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
+                    <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
+                    <SelectItem value="height">Höhenarbeiten</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button 
+                className="bg-safety-blue text-white hover:bg-blue-700 w-full sm:w-auto"
                 onClick={() => setCreateModalOpen(true)}
-                className="flex items-center gap-2 w-full sm:w-auto"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Neue Genehmigung
               </Button>
             </div>
@@ -241,6 +244,7 @@ export default function Permits() {
         onOpenChange={setCreateModalOpen}
         mode="create"
       />
+
     </div>
   );
 }
