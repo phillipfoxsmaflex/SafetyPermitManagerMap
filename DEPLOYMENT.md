@@ -29,7 +29,13 @@
 ## Default Credentials
 
 - **Username:** admin
-- **Password:** password
+- **Password:** password123
+
+**Additional Users:**
+- safety.officer / password123 (Safety Officer)
+- hans.mueller / password123 (Supervisor)
+- ops.manager / password123 (Operations Manager)
+- employee / password123 (Employee)
 
 ## Configuration
 
