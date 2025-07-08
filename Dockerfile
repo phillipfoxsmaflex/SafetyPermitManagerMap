@@ -8,13 +8,17 @@ WORKDIR /app
 RUN apk add --no-cache \
     postgresql-client \
     curl \
+    bash \
     && rm -rf /var/cache/apk/*
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm ci
+# Install dependencies
+RUN npm ci --only=production
+
+# Install tsx for TypeScript execution
+RUN npm install tsx
 
 # Copy source code
 COPY . .
@@ -22,10 +26,7 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Install all dependencies including tsx for runtime
-RUN npm ci --only=production && npm install tsx
-
-# Make the entrypoint script executable
+# Make sure the entrypoint script is executable and in the right place
 RUN chmod +x docker-entrypoint.sh
 
 # Expose port
@@ -35,5 +36,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000/api/health || exit 1
 
-# Use the entrypoint script
-CMD ["./docker-entrypoint.sh"]
+# Use bash to run the entrypoint script
+CMD ["bash", "/app/docker-entrypoint.sh"]

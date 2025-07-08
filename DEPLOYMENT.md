@@ -137,6 +137,14 @@ If you cannot login with admin/password123, this may indicate the database setup
    "
    ```
 
+5. **Entrypoint script not found error:**
+   ```bash
+   # This is fixed in the latest version
+   # Make sure you're using the updated Dockerfile
+   docker-compose down
+   docker-compose up -d --build
+   ```
+
 **Note:** The system now uses bcrypt password hashing for security. Legacy plain-text passwords are automatically detected and handled during login.
 
 ### Rebuild after code changes

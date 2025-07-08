@@ -29,8 +29,11 @@ app:
 # Vereinfachte Abhängigkeiten-Installation
 RUN npm ci --only=production && npm install tsx
 
-# Korrektes Entrypoint-Script
-CMD ["./docker-entrypoint.sh"]  # ✅ Korrigiert
+# Bash-Shell hinzugefügt für Script-Ausführung
+RUN apk add --no-cache bash
+
+# Korrektes Entrypoint-Script mit absolutem Pfad
+CMD ["bash", "/app/docker-entrypoint.sh"]  # ✅ Korrigiert
 ```
 
 ### docker-entrypoint.sh
@@ -60,3 +63,6 @@ docker-compose down -v
 - ✅ DEPLOYMENT.md mit --build Flag aktualisiert
 - ✅ Alle obsoleten Dateien entfernt
 - ✅ Authentifizierung mit admin/password123 bestätigt
+- ✅ **FINAL**: Absoluter Pfad für Entrypoint-Script (/app/docker-entrypoint.sh)
+- ✅ **FINAL**: Bash-Shell zu Alpine-Image hinzugefügt
+- ✅ **FINAL**: Bessere Docker-Layer-Caching durch korrekte Reihenfolge
