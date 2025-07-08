@@ -26,6 +26,10 @@
 - **Problem**: Docker interpretierte falsches File als Dockerfile
 - **Lösung**: Saubere Dockerfile-Neuerstellung ohne Encoding-Probleme
 
+### 7. Build-Reihenfolge-Problem
+- **Problem**: `npm run build` vor dem Kopieren der Quelldateien ausgeführt
+- **Lösung**: Quelldateien vor dem Build-Prozess kopieren
+
 ## Aktuelle Konfiguration:
 
 ### docker-compose.yml
@@ -38,8 +42,11 @@ app:
 
 ### Dockerfile
 ```dockerfile
-# Vereinfachte Abhängigkeiten-Installation
-RUN npm ci --only=production && npm install tsx
+# Korrekte Build-Reihenfolge
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
 # Bash-Shell hinzugefügt für Script-Ausführung
 RUN apk add --no-cache bash
@@ -80,3 +87,5 @@ docker-compose down -v
 - ✅ **FINAL**: Bessere Docker-Layer-Caching durch korrekte Reihenfolge
 - ✅ **FINAL**: TSX-Verfügbarkeit in Container behoben (direkter node_modules/.bin/tsx Pfad)
 - ✅ **FINAL**: Robuste Application-Startup-Logik (Build-Version oder tsx fallback)
+- ✅ **FINAL**: Build-Reihenfolge korrigiert (Quelldateien vor npm run build)
+- ✅ **FINAL**: Optimierte Docker-Layer-Struktur für bessere Performance

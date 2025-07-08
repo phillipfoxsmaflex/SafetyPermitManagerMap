@@ -17,14 +17,14 @@ COPY package*.json ./
 # Install all dependencies first (including dev dependencies for tsx)
 RUN npm ci
 
+# Copy source code
+COPY . .
+
 # Build the application for production
 RUN npm run build
 
-# Keep tsx available for seeding and development
-RUN npm install --save tsx
-
-# Copy source code
-COPY . .
+# Clean up dev dependencies and reinstall production + tsx
+RUN npm ci --only=production && npm install tsx
 
 # Create uploads directory
 RUN mkdir -p uploads
