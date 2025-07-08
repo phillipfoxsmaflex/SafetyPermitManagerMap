@@ -1,50 +1,51 @@
 import { db } from "./db";
-import { users, permits } from "@shared/schema";
+import { users, permits, systemSettings, workLocations, templates } from "@shared/schema";
+import bcrypt from "bcrypt";
 
 async function seed() {
   try {
     console.log("Seeding database...");
     
-    // Create default users
+    // Create default users with hashed passwords
     const defaultUsers = [
       {
         username: "admin",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "System Administrator",
         department: "IT",
         role: "admin"
       },
       {
         username: "hans.mueller",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "Hans Mueller",
         department: "Operations",
         role: "supervisor"
       },
       {
         username: "safety.officer",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "Dr. Sarah Weber",
         department: "Safety",
         role: "safety_officer"
       },
       {
         username: "ops.manager",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "Michael Schmidt",
         department: "Operations",
         role: "operations_manager"
       },
       {
         username: "employee",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "Thomas Bauer",
         department: "Maintenance",
         role: "employee"
       },
       {
         username: "supervisor",
-        password: "password123",
+        password: await bcrypt.hash("password123", 10),
         fullName: "Maria Schneider",
         department: "Production",
         role: "supervisor"
@@ -54,6 +55,25 @@ async function seed() {
     // Insert users
     for (const userData of defaultUsers) {
       await db.insert(users).values(userData).onConflictDoNothing();
+    }
+    
+    // Create default system settings
+    await db.insert(systemSettings).values({
+      applicationTitle: "Arbeitserlaubnis",
+      headerIcon: null
+    }).onConflictDoNothing();
+    
+    // Create default work locations
+    const defaultWorkLocations = [
+      { name: "Produktionshalle A", description: "Hauptproduktionsbereich", isActive: true },
+      { name: "Produktionshalle B", description: "Sekundäre Produktionsstätte", isActive: true },
+      { name: "Lagerhalle", description: "Hauptlagerbereich", isActive: true },
+      { name: "Chemikalienlager", description: "Gefahrstofflagerung", isActive: true },
+      { name: "Außenbereich", description: "Externe Arbeitsplätze", isActive: true }
+    ];
+    
+    for (const location of defaultWorkLocations) {
+      await db.insert(workLocations).values(location).onConflictDoNothing();
     }
 
     // Create sample permits

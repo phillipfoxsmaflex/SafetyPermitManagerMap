@@ -941,7 +941,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username, password } = req.body;
       
       const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) {
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Check if password is hashed (bcrypt) or plain text
+      const isPasswordValid = user.password.startsWith('$2b$') 
+        ? await storage.verifyPassword(password, user.password)
+        : user.password === password;
+      
+      if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       

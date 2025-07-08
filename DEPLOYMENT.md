@@ -108,43 +108,34 @@ docker-compose logs database
 
 ### Login Issues
 
-If you cannot login with admin/password123, the database schema may not be properly created. Follow these steps:
+If you cannot login with admin/password123, this may indicate the database setup needs manual intervention:
 
-1. **Create the database schema and admin user:**
-   ```bash
-   docker exec -i biggs-permit-db psql -U postgres -d biggs_permit < docker-create-schema.sql
-   ```
-
-2. **Alternative: Manual schema creation:**
-   ```bash
-   docker exec -it biggs-permit-db psql -U postgres -d biggs_permit
-   ```
-   
-   Then copy and paste the content from `docker-create-schema.sql` into the psql prompt.
-
-3. **Check if admin user exists:**
+1. **Check if admin user exists:**
    ```bash
    docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "SELECT username, full_name, role FROM users WHERE username = 'admin';"
    ```
 
-4. **If the above doesn't work, create tables manually:**
+2. **Check application logs for more details:**
+   ```bash
+   docker logs biggs-permit-app
+   ```
+
+3. **If the user doesn't exist, restart the containers (this will trigger re-seeding):**
+   ```bash
+   docker-compose down
+   docker-compose up -d
+   ```
+
+4. **Manual user creation (if automatic seeding fails):**
    ```bash
    docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "
-   CREATE TABLE IF NOT EXISTS users (
-       id SERIAL PRIMARY KEY,
-       username VARCHAR(255) UNIQUE NOT NULL,
-       password VARCHAR(255) NOT NULL,
-       full_name VARCHAR(255) NOT NULL,
-       department VARCHAR(255),
-       role VARCHAR(50) NOT NULL,
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
    INSERT INTO users (username, password, full_name, department, role) 
    VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin')
    ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';
    "
    ```
+
+**Note:** The system now uses bcrypt password hashing for security. Legacy plain-text passwords are automatically detected and handled during login.
 
 ### Rebuild after code changes
 ```bash

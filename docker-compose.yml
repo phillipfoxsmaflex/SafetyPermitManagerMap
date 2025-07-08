@@ -33,6 +33,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@database:5432/biggs_permit
+      - DOCKER_ENV=true
       - PGHOST=database
       - PGPORT=5432
       - PGUSER=postgres

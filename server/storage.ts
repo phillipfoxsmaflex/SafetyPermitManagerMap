@@ -1,6 +1,7 @@
 import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, systemSettings, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type SystemSettings, type InsertSystemSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User operations
@@ -9,6 +10,7 @@ export interface IStorage {
   getUserByFullName(fullName: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean>;
 
   // Permit operations
   getPermit(id: number): Promise<Permit | undefined>;
@@ -138,11 +140,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Hash password if it's not already hashed
+    if (insertUser.password && !insertUser.password.startsWith('$2b$')) {
+      insertUser.password = await bcrypt.hash(insertUser.password, 10);
+    }
+    
     const [user] = await db
       .insert(users)
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -337,6 +353,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(userId: number, updates: Partial<User>): Promise<User | undefined> {
+    // Hash password if it's being updated and not already hashed
+    if (updates.password && !updates.password.startsWith('$2b$')) {
+      updates.password = await bcrypt.hash(updates.password, 10);
+    }
+    
     const [user] = await db
       .update(users)
       .set(updates)
