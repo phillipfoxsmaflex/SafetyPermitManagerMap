@@ -115,13 +115,9 @@ If you cannot login with admin/password123, manually create the admin user:
    docker exec -it biggs-permit-db psql -U postgres -d biggs_permit
    ```
 
-2. **Create admin user manually:**
+2. **Create admin user manually (copy and paste this complete command):**
    ```sql
-   INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) 
-   VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW())
-   ON CONFLICT (username) DO UPDATE SET 
-     password = 'password123',
-     role = 'admin';
+   INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW()) ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';
    ```
 
 3. **Verify the user:**
@@ -133,6 +129,11 @@ If you cannot login with admin/password123, manually create the admin user:
    ```sql
    \q
    ```
+
+**Alternative - One-liner command:**
+```bash
+docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW()) ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';"
+```
 
 ### Rebuild after code changes
 ```bash
