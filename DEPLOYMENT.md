@@ -108,32 +108,43 @@ docker-compose logs database
 
 ### Login Issues
 
-If you cannot login with admin/password123, manually create the admin user:
+If you cannot login with admin/password123, the database schema may not be properly created. Follow these steps:
 
-1. **Access the database container:**
+1. **Create the database schema and admin user:**
+   ```bash
+   docker exec -i biggs-permit-db psql -U postgres -d biggs_permit < docker-create-schema.sql
+   ```
+
+2. **Alternative: Manual schema creation:**
    ```bash
    docker exec -it biggs-permit-db psql -U postgres -d biggs_permit
    ```
+   
+   Then copy and paste the content from `docker-create-schema.sql` into the psql prompt.
 
-2. **Create admin user manually (copy and paste this complete command):**
-   ```sql
-   INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW()) ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';
+3. **Check if admin user exists:**
+   ```bash
+   docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "SELECT username, full_name, role FROM users WHERE username = 'admin';"
    ```
 
-3. **Verify the user:**
-   ```sql
-   SELECT username, password, role FROM users WHERE username = 'admin';
+4. **If the above doesn't work, create tables manually:**
+   ```bash
+   docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "
+   CREATE TABLE IF NOT EXISTS users (
+       id SERIAL PRIMARY KEY,
+       username VARCHAR(255) UNIQUE NOT NULL,
+       password VARCHAR(255) NOT NULL,
+       full_name VARCHAR(255) NOT NULL,
+       department VARCHAR(255),
+       role VARCHAR(50) NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+   INSERT INTO users (username, password, full_name, department, role) 
+   VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin')
+   ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';
+   "
    ```
-
-4. **Exit database:**
-   ```sql
-   \q
-   ```
-
-**Alternative - One-liner command:**
-```bash
-docker exec -it biggs-permit-db psql -U postgres -d biggs_permit -c "INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW()) ON CONFLICT (username) DO UPDATE SET password = 'password123', role = 'admin';"
-```
 
 ### Rebuild after code changes
 ```bash
