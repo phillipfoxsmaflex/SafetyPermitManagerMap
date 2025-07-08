@@ -19,6 +19,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Copy manual seeding script
+COPY docker-manual-seed.sh /app/manual-seed.sh
+RUN chmod +x /app/manual-seed.sh
+
 # Create uploads directory
 RUN mkdir -p uploads
 
@@ -43,8 +47,8 @@ done\n\
 echo "Database is ready!"\n\
 echo "Setting up database schema..."\n\
 npx drizzle-kit push\n\
-echo "Seeding database..."\n\
-node -r esbuild-register server/seed.ts || echo "Seeding failed or already done"\n\
+echo "Running manual seeding..."\n\
+/app/manual-seed.sh\n\
 echo "Starting application server..."\n\
 exec node dist/index.js' > /app/start.sh && chmod +x /app/start.sh
 

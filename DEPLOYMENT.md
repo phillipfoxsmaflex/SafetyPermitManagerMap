@@ -106,6 +106,34 @@ docker-compose logs app
 docker-compose logs database
 ```
 
+### Login Issues
+
+If you cannot login with admin/password123, manually create the admin user:
+
+1. **Access the database container:**
+   ```bash
+   docker exec -it biggs-permit-db psql -U postgres -d biggs_permit
+   ```
+
+2. **Create admin user manually:**
+   ```sql
+   INSERT INTO users (username, password, full_name, department, role, created_at, updated_at) 
+   VALUES ('admin', 'password123', 'System Administrator', 'IT', 'admin', NOW(), NOW())
+   ON CONFLICT (username) DO UPDATE SET 
+     password = 'password123',
+     role = 'admin';
+   ```
+
+3. **Verify the user:**
+   ```sql
+   SELECT username, password, role FROM users WHERE username = 'admin';
+   ```
+
+4. **Exit database:**
+   ```sql
+   \q
+   ```
+
 ### Rebuild after code changes
 ```bash
 docker-compose down
