@@ -14,6 +14,18 @@
 - **Problem**: Komplexer Build-Prozess mit separaten Client-/Server-Builds
 - **Lösung**: Vereinfachte Installation mit tsx für Runtime
 
+### 4. Entrypoint-Script-Pfad
+- **Problem**: Relativer Pfad `./docker-entrypoint.sh` nicht gefunden
+- **Lösung**: Absoluter Pfad `/app/docker-entrypoint.sh` mit bash-Aufruf
+
+### 5. TSX-Verfügbarkeit
+- **Problem**: `tsx` nicht im Container-PATH verfügbar
+- **Lösung**: Direkter `node_modules/.bin/tsx` Pfad für zuverlässige Ausführung
+
+### 6. Dockerfile-Parsing-Error
+- **Problem**: Docker interpretierte falsches File als Dockerfile
+- **Lösung**: Saubere Dockerfile-Neuerstellung ohne Encoding-Probleme
+
 ## Aktuelle Konfiguration:
 
 ### docker-compose.yml
