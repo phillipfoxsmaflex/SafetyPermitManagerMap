@@ -177,6 +177,8 @@ export default function Login() {
                 </Button>
               </form>
             </Form>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
         <div className="text-center mt-8 text-blue-100 text-sm">
