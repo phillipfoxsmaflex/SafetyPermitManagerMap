@@ -498,6 +498,12 @@ export class DatabaseStorage implements IStorage {
           }
 
           console.log(`Directly updating selectedHazards to:`, newSelectedHazards);
+          console.log(`Type of newSelectedHazards:`, typeof newSelectedHazards, Array.isArray(newSelectedHazards));
+
+          // Ensure it's an array for PostgreSQL array column
+          if (!Array.isArray(newSelectedHazards)) {
+            newSelectedHazards = [];
+          }
 
           await db
             .update(permits)

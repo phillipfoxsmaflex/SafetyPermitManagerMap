@@ -349,10 +349,14 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   React.useEffect(() => {
     if (currentPermit && mode === 'edit') {
       console.log("AI-Suggestions: Syncing TRBS states with updated permit data");
+      console.log("Current permit selectedHazards:", currentPermit.selectedHazards);
+      console.log("Current permit hazardNotes:", currentPermit.hazardNotes);
       
-      // Sync selectedHazards
-      if (currentPermit.selectedHazards && Array.isArray(currentPermit.selectedHazards)) {
-        const newSelectedHazards = currentPermit.selectedHazards;
+      // Sync selectedHazards - auch wenn es ein leeres Array ist
+      if (currentPermit.selectedHazards !== undefined) {
+        const newSelectedHazards = Array.isArray(currentPermit.selectedHazards) 
+          ? currentPermit.selectedHazards 
+          : [];
         console.log("AI-Suggestions: Updating selectedHazards:", newSelectedHazards);
         setSelectedHazards(newSelectedHazards);
       }
@@ -369,9 +373,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
           console.warn("AI-Suggestions: Could not parse hazard notes:", currentPermit.hazardNotes);
           setHazardNotes({});
         }
+      } else {
+        // Reset hazardNotes if empty
+        setHazardNotes({});
       }
     }
-  }, [currentPermit?.selectedHazards, currentPermit?.hazardNotes, currentPermit?.id, mode]);
+  }, [currentPermit, mode]); // Vereinfachte Dependency - watch das gesamte currentPermit Objekt
 
   const onSubmit = (data: PermitFormData) => {
     console.log("Form submission data:", data);
