@@ -153,14 +153,14 @@ export default function Permits() {
               </Select>
 
               <DatePicker
-                value={dateFrom}
-                onChange={setDateFrom}
+                date={dateFrom}
+                onDateChange={setDateFrom}
                 placeholder="Von Datum"
               />
 
               <DatePicker
-                value={dateTo}
-                onChange={setDateTo}
+                date={dateTo}
+                onDateChange={setDateTo}
                 placeholder="Bis Datum"
               />
             </div>
