@@ -2217,13 +2217,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/safety-officers", requireAuth, async (req, res) => {
+  app.get("/api/users/safety-specialists", requireAuth, async (req, res) => {
     try {
-      const users = await storage.getSafetyOfficers();
+      const users = await storage.getSafetySpecialists();
       res.json(users);
     } catch (error) {
-      console.error("Error fetching safety officers:", error);
-      res.status(500).json({ message: "Failed to fetch safety officers" });
+      console.error("Error fetching safety specialists:", error);
+      res.status(500).json({ message: "Failed to fetch safety specialists" });
     }
   });
 

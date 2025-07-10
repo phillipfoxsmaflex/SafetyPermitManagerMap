@@ -311,11 +311,11 @@ export default function PermitPrint() {
               </div>
             </div>
             <div className="border-l-2 border-blue-500 pl-2">
-              <strong>Sicherheitsbeauftragte/r:</strong> {getUserName(permit.safetyOfficer)}
+              <strong>Sicherheitsfachkraft:</strong> {getUserName(permit.safetySpecialist)}
               <div className="ml-2 mt-1 text-gray-600">
-                {permit.safetyOfficerApproval ? (
+                {permit.safetySpecialistApproval ? (
                   <span className="text-green-600">
-                    ✓ Genehmigt {permit.safetyOfficerApprovalDate ? `am ${formatDateTime(permit.safetyOfficerApprovalDate)}` : ''}
+                    ✓ Genehmigt {permit.safetySpecialistApprovalDate ? `am ${formatDateTime(permit.safetySpecialistApprovalDate)}` : ''}
                   </span>
                 ) : (
                   <span className="text-orange-600">⏳ Ausstehend</span>

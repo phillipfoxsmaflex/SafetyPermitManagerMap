@@ -1171,8 +1171,8 @@ export class DatabaseStorage implements IStorage {
     return await this.getUsersByRole('department_head');
   }
 
-  async getSafetyOfficers(): Promise<User[]> {
-    return await this.getUsersByRole('safety_officer');
+  async getSafetySpecialists(): Promise<User[]> {
+    return await this.getUsersByRole('safety_specialist');
   }
 
   async getMaintenanceApprovers(): Promise<User[]> {

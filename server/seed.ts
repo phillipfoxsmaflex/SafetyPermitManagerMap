@@ -23,11 +23,11 @@ async function seed() {
         role: "supervisor"
       },
       {
-        username: "safety.officer",
+        username: "safety.specialist",
         password: await bcrypt.hash("password123", 10),
         fullName: "Dr. Sarah Weber",
         department: "Safety",
-        role: "safety_officer"
+        role: "safety_specialist"
       },
       {
         username: "ops.manager",
@@ -98,7 +98,7 @@ async function seed() {
         endDate: tomorrow,
         status: "pending",
         riskLevel: "high",
-        safetyOfficer: "Dr. Sarah Weber",
+        safetySpecialist: "Dr. Sarah Weber",
         identifiedHazards: "Giftige Dämpfe, Sauerstoffmangel, enge Raumverhältnisse",
         additionalComments: "Vollständige Atmosphärenprüfung erforderlich vor Zutritt",
         atmosphereTest: true,
@@ -111,7 +111,7 @@ async function seed() {
         lelLevel: "0%",
         h2sLevel: "0 ppm",
         supervisorApproval: false,
-        safetyOfficerApproval: false,
+        safetySpecialistApproval: false,
         operationsManagerApproval: false,
         createdAt: now,
         updatedAt: now
@@ -129,7 +129,7 @@ async function seed() {
         endDate: nextWeek,
         status: "approved",
         riskLevel: "medium",
-        safetyOfficer: "Dr. Sarah Weber",
+        safetySpecialist: "Dr. Sarah Weber",
         identifiedHazards: "Brandgefahr, heiße Oberflächen, Schweißrauch",
         additionalComments: "Feuerwache während der gesamten Arbeitszeit erforderlich",
         atmosphereTest: false,
@@ -139,10 +139,10 @@ async function seed() {
         fireWatch: true,
         isolationLockout: true,
         supervisorApproval: true,
-        safetyOfficerApproval: true,
+        safetySpecialistApproval: true,
         operationsManagerApproval: true,
         supervisorApprovalDate: now,
-        safetyOfficerApprovalDate: now,
+        safetySpecialistApprovalDate: now,
         operationsManagerApprovalDate: now,
         createdAt: now,
         updatedAt: now

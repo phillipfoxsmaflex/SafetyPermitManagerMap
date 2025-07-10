@@ -28,7 +28,7 @@ export function getUserPermissions(user: User, permit: Permit): string[] {
   if (user.role === 'department_head') {
     permissions.push('approver');
   }
-  if (user.role === 'safety_officer') {
+  if (user.role === 'safety_specialist') {
     permissions.push('approver');
   }
   if (user.role === 'maintenance') {
@@ -36,7 +36,7 @@ export function getUserPermissions(user: User, permit: Permit): string[] {
   }
   
   // Supervisor-Rechte - Department Heads, Safety Officers und Maintenance können als Supervisors agieren
-  if (user.role === 'supervisor' || user.role === 'department_head' || user.role === 'safety_officer' || user.role === 'maintenance') {
+  if (user.role === 'supervisor' || user.role === 'department_head' || user.role === 'safety_specialist' || user.role === 'maintenance') {
     permissions.push('supervisor');
   }
   
@@ -49,7 +49,7 @@ export function getUserPermissions(user: User, permit: Permit): string[] {
   if (permit.departmentHead === user.username) {
     permissions.push('approver');
   }
-  if (permit.safetyOfficer === user.username) {
+  if (permit.safetySpecialist === user.username) {
     permissions.push('approver');
   }
   if (permit.maintenanceApprover === user.username) {

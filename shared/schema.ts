@@ -17,7 +17,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
   department: text("department").notNull(),
-  role: text("role").notNull(), // 'admin', 'department_head', 'safety_officer', 'maintenance', 'employee'
+  role: text("role").notNull(), // 'admin', 'department_head', 'safety_specialist', 'maintenance', 'employee'
 });
 
 export const permits = pgTable("permits", {
@@ -36,7 +36,7 @@ export const permits = pgTable("permits", {
   endDate: timestamp("end_date"),
   status: text("status").notNull().default('pending'), // 'pending', 'approved', 'active', 'completed', 'expired', 'rejected'
   riskLevel: text("risk_level"), // 'low', 'medium', 'high', 'critical'
-  safetyOfficer: text("safety_officer"),
+  safetySpecialist: text("safety_specialist"),
   departmentHead: text("department_head"), // Required approver
   maintenanceApprover: text("maintenance_approver"), // Required approver
   identifiedHazards: text("identified_hazards"),
@@ -53,8 +53,8 @@ export const permits = pgTable("permits", {
   maintenanceApproval: boolean("maintenance_approval").default(false),
   maintenanceApprovalDate: timestamp("maintenance_approval_date"),
   // Optional additional approvals
-  safetyOfficerApproval: boolean("safety_officer_approval").default(false),
-  safetyOfficerApprovalDate: timestamp("safety_officer_approval_date"),
+  safetySpecialistApproval: boolean("safety_specialist_approval").default(false),
+  safetySpecialistApprovalDate: timestamp("safety_specialist_approval_date"),
   
   // Performer information - filled after approval
   performerName: text("performer_name"),
