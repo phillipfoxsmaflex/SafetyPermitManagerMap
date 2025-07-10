@@ -70,7 +70,7 @@ const permitSchema = z.object({
   emergencyContact: z.string().optional(),
   performerName: z.string().optional(),
   departmentHeadId: z.number().optional(),
-  safetySpecialistId: z.number().optional(),
+  safetyOfficerId: z.number().optional(),
   maintenanceApproverId: z.number().optional(),
   identifiedHazards: z.string().optional(),
   selectedHazards: z.array(z.string()).optional(),
@@ -108,8 +108,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     queryKey: ["/api/users/department-heads"],
   });
 
-  const { data: safetySpecialists = [] } = useQuery<User[]>({
-    queryKey: ["/api/users/safety-specialists"],
+  const { data: safetyOfficers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users/safety-officers"],
   });
 
   const { data: maintenanceApprovers = [] } = useQuery<User[]>({
@@ -142,7 +142,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       emergencyContact: "",
       performerName: "",
       departmentHeadId: undefined,
-      safetySpecialistId: undefined,
+      safetyOfficerId: undefined,
       maintenanceApproverId: undefined,
       identifiedHazards: "",
       selectedHazards: [],
@@ -187,7 +187,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         completedMeasures: data.completedMeasures || [],
         performerName: data.performerName || "",
         departmentHead: departmentHeads.find(head => head.id === data.departmentHeadId)?.fullName || "",
-        safetySpecialist: safetySpecialists.find(specialist => specialist.id === data.safetySpecialistId)?.fullName || "",
+        safetyOfficer: safetyOfficers.find(officer => officer.id === data.safetyOfficerId)?.fullName || "",
         maintenanceApprover: maintenanceApprovers.find(approver => approver.id === data.maintenanceApproverId)?.fullName || "",
         performerSignature: data.performerSignature || "",
         workStartedAt: data.workStartedAt || null,
@@ -305,7 +305,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         emergencyContact: currentPermit.emergencyContact || "",
         performerName: currentPermit.performerName || "",
         departmentHeadId: findUserIdByName(currentPermit.departmentHead, departmentHeads),
-        safetySpecialistId: findUserIdByName(currentPermit.safetySpecialist, safetySpecialists),
+        safetyOfficerId: findUserIdByName(currentPermit.safetyOfficer, safetyOfficers),
         maintenanceApproverId: findUserIdByName(currentPermit.maintenanceApprover, maintenanceApprovers),
         identifiedHazards: currentPermit.identifiedHazards || "",
         selectedHazards: currentPermit.selectedHazards || [],
@@ -344,7 +344,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         }
       }
     }
-  }, [currentPermit, open, form, departmentHeads, safetySpecialists, maintenanceApprovers, mode]);
+  }, [currentPermit, open, form, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
 
   // LÖSUNG 1: Zusätzliche State-Synchronisation für AI-Vorschläge
   // Synchronisiert selectedHazards und hazardNotes wenn sich currentPermit ändert
@@ -986,20 +986,20 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
                       <FormField
                         control={form.control}
-                        name="safetySpecialistId"
+                        name="safetyOfficerId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sicherheitsfachkraft</FormLabel>
+                            <FormLabel>Sicherheitsbeauftragter</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""} disabled={!canEdit}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Sicherheitsfachkraft auswählen..." />
+                                  <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {safetySpecialists.map((specialist) => (
-                                  <SelectItem key={specialist.id} value={specialist.id.toString()}>
-                                    {specialist.fullName} ({specialist.username})
+                                {safetyOfficers.map((officer) => (
+                                  <SelectItem key={officer.id} value={officer.id.toString()}>
+                                    {officer.fullName} ({officer.username})
                                   </SelectItem>
                                 ))}
                               </SelectContent>

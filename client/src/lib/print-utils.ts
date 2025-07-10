@@ -209,9 +209,9 @@ export function printPermit(permit: Permit) {
             </div>
           </div>
           <div class="signature-box">
-            <div>Sicherheitsfachkraft</div>
+            <div>Sicherheitsbeauftragter</div>
             <div style="margin-top: 20px; font-size: 10px;">
-              ${permit.safetySpecialistApproval ? `Genehmigt: ${permit.safetySpecialistApprovalDate ? new Date(permit.safetySpecialistApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
+              ${permit.safetyOfficerApproval ? `Genehmigt: ${permit.safetyOfficerApprovalDate ? new Date(permit.safetyOfficerApprovalDate).toLocaleDateString('de-DE') : ''}` : 'Ausstehend'}
             </div>
           </div>
           <div class="signature-box">

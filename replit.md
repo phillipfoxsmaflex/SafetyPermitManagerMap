@@ -42,13 +42,6 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
-- **2025-01-10**: Systemweite Terminologie-Änderung abgeschlossen ✅
-  - Änderung von "Sicherheitsbeauftragter" zu "Sicherheitsfachkraft" durchgeführt
-  - Datenbank-Schema aktualisiert: safety_officer → safety_specialist
-  - Alle API-Endpoints, Frontend-Komponenten und User-Interfaces aktualisiert
-  - User-Rollen in der Datenbank migriert: safety_officer → safety_specialist
-  - Print-Ansicht und Genehmigungsworkflow entsprechend angepasst
-  - **BESTÄTIGT**: Vollständige Terminologie-Aktualisierung erfolgreich implementiert
 - **2025-01-10**: AI-Suggestions Bug vollständig behoben ✅
   - Problem identifiziert: selectedHazards wurde als leeres Objekt {} statt Array [] in PostgreSQL gespeichert
   - Backend-Validierung für selectedHazards-Arrays in storage.ts verstärkt
