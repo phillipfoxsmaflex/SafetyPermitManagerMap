@@ -120,10 +120,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     queryKey: ["/api/users"],
   });
 
-  // Get current permit data for edit mode
+  // Get current permit data for edit mode with forced refresh
   const { data: currentPermit } = useQuery<Permit>({
     queryKey: [`/api/permits/${permit?.id}`],
     enabled: !!permit?.id && mode === 'edit',
+    refetchOnWindowFocus: true,
+    refetchInterval: 2000, // Refresh every 2 seconds to catch AI suggestion updates
   });
 
   const form = useForm<PermitFormData>({
@@ -359,6 +361,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
           : [];
         console.log("AI-Suggestions: Updating selectedHazards:", newSelectedHazards);
         setSelectedHazards(newSelectedHazards);
+      } else {
+        // If undefined, reset to empty array
+        console.log("AI-Suggestions: Resetting selectedHazards to empty array");
+        setSelectedHazards([]);
       }
       
       // Sync hazardNotes

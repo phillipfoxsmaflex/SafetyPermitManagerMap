@@ -42,6 +42,12 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
+- **2025-01-10**: AI-Suggestions Bug komplett behoben
+  - Problem identifiziert: selectedHazards wurde als leeres Objekt {} statt Array [] in PostgreSQL gespeichert
+  - Backend-Validierung für selectedHazards-Arrays in storage.ts verstärkt
+  - Frontend State-Synchronisation zwischen AI-Suggestions und Edit-Modal verbessert
+  - Automatische Query-Invalidierung und Refresh-Mechanismus implementiert
+  - TRBS-Tab zeigt jetzt korrekt die von AI vorgeschlagenen Checkboxen und Notizen an
 - **2025-01-08**: Complete Docker deployment solution implemented and finalized
   - Fixed database configuration for Docker vs Neon environments
   - Implemented bcrypt password hashing for security
