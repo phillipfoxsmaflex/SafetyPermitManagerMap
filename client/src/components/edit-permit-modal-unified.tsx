@@ -344,6 +344,35 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     }
   }, [currentPermit, open, form, departmentHeads, safetyOfficers, maintenanceApprovers, mode]);
 
+  // LÖSUNG 1: Zusätzliche State-Synchronisation für AI-Vorschläge
+  // Synchronisiert selectedHazards und hazardNotes wenn sich currentPermit ändert
+  React.useEffect(() => {
+    if (currentPermit && mode === 'edit') {
+      console.log("AI-Suggestions: Syncing TRBS states with updated permit data");
+      
+      // Sync selectedHazards
+      if (currentPermit.selectedHazards && Array.isArray(currentPermit.selectedHazards)) {
+        const newSelectedHazards = currentPermit.selectedHazards;
+        console.log("AI-Suggestions: Updating selectedHazards:", newSelectedHazards);
+        setSelectedHazards(newSelectedHazards);
+      }
+      
+      // Sync hazardNotes
+      if (currentPermit.hazardNotes) {
+        try {
+          const parsedNotes = typeof currentPermit.hazardNotes === 'string' 
+            ? JSON.parse(currentPermit.hazardNotes) 
+            : currentPermit.hazardNotes;
+          console.log("AI-Suggestions: Updating hazardNotes:", parsedNotes);
+          setHazardNotes(parsedNotes);
+        } catch (e) {
+          console.warn("AI-Suggestions: Could not parse hazard notes:", currentPermit.hazardNotes);
+          setHazardNotes({});
+        }
+      }
+    }
+  }, [currentPermit?.selectedHazards, currentPermit?.hazardNotes, currentPermit?.id, mode]);
+
   const onSubmit = (data: PermitFormData) => {
     console.log("Form submission data:", data);
     console.log("Selected hazards:", selectedHazards);

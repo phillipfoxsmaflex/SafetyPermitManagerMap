@@ -129,13 +129,20 @@ export function AiSuggestions({ permitId, disabled = false }: AiSuggestionsProps
     },
     onSuccess: (data) => {
       console.log("Client: onSuccess called with:", data);
-      // Force cache invalidation for permit data and suggestions
+      
+      // LÖSUNG 2: Erweiterte Query-Invalidierung für AI-Vorschläge
+      // Invalidiere alle relevanten Queries um State-Synchronisation zu gewährleisten
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
 
-      // Force refetch permit data immediately
+      // Force refetch permit data immediately to trigger React effect updates
       queryClient.refetchQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
+      // Zusätzliche Invalidierung für bessere State-Synchronisation
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      console.log("AI-Suggestions: Cache invalidated, permit data will be refetched");
 
       toast({
         title: "Vorschlag übernommen",
@@ -206,10 +213,15 @@ export function AiSuggestions({ permitId, disabled = false }: AiSuggestionsProps
     iframe.src = `/api/permits/${permitId}/suggestions/apply-all?redirect=/success`;
 
     iframe.onload = () => {
-      // Request completed, refresh the suggestions and permit data
+      // LÖSUNG 2: Erweiterte Query-Invalidierung für "Alle anwenden"
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/permits'] });
+      
+      // Force refetch permit data immediately to trigger React effect updates
+      queryClient.refetchQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
+      console.log("AI-Suggestions: Cache invalidated after applying all suggestions");
 
       toast({
         title: "Alle Vorschläge übernommen",
@@ -239,8 +251,14 @@ export function AiSuggestions({ permitId, disabled = false }: AiSuggestionsProps
       return await response.json();
     },
     onSuccess: (data: any) => {
+      // LÖSUNG 2: Erweiterte Query-Invalidierung für applyAllMutation
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}/suggestions`] });
       queryClient.invalidateQueries({ queryKey: [`/api/permits/${permitId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      
+      // Force refetch permit data immediately
+      queryClient.refetchQueries({ queryKey: [`/api/permits/${permitId}`] });
+      
       toast({
         title: "Alle Vorschläge übernommen",
         description: data?.message || 'Alle Vorschläge wurden erfolgreich übernommen.',
