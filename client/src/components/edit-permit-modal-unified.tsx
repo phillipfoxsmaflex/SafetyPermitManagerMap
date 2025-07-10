@@ -125,7 +125,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     queryKey: [`/api/permits/${permit?.id}`],
     enabled: !!permit?.id && mode === 'edit',
     refetchOnWindowFocus: true,
-    refetchInterval: 2000, // Refresh every 2 seconds to catch AI suggestion updates
+    refetchInterval: 5000, // Refresh every 5 seconds to catch AI suggestion updates
   });
 
   const form = useForm<PermitFormData>({
@@ -781,6 +781,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                                 .map((hazard, hazardIndex) => {
                                 const hazardId = `${category.id}-${hazardIndex}`;
                                 const isSelected = selectedHazards.includes(hazardId);
+                                
+                                // Debug logging for AI suggestions
+                                if (isSelected) {
+                                  console.log(`TRBS DEBUG: Hazard ${hazardId} is selected: ${hazard.hazard}`);
+                                }
                                 
                                 return (
                                   <div key={hazardIndex} className="border rounded-lg p-4">
