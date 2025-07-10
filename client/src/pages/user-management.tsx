@@ -139,7 +139,7 @@ export default function UserManagement() {
   const getRoleLabel = (role: string) => {
     const roleMap: Record<string, string> = {
       'admin': 'Administrator',
-      'safety_officer': 'Sicherheitsbeauftragter',
+      'safety_officer': 'Sicherheitsfachkraft',
       'department_head': 'Abteilungsleiter',
       'maintenance': 'Technik',
       'employee': 'Mitarbeiter',
@@ -258,7 +258,7 @@ export default function UserManagement() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sicherheitsbeauftragte</CardTitle>
+              <CardTitle className="text-sm font-medium">Sicherheitsfachkräfte</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -315,7 +315,7 @@ export default function UserManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="admin">Administrator</SelectItem>
-                            <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                            <SelectItem value="safety_officer">Sicherheitsfachkraft</SelectItem>
                             <SelectItem value="department_head">Abteilungsleiter</SelectItem>
                             <SelectItem value="maintenance">Technik</SelectItem>
                             <SelectItem value="employee">Mitarbeiter</SelectItem>
@@ -402,7 +402,7 @@ export default function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Administrator</SelectItem>
-                  <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                  <SelectItem value="safety_officer">Sicherheitsfachkraft</SelectItem>
                   <SelectItem value="department_head">Abteilungsleiter</SelectItem>
                   <SelectItem value="maintenance">Technik</SelectItem>
                   <SelectItem value="employee">Mitarbeiter</SelectItem>
@@ -500,7 +500,7 @@ export default function UserManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="safety_officer">Sicherheitsbeauftragter</SelectItem>
+                    <SelectItem value="safety_officer">Sicherheitsfachkraft</SelectItem>
                     <SelectItem value="department_head">Abteilungsleiter</SelectItem>
                     <SelectItem value="maintenance">Technik</SelectItem>
                     <SelectItem value="employee">Mitarbeiter</SelectItem>

@@ -989,11 +989,11 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                         name="safetyOfficerId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sicherheitsbeauftragter</FormLabel>
+                            <FormLabel>Sicherheitsfachkraft</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""} disabled={!canEdit}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Sicherheitsbeauftragter auswählen..." />
+                                  <SelectValue placeholder="Sicherheitsfachkraft auswählen..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>

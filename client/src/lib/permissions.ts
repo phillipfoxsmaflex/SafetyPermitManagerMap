@@ -35,7 +35,7 @@ export function getUserPermissions(user: User, permit: Permit): string[] {
     permissions.push('approver');
   }
   
-  // Supervisor-Rechte - Department Heads, Safety Officers und Maintenance können als Supervisors agieren
+  // Supervisor-Rechte - Department Heads, Sicherheitsfachkräfte und Maintenance können als Supervisors agieren
   if (user.role === 'supervisor' || user.role === 'department_head' || user.role === 'safety_officer' || user.role === 'maintenance') {
     permissions.push('supervisor');
   }
@@ -105,7 +105,7 @@ export function isAllApprovalReceived(permit: Permit): boolean {
     }
   }
   
-  // Sicherheitsbeauftragter (optional, aber wenn gesetzt dann erforderlich)
+  // Sicherheitsfachkraft (optional, aber wenn gesetzt dann erforderlich)
   if (permit.safetyOfficer) {
     requiredApprovals++;
     if (permit.safetyOfficerApproval) {

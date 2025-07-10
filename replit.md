@@ -42,6 +42,11 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
+- **2025-01-10**: Frontend-Umbenennung "Sicherheitsbeauftragter" → "Sicherheitsfachkraft" ✅
+  - Alle GUI-Texte in Frontend von "Sicherheitsbeauftragter" zu "Sicherheitsfachkraft" geändert
+  - Betroffen: user-management.tsx, approvals.tsx, edit-permit-modal-unified.tsx, print-utils.ts, permissions.ts
+  - Backend-Datenstrukturen unverändert (safety_officer, safetyOfficer etc.)
+  - Dropdown-Optionen, Labels, Anzeige-Texte und Kommentare aktualisiert
 - **2025-01-10**: AI-Suggestions Bug vollständig behoben ✅
   - Problem identifiziert: selectedHazards wurde als leeres Objekt {} statt Array [] in PostgreSQL gespeichert
   - Backend-Validierung für selectedHazards-Arrays in storage.ts verstärkt

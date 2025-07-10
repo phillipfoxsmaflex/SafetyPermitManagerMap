@@ -276,7 +276,7 @@ export default function Approvals() {
                   <Clock className="h-4 w-4 text-orange-600" />
                 )}
                 <span className="text-sm">
-                  Sicherheitsbeauftragte: {permit.safetyOfficerApproval ? 'Genehmigt' : 'Ausstehend'}
+                  Sicherheitsfachkraft: {permit.safetyOfficerApproval ? 'Genehmigt' : 'Ausstehend'}
                 </span>
               </div>
             )}
