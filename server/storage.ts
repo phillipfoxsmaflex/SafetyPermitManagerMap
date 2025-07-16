@@ -1,4 +1,4 @@
-import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, systemSettings, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type SystemSettings, type InsertSystemSettings } from "@shared/schema";
+import { users, permits, notifications, templates, aiSuggestions, webhookConfig, workLocations, permitAttachments, sessions, systemSettings, mapBackgrounds, type User, type InsertUser, type Permit, type InsertPermit, type Notification, type InsertNotification, type Template, type InsertTemplate, type AiSuggestion, type InsertAiSuggestion, type WebhookConfig, type InsertWebhookConfig, type WorkLocation, type InsertWorkLocation, type PermitAttachment, type InsertPermitAttachment, type Session, type InsertSession, type SystemSettings, type InsertSystemSettings, type MapBackground, type InsertMapBackground } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -97,6 +97,18 @@ export interface IStorage {
   getSystemSettings(): Promise<SystemSettings | undefined>;
   updateSystemSettings(settings: Partial<SystemSettings>): Promise<SystemSettings | undefined>;
   createSystemSettings(settings: InsertSystemSettings): Promise<SystemSettings>;
+
+  // Map Background operations
+  getAllMapBackgrounds(): Promise<MapBackground[]>;
+  getActiveMapBackgrounds(): Promise<MapBackground[]>;
+  getMapBackgroundById(id: number): Promise<MapBackground | undefined>;
+  createMapBackground(background: InsertMapBackground): Promise<MapBackground>;
+  updateMapBackground(id: number, updates: Partial<MapBackground>): Promise<MapBackground | undefined>;
+  deleteMapBackground(id: number): Promise<boolean>;
+
+  // Map operations
+  getPermitsForMap(): Promise<Permit[]>;
+  updateWorkLocationPosition(id: number, x: number, y: number): Promise<WorkLocation | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1385,6 +1397,46 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return settings;
+  }
+
+  async getAllMapBackgrounds(): Promise<MapBackground[]> {
+    return await db.select().from(mapBackgrounds).orderBy(desc(mapBackgrounds.createdAt));
+  }
+
+  async getActiveMapBackgrounds(): Promise<MapBackground[]> {
+    return await db.select().from(mapBackgrounds).where(eq(mapBackgrounds.isActive, true)).orderBy(desc(mapBackgrounds.createdAt));
+  }
+
+  async getMapBackgroundById(id: number): Promise<MapBackground | undefined> {
+    const [background] = await db.select().from(mapBackgrounds).where(eq(mapBackgrounds.id, id));
+    return background;
+  }
+
+  async createMapBackground(insertBackground: InsertMapBackground): Promise<MapBackground> {
+    const [background] = await db.insert(mapBackgrounds).values(insertBackground).returning();
+    return background;
+  }
+
+  async updateMapBackground(id: number, updates: Partial<MapBackground>): Promise<MapBackground | undefined> {
+    const [background] = await db.update(mapBackgrounds).set(updates).where(eq(mapBackgrounds.id, id)).returning();
+    return background;
+  }
+
+  async deleteMapBackground(id: number): Promise<boolean> {
+    const result = await db.delete(mapBackgrounds).where(eq(mapBackgrounds.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getPermitsForMap(): Promise<Permit[]> {
+    return await db.select().from(permits).orderBy(desc(permits.createdAt));
+  }
+
+  async updateWorkLocationPosition(id: number, x: number, y: number): Promise<WorkLocation | undefined> {
+    const [location] = await db.update(workLocations).set({
+      mapPositionX: x,
+      mapPositionY: y
+    }).where(eq(workLocations.id, id)).returning();
+    return location;
   }
 }
 

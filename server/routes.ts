@@ -365,6 +365,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get permits for map (must come before /api/permits/:id)
+  app.get("/api/permits/map", requireAuth, async (req, res) => {
+    try {
+      const permits = await storage.getPermitsForMap();
+      res.json(permits);
+    } catch (error) {
+      log(`Error fetching permits for map: ${error}`);
+      res.status(500).json({ message: "Failed to fetch permits for map" });
+    }
+  });
+
   // Get all permits
   app.get("/api/permits", requireAuth, async (req, res) => {
     try {
@@ -2425,6 +2436,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading icon:", error);
       res.status(500).json({ message: "Failed to upload icon" });
+    }
+  });
+
+  // Map Background routes
+  app.get("/api/map-backgrounds", requireAuth, async (req, res) => {
+    try {
+      const backgrounds = await storage.getAllMapBackgrounds();
+      res.json(backgrounds);
+    } catch (error) {
+      log(`Error fetching map backgrounds: ${error}`);
+      res.status(500).json({ message: "Failed to fetch map backgrounds" });
+    }
+  });
+
+  app.get("/api/map-backgrounds/active", requireAuth, async (req, res) => {
+    try {
+      const backgrounds = await storage.getActiveMapBackgrounds();
+      res.json(backgrounds);
+    } catch (error) {
+      log(`Error fetching active map backgrounds: ${error}`);
+      res.status(500).json({ message: "Failed to fetch active map backgrounds" });
+    }
+  });
+
+  app.post("/api/map-backgrounds", requireAuth, iconUpload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file uploaded" });
+      }
+
+      // Validate file type
+      if (!req.file.mimetype.startsWith('image/')) {
+        return res.status(400).json({ message: "Only image files are allowed" });
+      }
+
+      // Convert to base64
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      const backgroundData = {
+        name: req.body.name || "Unnamed Map",
+        description: req.body.description || "",
+        imagePath: base64Image,
+        isActive: req.body.isActive === 'true' || true
+      };
+
+      const background = await storage.createMapBackground(backgroundData);
+      res.json(background);
+    } catch (error) {
+      log(`Error creating map background: ${error}`);
+      res.status(500).json({ message: "Failed to create map background" });
+    }
+  });
+
+  app.patch("/api/map-backgrounds/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const background = await storage.updateMapBackground(id, req.body);
+      if (!background) {
+        return res.status(404).json({ message: "Map background not found" });
+      }
+      res.json(background);
+    } catch (error) {
+      log(`Error updating map background: ${error}`);
+      res.status(500).json({ message: "Failed to update map background" });
+    }
+  });
+
+  app.delete("/api/map-backgrounds/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteMapBackground(id);
+      if (!success) {
+        return res.status(404).json({ message: "Map background not found" });
+      }
+      res.json({ message: "Map background deleted successfully" });
+    } catch (error) {
+      log(`Error deleting map background: ${error}`);
+      res.status(500).json({ message: "Failed to delete map background" });
+    }
+  });
+
+  // Map operations routes
+
+  app.patch("/api/work-locations/:id/position", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { x, y } = req.body;
+      const location = await storage.updateWorkLocationPosition(id, x, y);
+      if (!location) {
+        return res.status(404).json({ message: "Work location not found" });
+      }
+      res.json(location);
+    } catch (error) {
+      log(`Error updating work location position: ${error}`);
+      res.status(500).json({ message: "Failed to update work location position" });
     }
   });
 

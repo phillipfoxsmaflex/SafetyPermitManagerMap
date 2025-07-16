@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
 import { WorkLocationManagement } from "@/components/work-location-management";
+import { MapBackgroundManagement } from "@/components/map-background-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -854,6 +855,11 @@ export default function Settings() {
                 <WorkLocationManagement />
               </CardContent>
             </Card>
+          )}
+
+          {/* Map Background Management - Only for Admins */}
+          {isAdmin && (
+            <MapBackgroundManagement />
           )}
 
           {/* System Settings - Only for Admins */}

@@ -26,6 +26,8 @@ export const permits = pgTable("permits", {
   type: text("type").notNull(), // 'confined_space', 'hot_work', 'electrical', 'chemical', 'height'
   location: text("location").notNull(),
   workLocationId: integer("work_location_id").references(() => workLocations.id),
+  mapPositionX: integer("map_position_x"),
+  mapPositionY: integer("map_position_y"),
   description: text("description").notNull(),
   requestorId: integer("requestor_id").references(() => users.id),
   requestorName: text("requestor_name").notNull(),
@@ -133,6 +135,9 @@ export const workLocations = pgTable("work_locations", {
   description: text("description"),
   building: text("building"),
   area: text("area"),
+  mapPositionX: integer("map_position_x"),
+  mapPositionY: integer("map_position_y"),
+  mapBackgroundId: integer("map_background_id").references(() => mapBackgrounds.id),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -152,10 +157,21 @@ export const permitAttachments = pgTable("permit_attachments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const mapBackgrounds = pgTable("map_backgrounds", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  imagePath: text("image_path").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const systemSettings = pgTable("system_settings", {
   id: serial("id").primaryKey(),
   headerIcon: text("header_icon"), // Base64 encoded image or file path
   applicationTitle: text("application_title").notNull().default("Arbeitserlaubnis"),
+  defaultMapView: text("default_map_view"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -238,6 +254,12 @@ export const insertWorkLocationSchema = createInsertSchema(workLocations).omit({
   updatedAt: true,
 });
 
+export const insertMapBackgroundSchema = createInsertSchema(mapBackgrounds).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertPermitAttachmentSchema = createInsertSchema(permitAttachments).omit({
   id: true,
   createdAt: true,
@@ -274,3 +296,5 @@ export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type SystemSettings = typeof systemSettings.$inferSelect;
+export type InsertMapBackground = z.infer<typeof insertMapBackgroundSchema>;
+export type MapBackground = typeof mapBackgrounds.$inferSelect;

@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar } from "lucide-react";
+import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar, Map, List } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { PermitTable } from "@/components/permit-table-clean";
+import { MapWidget } from "@/components/map-widget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { PermitStats } from "@/lib/types";
-import type { Permit } from "@shared/schema";
+import type { Permit, MapBackground } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -35,6 +36,9 @@ export default function Dashboard() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedMapBackground, setSelectedMapBackground] = useState<MapBackground | null>(null);
+  const [mapClickPosition, setMapClickPosition] = useState<{ x: number, y: number } | null>(null);
   const itemsPerPage = 10;
   const { toast } = useToast();
   const { user } = useAuth();
@@ -76,6 +80,20 @@ export default function Dashboard() {
       });
     },
   });
+
+  const handleMapClick = (x: number, y: number) => {
+    setMapClickPosition({ x, y });
+    setCreateModalOpen(true);
+  };
+
+  const handlePermitClick = (permit: Permit) => {
+    setSelectedPermit(permit);
+    setEditModalOpen(true);
+  };
+
+  const resetMapClick = () => {
+    setMapClickPosition(null);
+  };
 
   const filteredPermits = useMemo(() => {
     let filtered = permits;
@@ -270,6 +288,28 @@ export default function Dashboard() {
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap">Neue Genehmigung</span>
             </Button>
+            
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="px-3 py-1"
+              >
+                <List className="w-4 h-4 mr-1" />
+                Liste
+              </Button>
+              <Button
+                variant={viewMode === 'map' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('map')}
+                className="px-3 py-1"
+              >
+                <Map className="w-4 h-4 mr-1" />
+                Karte
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -340,34 +380,49 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Permits Table */}
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-industrial-gray mb-4">
-            {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
-          </h3>
-        </div>
-        <PermitTable 
-          permits={paginatedPermits} 
-          isLoading={permitsLoading} 
-          onEdit={handleEditPermit} 
-          onDelete={handleDeletePermit}
-          isAdmin={isAdmin}
-        />
+        {/* Main Content */}
+        {viewMode === 'list' ? (
+          <>
+            {/* Permits Table */}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-industrial-gray mb-4">
+                {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
+              </h3>
+            </div>
+            <PermitTable 
+              permits={paginatedPermits} 
+              isLoading={permitsLoading} 
+              onEdit={handleEditPermit} 
+              onDelete={handleDeletePermit}
+              isAdmin={isAdmin}
+            />
 
-        {/* Pagination Controls */}
-        {filteredPermits.length > 0 && (
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <PaginationInfo
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={filteredPermits.length}
-            />
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+            {/* Pagination Controls */}
+            {filteredPermits.length > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <PaginationInfo
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredPermits.length}
+                />
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          /* Map View */
+          <MapWidget
+            onPermitClick={handlePermitClick}
+            onMapClick={handleMapClick}
+            showFilters={false}
+            mode="create"
+            selectedMapBackground={selectedMapBackground}
+            onMapBackgroundChange={setSelectedMapBackground}
+          />
         )}
       </main>
 
@@ -385,6 +440,8 @@ export default function Dashboard() {
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
         mode="create"
+        mapClickPosition={mapClickPosition}
+        onMapReset={() => setMapClickPosition(null)}
       />
       
       <EditPermitModalUnified

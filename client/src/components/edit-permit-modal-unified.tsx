@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +55,8 @@ interface EditPermitModalUnifiedProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: 'edit' | 'create';
+  mapClickPosition?: { x: number, y: number } | null;
+  onMapReset?: () => void;
 }
 
 const permitSchema = z.object({
@@ -85,11 +87,13 @@ const permitSchema = z.object({
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
   overallRisk: z.string().optional(),
+  positionX: z.number().optional(),
+  positionY: z.number().optional(),
 });
 
 type PermitFormData = z.infer<typeof permitSchema>;
 
-export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edit' }: EditPermitModalUnifiedProps) {
+export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edit', mapClickPosition, onMapReset }: EditPermitModalUnifiedProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -157,8 +161,18 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       beforeWorkStarts: "",
       complianceNotes: "",
       overallRisk: "",
+      positionX: mapClickPosition?.x,
+      positionY: mapClickPosition?.y,
     },
   });
+
+  // Update form when map position changes
+  useEffect(() => {
+    if (mapClickPosition && mode === 'create') {
+      form.setValue('positionX', mapClickPosition.x);
+      form.setValue('positionY', mapClickPosition.y);
+    }
+  }, [mapClickPosition, mode, form]);
 
   // Create/Update mutation
   const submitMutation = useMutation({
@@ -193,6 +207,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         workStartedAt: data.workStartedAt || null,
         workCompletedAt: data.workCompletedAt || null,
         status: mode === 'create' ? "draft" : data.status,
+        positionX: data.positionX,
+        positionY: data.positionY,
       };
 
       console.log("Final submit data:", submitData);
@@ -206,6 +222,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/permits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/permits/map"] });
       if (mode === 'edit' && permit?.id) {
         queryClient.invalidateQueries({ queryKey: [`/api/permits/${permit.id}`] });
       }
@@ -220,6 +237,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         form.reset();
         setHazardNotes({});
         setSelectedHazards([]);
+        onMapReset?.();
       }
     },
     onError: (error: Error) => {
