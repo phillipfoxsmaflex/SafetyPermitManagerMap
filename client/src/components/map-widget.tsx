@@ -53,7 +53,7 @@ export function MapWidget({
   });
 
   const { data: mapBackgrounds = [], isLoading: backgroundsLoading } = useQuery<MapBackground[]>({
-    queryKey: ["/api/map-backgrounds/active"],
+    queryKey: ["/api/map-backgrounds"],
   });
 
   const { data: workLocations = [] } = useQuery<WorkLocation[]>({
@@ -62,6 +62,13 @@ export function MapWidget({
 
   // Default background if none selected
   const currentBackground = selectedMapBackground || mapBackgrounds[0];
+
+  // Debug logging
+  useEffect(() => {
+    console.log('MapWidget - mapBackgrounds:', mapBackgrounds);
+    console.log('MapWidget - selectedMapBackground:', selectedMapBackground);
+    console.log('MapWidget - currentBackground:', currentBackground);
+  }, [mapBackgrounds, selectedMapBackground, currentBackground]);
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
@@ -317,6 +324,13 @@ export function MapWidget({
                       width="800"
                       height="600"
                       preserveAspectRatio="xMidYMid slice"
+                      onError={(e) => {
+                        console.error('Failed to load map background image:', currentBackground.imagePath);
+                        console.error('Error event:', e);
+                      }}
+                      onLoad={() => {
+                        console.log('Successfully loaded map background image:', currentBackground.imagePath);
+                      }}
                     />
                     
                     {/* Permit Markers */}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar, Map, List } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
@@ -53,6 +53,10 @@ export default function Dashboard() {
     queryKey: ["/api/permits"],
   });
 
+  const { data: mapBackgrounds = [] } = useQuery<MapBackground[]>({
+    queryKey: ["/api/map-backgrounds"],
+  });
+
   const deletePermitMutation = useMutation({
     mutationFn: async (permitId: number) => {
       const response = await fetch(`/api/permits/${permitId}`, {
@@ -94,6 +98,13 @@ export default function Dashboard() {
   const resetMapClick = () => {
     setMapClickPosition(null);
   };
+
+  // Set the first available background when map backgrounds are loaded
+  useEffect(() => {
+    if (mapBackgrounds.length > 0 && !selectedMapBackground) {
+      setSelectedMapBackground(mapBackgrounds[0]);
+    }
+  }, [mapBackgrounds, selectedMapBackground]);
 
   const filteredPermits = useMemo(() => {
     let filtered = permits;
