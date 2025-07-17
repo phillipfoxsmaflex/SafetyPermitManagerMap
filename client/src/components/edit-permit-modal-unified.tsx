@@ -45,7 +45,7 @@ import { StatusIndicator } from "@/components/status-indicator";
 import { StatusTimeline } from "@/components/status-timeline";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
 import { WorkflowButtons } from "@/components/workflow-buttons";
-import { MapWidget } from "@/components/map-widget";
+import { MapPositionSelector } from "@/components/map-position-selector";
 import trbsData from "@/data/trbs_complete_hazards.json";
 import { WORKFLOW_CONFIG } from "@/lib/workflow-config";
 import { canEditPermit } from "@/lib/permissions";
@@ -636,16 +636,12 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                       <div className="space-y-2">
                         <FormLabel>Arbeitsort auf der Karte markieren</FormLabel>
                         <div className="border rounded-lg p-2">
-                          <div className="h-64 w-full">
-                            <MapWidget
-                              onPermitClick={handlePermitClick}
-                              onMapClick={handleMapClick}
-                              showFilters={false}
-                              mode="create"
-                              selectedMapBackground={selectedMapBackground}
-                              onMapBackgroundChange={setSelectedMapBackground}
-                              mapClickPosition={permitMapPosition}
-                              className="rounded-lg"
+                          <div className="h-64 w-full relative">
+                            <MapPositionSelector
+                              mapBackground={selectedMapBackground}
+                              selectedPosition={permitMapPosition}
+                              onPositionChange={handleMapClick}
+                              disabled={!canEdit}
                             />
                           </div>
                           {permitMapPosition && (
