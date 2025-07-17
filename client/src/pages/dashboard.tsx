@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar, Map, List } from "lucide-react";
+import { Plus, Search, Download, FileText, Clock, AlertTriangle, CheckCircle, Trash2, X, Calendar, Map, List, Filter } from "lucide-react";
 import { NavigationHeader } from "@/components/navigation-header";
 import { EditPermitModalUnified } from "@/components/edit-permit-modal-unified";
 import { PermitTable } from "@/components/permit-table-clean";
 import { MapWidget } from "@/components/map-widget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationInfo } from "@/components/ui/pagination";
 import {
   AlertDialog,
@@ -27,12 +29,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isAfter, isBefore, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { getStatusConfig } from "@/utils/status-config";
 
 export default function Dashboard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,6 +111,18 @@ export default function Dashboard() {
     }
   }, [mapBackgrounds, selectedMapBackground]);
 
+  const getPermitTypeLabel = (type: string) => {
+    const typeLabels: Record<string, string> = {
+      'hot_work': 'Heißarbeiten',
+      'confined_space': 'Enger Raum',
+      'electrical': 'Elektrische Arbeiten',
+      'chemical': 'Chemische Arbeiten',
+      'maintenance': 'Wartungsarbeiten',
+      'general': 'Allgemeine Genehmigung'
+    };
+    return typeLabels[type] || type;
+  };
+
   const filteredPermits = useMemo(() => {
     let filtered = permits;
     
@@ -119,6 +136,16 @@ export default function Dashboard() {
         permit.department.toLowerCase().includes(term) ||
         permit.description.toLowerCase().includes(term)
       );
+    }
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(permit => permit.status === statusFilter);
+    }
+    
+    // Apply type filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(permit => permit.type === typeFilter);
     }
     
     // Apply date filters
@@ -141,7 +168,7 @@ export default function Dashboard() {
     }
     
     return filtered;
-  }, [permits, searchTerm, dateFrom, dateTo]);
+  }, [permits, searchTerm, statusFilter, typeFilter, dateFrom, dateTo]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredPermits.length / itemsPerPage);
@@ -151,7 +178,7 @@ export default function Dashboard() {
   // Reset to first page when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateFrom, dateTo]);
+  }, [searchTerm, statusFilter, typeFilter, dateFrom, dateTo]);
 
   const handleEditPermit = (permit: Permit) => {
     setSelectedPermit(permit);
@@ -160,6 +187,14 @@ export default function Dashboard() {
 
   const handleDeletePermit = (permitId: number) => {
     deletePermitMutation.mutate(permitId);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
   };
 
   const handleExportReport = () => {
@@ -240,47 +275,7 @@ export default function Dashboard() {
             </p>
           </div>
           
-          {/* Search and filters - Mobile-first layout */}
-          <div className="space-y-3 mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
-              <Input
-                placeholder="Genehmigung suchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
-              />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <DatePicker
-                date={dateFrom}
-                onDateChange={setDateFrom}
-                placeholder="Von Datum"
-                className="flex-1"
-              />
-              <DatePicker
-                date={dateTo}
-                onDateChange={setDateTo}
-                placeholder="Bis Datum"
-                className="flex-1"
-              />
-              {(dateFrom || dateTo) && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
-                  }}
-                  className="h-10 w-10 sm:flex-shrink-0"
-                  title="Filter zurücksetzen"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
+
           
           {/* Action buttons - Stacked on mobile */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -378,10 +373,113 @@ export default function Dashboard() {
         {/* Main Content */}
         {viewMode === 'list' ? (
           <>
+            {/* Filter Card for List View */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-industrial-gray flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Filter
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {/* Search */}
+                  <div className="space-y-2">
+                    <Label htmlFor="search">Suche</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-gray w-4 h-4" />
+                      <Input
+                        id="search"
+                        placeholder="Suche..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Status Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="status-filter">Status</Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger id="status-filter">
+                        <SelectValue placeholder="Alle Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Status</SelectItem>
+                        <SelectItem value="active">{getStatusConfig('active').label}</SelectItem>
+                        <SelectItem value="pending">{getStatusConfig('pending').label}</SelectItem>
+                        <SelectItem value="completed">{getStatusConfig('completed').label}</SelectItem>
+                        <SelectItem value="approved">{getStatusConfig('approved').label}</SelectItem>
+                        <SelectItem value="draft">{getStatusConfig('draft').label}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Type Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="type-filter">Typ</Label>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger id="type-filter">
+                        <SelectValue placeholder="Alle Typen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Typen</SelectItem>
+                        <SelectItem value="hot_work">Heißarbeiten</SelectItem>
+                        <SelectItem value="confined_space">Enger Raum</SelectItem>
+                        <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
+                        <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
+                        <SelectItem value="maintenance">Wartungsarbeiten</SelectItem>
+                        <SelectItem value="general">Allgemeine Genehmigung</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* From Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="from-date">Von Datum</Label>
+                    <DatePicker
+                      date={dateFrom}
+                      onDateChange={setDateFrom}
+                      placeholder="Von Datum"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* To Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="to-date">Bis Datum</Label>
+                    <DatePicker
+                      date={dateTo}
+                      onDateChange={setDateTo}
+                      placeholder="Bis Datum"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                
+                {/* Reset Button */}
+                {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo) && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={resetFilters}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Alle Filter zurücksetzen
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Permits Table */}
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-industrial-gray mb-4">
-                {searchTerm ? `Suchergebnisse (${filteredPermits.length})` : 'Aktuelle Genehmigungen'}
+                {searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo 
+                  ? `Suchergebnisse (${filteredPermits.length})` 
+                  : 'Aktuelle Genehmigungen'}
               </h3>
             </div>
             <PermitTable 
