@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Permit, MapBackground, WorkLocation } from '@shared/schema';
+import { getStatusConfig } from '@/utils/status-config';
 
 interface MapWidgetProps {
   onPermitClick?: (permit: Permit) => void;
@@ -76,25 +77,13 @@ export function MapWidget({
   }, [mapBackgrounds, selectedMapBackground, currentBackground]);
 
   const getStatusColor = (status: string) => {
-    switch(status.toLowerCase()) {
-      case 'active': return { fill: '#22c55e', stroke: '#16a34a' }; // Grün - In Bearbeitung
-      case 'pending': return { fill: '#3b82f6', stroke: '#2563eb' }; // Blau - Geplant
-      case 'approved': return { fill: '#eab308', stroke: '#ca8a04' }; // Gelb - Genehmigt/Wartend
-      case 'expired': return { fill: '#ef4444', stroke: '#dc2626' }; // Rot - Dringend/Abgelaufen
-      case 'completed': return { fill: '#10b981', stroke: '#059669' }; // Grün - Abgeschlossen
-      default: return { fill: '#6b7280', stroke: '#4b5563' }; // Grau - Unbekannt
-    }
+    const config = getStatusConfig(status);
+    return { fill: config.mapFill, stroke: config.mapStroke };
   };
 
   const getStatusColorClass = (status: string) => {
-    switch(status.toLowerCase()) {
-      case 'active': return 'bg-green-500 border-green-600';
-      case 'pending': return 'bg-blue-500 border-blue-600';
-      case 'approved': return 'bg-yellow-500 border-yellow-600';
-      case 'expired': return 'bg-red-500 border-red-600';
-      case 'completed': return 'bg-emerald-500 border-emerald-600';
-      default: return 'bg-gray-500 border-gray-600';
-    }
+    const config = getStatusConfig(status);
+    return config.mapColorClass;
   };
 
   const getStatusIcon = (status: string) => {
@@ -109,14 +98,8 @@ export function MapWidget({
   };
 
   const getStatusText = (status: string) => {
-    switch(status.toLowerCase()) {
-      case 'active': return 'In Bearbeitung';
-      case 'pending': return 'Geplant';
-      case 'approved': return 'Genehmigt';
-      case 'expired': return 'Dringend';
-      case 'completed': return 'Abgeschlossen';
-      default: return status;
-    }
+    const config = getStatusConfig(status);
+    return config.label;
   };
 
   const getPermitTypeLabel = (type: string) => {
