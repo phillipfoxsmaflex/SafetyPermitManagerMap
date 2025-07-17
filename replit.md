@@ -42,6 +42,13 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
+- **2025-01-17**: Einheitliche Status-Konfiguration für alle Ansichten implementiert ✅
+  - Zentrale Status-Konfiguration in utils/status-config.ts erstellt
+  - Alle Status-Farben und -Bezeichnungen zwischen Karten- und Listenansicht synchronisiert
+  - Kartenlegende und Statistiken-Sektion verwenden einheitliche Konfiguration
+  - Status-Bezeichnungen vereinheitlicht: "Aktiv", "Ausstehend", "Genehmigt", "Abgelaufen", "Abgeschlossen"
+  - permit-status-badge.tsx und map-widget.tsx nutzen zentrale Konfiguration
+  - **BESTÄTIGT**: Alle Status-Anzeigen zeigen konsistente Farben und Labels
 - **2025-01-10**: Frontend-Umbenennung "Sicherheitsbeauftragter" → "Sicherheitsfachkraft" ✅
   - Alle GUI-Texte in Frontend von "Sicherheitsbeauftragter" zu "Sicherheitsfachkraft" geändert
   - Betroffen: user-management.tsx, approvals.tsx, edit-permit-modal-unified.tsx, print-utils.ts, permissions.ts

@@ -456,26 +456,15 @@ export function MapWidget({
               
               {/* Legend */}
               <div className="mt-4 flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">In Bearbeitung</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm">Geplant</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm">Genehmigt</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-sm">Dringend</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-emerald-500 rounded-full"></div>
-                  <span className="text-sm">Abgeschlossen</span>
-                </div>
+                {['active', 'pending', 'approved', 'expired', 'completed'].map(status => {
+                  const config = getStatusConfig(status);
+                  return (
+                    <div key={status} className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded-full ${config.mapColorClass.split(' ')[0]}`}></div>
+                      <span className="text-sm">{config.label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -543,36 +532,20 @@ export function MapWidget({
                   <span>Gesamt:</span>
                   <span className="font-medium">{filteredPermits.length}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>In Bearbeitung:</span>
-                  <span className="font-medium text-green-600">
-                    {filteredPermits.filter(p => p.status === 'active').length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Geplant:</span>
-                  <span className="font-medium text-blue-600">
-                    {filteredPermits.filter(p => p.status === 'pending').length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Genehmigt:</span>
-                  <span className="font-medium text-yellow-600">
-                    {filteredPermits.filter(p => p.status === 'approved').length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Dringend:</span>
-                  <span className="font-medium text-red-600">
-                    {filteredPermits.filter(p => p.status === 'expired').length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Abgeschlossen:</span>
-                  <span className="font-medium text-emerald-600">
-                    {filteredPermits.filter(p => p.status === 'completed').length}
-                  </span>
-                </div>
+                {['active', 'pending', 'approved', 'expired', 'completed'].map(status => {
+                  const config = getStatusConfig(status);
+                  const count = filteredPermits.filter(p => p.status === status).length;
+                  const textColorClass = config.mapColorClass.split(' ')[0].replace('bg-', 'text-');
+                  
+                  return (
+                    <div key={status} className="flex justify-between text-sm">
+                      <span>{config.label}:</span>
+                      <span className={`font-medium ${textColorClass}`}>
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
