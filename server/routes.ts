@@ -496,13 +496,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: validatedData.status || "pending",
       };
       
-      // Add map position data after other data to ensure it's not overwritten
-      if (validatedData.positionX !== undefined && validatedData.positionY !== undefined) {
-        console.log("Setting map position:", validatedData.positionX, validatedData.positionY);
+      // Handle map position data
+      if (validatedData.mapPosition) {
+        try {
+          console.log("Parsing map position:", validatedData.mapPosition);
+          const position = JSON.parse(validatedData.mapPosition);
+          if (position && typeof position.x === 'number' && typeof position.y === 'number') {
+            console.log("Setting map position:", position.x, position.y);
+            permitData.mapPositionX = position.x;
+            permitData.mapPositionY = position.y;
+          } else {
+            console.log("Invalid position format:", position);
+          }
+        } catch (e) {
+          console.log("Error parsing map position:", e);
+        }
+      } else if (validatedData.positionX !== undefined && validatedData.positionY !== undefined) {
+        console.log("Setting map position from positionX/Y:", validatedData.positionX, validatedData.positionY);
         permitData.mapPositionX = validatedData.positionX;
         permitData.mapPositionY = validatedData.positionY;
       } else {
-        console.log("No position data found in validatedData:", { positionX: validatedData.positionX, positionY: validatedData.positionY });
+        console.log("No position data found in validatedData:", { 
+          mapPosition: validatedData.mapPosition, 
+          positionX: validatedData.positionX, 
+          positionY: validatedData.positionY 
+        });
       }
       
       const permit = await storage.createPermit(permitData as any);
@@ -553,6 +571,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Handle map position data in updates
+      if (updates.mapPosition) {
+        try {
+          console.log("Parsing map position for update:", updates.mapPosition);
+          const position = JSON.parse(updates.mapPosition);
+          if (position && typeof position.x === 'number' && typeof position.y === 'number') {
+            console.log("Setting map position for update:", position.x, position.y);
+            updates.mapPositionX = position.x;
+            updates.mapPositionY = position.y;
+          } else {
+            console.log("Invalid position format for update:", position);
+          }
+          delete updates.mapPosition; // Remove the JSON string field
+        } catch (e) {
+          console.log("Error parsing map position for update:", e);
+        }
+      }
+
       // Validate required fields based on permit type
       const validationErrors = [];
       

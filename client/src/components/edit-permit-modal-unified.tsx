@@ -305,7 +305,14 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   React.useEffect(() => {
     if (mode === 'create' && mapClickPosition) {
       setPermitMapPosition(mapClickPosition);
+    } else if (currentPermit?.mapPositionX !== null && currentPermit?.mapPositionY !== null) {
+      // Load position from separate X/Y coordinates
+      setPermitMapPosition({
+        x: currentPermit.mapPositionX || 0,
+        y: currentPermit.mapPositionY || 0
+      });
     } else if (currentPermit?.mapPosition) {
+      // Fallback: try to parse from JSON field if exists
       try {
         const position = typeof currentPermit.mapPosition === 'string' 
           ? JSON.parse(currentPermit.mapPosition) 
