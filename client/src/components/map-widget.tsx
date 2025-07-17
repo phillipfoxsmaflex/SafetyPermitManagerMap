@@ -145,9 +145,11 @@ export function MapWidget({
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       
-      // Convert to SVG coordinates
+      // Convert to SVG coordinates more accurately
       const svgX = (x / rect.width) * 800;
       const svgY = (y / rect.height) * 600;
+      
+      console.log('Map click coordinates:', { x, y, svgX, svgY, rect });
       
       setNewPermitPosition({ x: svgX, y: svgY });
       
@@ -358,16 +360,32 @@ export function MapWidget({
                       const statusColor = getStatusColor(permit.status);
                       const x = permit.mapPositionX || (100 + Math.random() * 600);
                       const y = permit.mapPositionY || (100 + Math.random() * 400);
+                      const isSelected = selectedPermit?.id === permit.id;
+                      const isHovered = hoveredPermit?.id === permit.id;
                       
                       return (
                         <g key={permit.id}>
+                          {/* Selection ring */}
+                          {isSelected && (
+                            <circle
+                              cx={x}
+                              cy={y}
+                              r="18"
+                              fill="none"
+                              stroke="#3b82f6"
+                              strokeWidth="3"
+                              className="animate-pulse"
+                            />
+                          )}
+                          
+                          {/* Main marker */}
                           <circle
                             cx={x}
                             cy={y}
-                            r={hoveredPermit?.id === permit.id ? "15" : "12"}
+                            r={isHovered ? "15" : isSelected ? "14" : "12"}
                             fill={statusColor.fill}
-                            stroke={statusColor.stroke}
-                            strokeWidth="2"
+                            stroke={isSelected ? "#3b82f6" : statusColor.stroke}
+                            strokeWidth={isSelected ? "3" : "2"}
                             className="cursor-pointer transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -376,6 +394,8 @@ export function MapWidget({
                             onMouseEnter={() => setHoveredPermit(permit)}
                             onMouseLeave={() => setHoveredPermit(null)}
                           />
+                          
+                          {/* Permit ID text */}
                           <text
                             x={x}
                             y={y + 4}
@@ -475,7 +495,11 @@ export function MapWidget({
                 {filteredPermits.map((permit) => (
                   <div
                     key={permit.id}
-                    className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                    className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                      selectedPermit?.id === permit.id 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'hover:bg-gray-50'
+                    }`}
                     onClick={() => handlePermitClick(permit)}
                   >
                     <div className="flex items-start justify-between">

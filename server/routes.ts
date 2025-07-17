@@ -493,6 +493,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: processedData.startDate || "",
         endDate: processedData.endDate || "",
         status: validatedData.status || "pending",
+        // Add map position data
+        mapPositionX: validatedData.positionX || null,
+        mapPositionY: validatedData.positionY || null,
         ...validatedData
       };
       

@@ -192,6 +192,8 @@ export const insertPermitSchema = createInsertSchema(permits).omit({
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
   overallRisk: z.string().optional(),
+  positionX: z.number().optional(),
+  positionY: z.number().optional(),
 });
 
 // Schema for draft permits with optional fields
@@ -223,6 +225,8 @@ export const insertDraftPermitSchema = createInsertSchema(permits).omit({
   beforeWorkStarts: z.string().optional(),
   complianceNotes: z.string().optional(),
   overallRisk: z.string().optional(),
+  positionX: z.number().optional(),
+  positionY: z.number().optional(),
   status: z.string().default("draft"),
 }).partial();
 
