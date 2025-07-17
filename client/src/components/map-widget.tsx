@@ -366,9 +366,14 @@ export function MapWidget({
                     
                     {/* Permit Markers */}
                     {filteredPermits.map((permit) => {
+                      // Only show permits that have map positions
+                      if (!permit.mapPositionX || !permit.mapPositionY) {
+                        return null;
+                      }
+                      
                       const statusColor = getStatusColor(permit.status);
-                      const x = permit.mapPositionX || (100 + Math.random() * 600);
-                      const y = permit.mapPositionY || (100 + Math.random() * 400);
+                      const x = permit.mapPositionX;
+                      const y = permit.mapPositionY;
                       const isSelected = selectedPermit?.id === permit.id;
                       const isHovered = hoveredPermit?.id === permit.id;
                       

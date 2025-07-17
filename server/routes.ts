@@ -494,10 +494,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: processedData.startDate || "",
         endDate: processedData.endDate || "",
         status: validatedData.status || "pending",
-        // Add map position data (ensure these overwrite any existing values)
-        mapPositionX: validatedData.positionX || null,
-        mapPositionY: validatedData.positionY || null,
       };
+      
+      // Add map position data after other data to ensure it's not overwritten
+      if (validatedData.positionX !== undefined && validatedData.positionY !== undefined) {
+        permitData.mapPositionX = validatedData.positionX;
+        permitData.mapPositionY = validatedData.positionY;
+      }
       
       const permit = await storage.createPermit(permitData as any);
       console.log("Created permit:", permit);
