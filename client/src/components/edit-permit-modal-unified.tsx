@@ -1076,7 +1076,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               </FormControl>
                               <SelectContent>
                                 {departmentHeads.map((head) => (
-                                  <SelectItem key={head.id} value={head.id.toString()}>
+                                  <SelectItem key={`dept-head-${head.id}`} value={head.id.toString()}>
                                     {head.fullName} ({head.username})
                                   </SelectItem>
                                 ))}
@@ -1101,7 +1101,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               </FormControl>
                               <SelectContent>
                                 {safetyOfficers.map((officer) => (
-                                  <SelectItem key={officer.id} value={officer.id.toString()}>
+                                  <SelectItem key={`safety-officer-${officer.id}`} value={officer.id.toString()}>
                                     {officer.fullName} ({officer.username})
                                   </SelectItem>
                                 ))}
@@ -1126,7 +1126,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                               </FormControl>
                               <SelectContent>
                                 {maintenanceApprovers.map((approver) => (
-                                  <SelectItem key={approver.id} value={approver.id.toString()}>
+                                  <SelectItem key={`maintenance-approver-${approver.id}`} value={approver.id.toString()}>
                                     {approver.fullName} ({approver.username})
                                   </SelectItem>
                                 ))}
