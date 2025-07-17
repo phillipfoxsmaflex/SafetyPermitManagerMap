@@ -31,6 +31,7 @@ interface MapWidgetProps {
   mode?: 'view' | 'create';
   selectedMapBackground?: MapBackground | null;
   onMapBackgroundChange?: (background: MapBackground) => void;
+  resetTrigger?: number;
 }
 
 export function MapWidget({ 
@@ -39,7 +40,8 @@ export function MapWidget({
   showFilters = true,
   mode = 'view',
   selectedMapBackground,
-  onMapBackgroundChange
+  onMapBackgroundChange,
+  resetTrigger
 }: MapWidgetProps) {
   const [selectedPermit, setSelectedPermit] = useState<Permit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -174,6 +176,13 @@ export function MapWidget({
     setShowingCreateMode(false);
     setNewPermitPosition(null);
   };
+
+  // Reset position when resetTrigger changes
+  useEffect(() => {
+    if (resetTrigger !== undefined) {
+      setNewPermitPosition(null);
+    }
+  }, [resetTrigger]);
 
   if (permitsLoading || backgroundsLoading) {
     return (

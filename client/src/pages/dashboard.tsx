@@ -433,6 +433,7 @@ export default function Dashboard() {
             mode="create"
             selectedMapBackground={selectedMapBackground}
             onMapBackgroundChange={setSelectedMapBackground}
+            resetTrigger={mapClickPosition ? 0 : Date.now()}
           />
         )}
       </main>

@@ -483,6 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle draft permits with proper defaults
       const permitData = {
+        ...validatedData,
         type: validatedData.type || "",
         location: validatedData.location || "",
         description: validatedData.description || "",
@@ -493,10 +494,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: processedData.startDate || "",
         endDate: processedData.endDate || "",
         status: validatedData.status || "pending",
-        // Add map position data
+        // Add map position data (ensure these overwrite any existing values)
         mapPositionX: validatedData.positionX || null,
         mapPositionY: validatedData.positionY || null,
-        ...validatedData
       };
       
       const permit = await storage.createPermit(permitData as any);
