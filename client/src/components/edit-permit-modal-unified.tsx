@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
-import type { Permit, User, WorkLocation } from "@shared/schema";
+import type { Permit, User, WorkLocation, MapBackground } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AiSuggestions } from "@/components/ai-suggestions";
@@ -45,6 +45,7 @@ import { StatusIndicator } from "@/components/status-indicator";
 import { StatusTimeline } from "@/components/status-timeline";
 import { WorkflowVisualization } from "@/components/workflow-visualization";
 import { WorkflowButtons } from "@/components/workflow-buttons";
+import { MapWidget } from "@/components/map-widget";
 import trbsData from "@/data/trbs_complete_hazards.json";
 import { WORKFLOW_CONFIG } from "@/lib/workflow-config";
 import { canEditPermit } from "@/lib/permissions";
@@ -101,6 +102,8 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [hazardNotes, setHazardNotes] = useState<{ [key: string]: string }>({});
   const [selectedHazards, setSelectedHazards] = useState<string[]>([]);
+  const [selectedMapBackground, setSelectedMapBackground] = useState<MapBackground | null>(null);
+  const [permitMapPosition, setPermitMapPosition] = useState<{ x: number, y: number } | null>(null);
 
 
   // Dropdown data queries
@@ -122,6 +125,10 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   const { data: allUsers = [] } = useQuery<User[]>({
     queryKey: ["/api/users"],
+  });
+
+  const { data: mapBackgrounds = [] } = useQuery<MapBackground[]>({
+    queryKey: ["/api/map-backgrounds"],
   });
 
   // Get current permit data for edit mode with optimized refresh
@@ -287,6 +294,40 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
   const canStartAiAnalysis = mode === 'create' || (currentPermit?.status === 'draft'); // AI analysis only for drafts
   const isLoading = submitMutation.isPending || workflowMutation.isPending;
 
+  // Initialize map background
+  React.useEffect(() => {
+    if (mapBackgrounds.length > 0 && !selectedMapBackground) {
+      setSelectedMapBackground(mapBackgrounds[0]);
+    }
+  }, [mapBackgrounds, selectedMapBackground]);
+
+  // Initialize permit map position from props or permit data
+  React.useEffect(() => {
+    if (mode === 'create' && mapClickPosition) {
+      setPermitMapPosition(mapClickPosition);
+    } else if (currentPermit?.mapPosition) {
+      try {
+        const position = typeof currentPermit.mapPosition === 'string' 
+          ? JSON.parse(currentPermit.mapPosition) 
+          : currentPermit.mapPosition;
+        setPermitMapPosition(position);
+      } catch (e) {
+        console.warn("Could not parse permit map position:", currentPermit.mapPosition);
+      }
+    } else if (mode === 'create' && !mapClickPosition) {
+      // Reset position for new permits without map click
+      setPermitMapPosition(null);
+    }
+  }, [mode, mapClickPosition, currentPermit]);
+
+  // Reset map position when modal closes
+  React.useEffect(() => {
+    if (!open && mode === 'create' && onMapReset) {
+      onMapReset();
+      setPermitMapPosition(null);
+    }
+  }, [open, mode, onMapReset]);
+
   // Sync form with permit data in edit mode
   React.useEffect(() => {
     if (mode === 'edit' && currentPermit && open && !workflowMutation.isPending) {
@@ -408,7 +449,17 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     console.log("Form submission data:", data);
     console.log("Selected hazards:", selectedHazards);
     console.log("Hazard notes:", hazardNotes);
-    submitMutation.mutate(data);
+    console.log("Permit map position:", permitMapPosition);
+    
+    // Add map position to the data
+    const submitData = {
+      ...data,
+      mapPosition: permitMapPosition ? JSON.stringify(permitMapPosition) : null,
+      selectedHazards,
+      hazardNotes: JSON.stringify(hazardNotes)
+    };
+    
+    submitMutation.mutate(submitData);
   };
 
   const toggleHazard = (hazardId: string) => {
@@ -424,6 +475,16 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
       ...prev,
       [hazardId]: note
     }));
+  };
+
+  const handleMapClick = (position: { x: number, y: number }) => {
+    if (canEdit) {
+      setPermitMapPosition(position);
+    }
+  };
+
+  const handlePermitClick = (permitId: string) => {
+    // Handle permit click if needed
   };
 
   const handleWorkflowAction = async (actionId: string, nextStatus: string) => {
@@ -570,6 +631,30 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
                           </FormItem>
                         )}
                       />
+
+                      {/* Map Position Selection */}
+                      <div className="space-y-2">
+                        <FormLabel>Arbeitsort auf der Karte markieren</FormLabel>
+                        <div className="border rounded-lg p-2">
+                          <div className="h-64 w-full">
+                            <MapWidget
+                              onPermitClick={handlePermitClick}
+                              onMapClick={handleMapClick}
+                              showFilters={false}
+                              mode="create"
+                              selectedMapBackground={selectedMapBackground}
+                              onMapBackgroundChange={setSelectedMapBackground}
+                              mapClickPosition={permitMapPosition}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          {permitMapPosition && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              Position markiert: ({permitMapPosition.x.toFixed(0)}, {permitMapPosition.y.toFixed(0)})
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       <FormField
                         control={form.control}
