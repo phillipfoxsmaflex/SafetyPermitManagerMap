@@ -413,7 +413,7 @@ export default function Dashboard() {
           <MapWidget
             onPermitClick={handlePermitClick}
             onMapClick={handleMapClick}
-            showFilters={false}
+            showFilters={true}
             mode="create"
             selectedMapBackground={selectedMapBackground}
             onMapBackgroundChange={setSelectedMapBackground}

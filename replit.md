@@ -42,6 +42,12 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
+- **2025-01-17**: Erweiterte Kartenfilter implementiert ✅
+  - Fünf-Spalten-Filter-Layout für Kartenansicht: Suche, Status, Typ, Von Datum, Bis Datum
+  - Intelligente Datumsfilterung mit Start- und Enddatum der Genehmigungen
+  - Filter-Reset-Button für alle aktiven Filter
+  - Filter im Dashboard-Kartenansicht aktiviert (showFilters={true})
+  - Punkte auf der Karte werden entsprechend den eingestellten Filtern angezeigt
 - **2025-01-17**: Dashboard-Bereinigung und Kartenlegende-Optimierung ✅
   - "Heute abgelaufen" Kachel vom Dashboard entfernt
   - Dashboard-Layout von 4 auf 3 Spalten reduziert (Aktiv, Ausstehend, Abgeschlossen)
