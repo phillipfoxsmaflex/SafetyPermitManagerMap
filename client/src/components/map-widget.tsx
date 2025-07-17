@@ -18,7 +18,8 @@ import {
   Clock, 
   Filter,
   X,
-  Layers
+  Layers,
+  Wrench
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Permit, MapBackground, WorkLocation } from '@shared/schema';
@@ -46,6 +47,8 @@ export function MapWidget({
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showingCreateMode, setShowingCreateMode] = useState(false);
   const [newPermitPosition, setNewPermitPosition] = useState<{ x: number, y: number } | null>(null);
+  const [hoveredPermit, setHoveredPermit] = useState<Permit | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const { toast } = useToast();
 
   const { data: permits = [], isLoading: permitsLoading } = useQuery<Permit[]>({
@@ -72,32 +75,43 @@ export function MapWidget({
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
+      case 'active': return { fill: '#22c55e', stroke: '#16a34a' }; // Grün - In Bearbeitung
+      case 'pending': return { fill: '#3b82f6', stroke: '#2563eb' }; // Blau - Geplant
+      case 'approved': return { fill: '#eab308', stroke: '#ca8a04' }; // Gelb - Genehmigt/Wartend
+      case 'expired': return { fill: '#ef4444', stroke: '#dc2626' }; // Rot - Dringend/Abgelaufen
+      case 'completed': return { fill: '#10b981', stroke: '#059669' }; // Grün - Abgeschlossen
+      default: return { fill: '#6b7280', stroke: '#4b5563' }; // Grau - Unbekannt
+    }
+  };
+
+  const getStatusColorClass = (status: string) => {
+    switch(status.toLowerCase()) {
       case 'active': return 'bg-green-500 border-green-600';
-      case 'pending': return 'bg-yellow-500 border-yellow-600';
-      case 'approved': return 'bg-blue-500 border-blue-600';
+      case 'pending': return 'bg-blue-500 border-blue-600';
+      case 'approved': return 'bg-yellow-500 border-yellow-600';
       case 'expired': return 'bg-red-500 border-red-600';
-      case 'completed': return 'bg-gray-500 border-gray-600';
+      case 'completed': return 'bg-emerald-500 border-emerald-600';
       default: return 'bg-gray-500 border-gray-600';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch(status.toLowerCase()) {
-      case 'active': return <CheckCircle className="w-4 h-4" />;
-      case 'pending': return <Clock className="w-4 h-4" />;
-      case 'approved': return <CheckCircle className="w-4 h-4" />;
-      case 'expired': return <AlertTriangle className="w-4 h-4" />;
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
+      case 'active': return <Wrench className="w-4 h-4" />; // In Bearbeitung
+      case 'pending': return <Clock className="w-4 h-4" />; // Geplant
+      case 'approved': return <AlertTriangle className="w-4 h-4" />; // Genehmigt/Wartend
+      case 'expired': return <AlertTriangle className="w-4 h-4" />; // Dringend
+      case 'completed': return <CheckCircle className="w-4 h-4" />; // Abgeschlossen
       default: return <MapPin className="w-4 h-4" />;
     }
   };
 
   const getStatusText = (status: string) => {
     switch(status.toLowerCase()) {
-      case 'active': return 'Aktiv';
-      case 'pending': return 'Ausstehend';
+      case 'active': return 'In Bearbeitung';
+      case 'pending': return 'Geplant';
       case 'approved': return 'Genehmigt';
-      case 'expired': return 'Abgelaufen';
+      case 'expired': return 'Dringend';
       case 'completed': return 'Abgeschlossen';
       default: return status;
     }
@@ -141,6 +155,10 @@ export function MapWidget({
         onMapClick(svgX, svgY);
       }
     }
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<SVGElement>) => {
+    setMousePosition({ x: event.clientX, y: event.clientY });
   };
 
   const handlePermitClick = (permit: Permit) => {
@@ -317,6 +335,8 @@ export function MapWidget({
                     viewBox="0 0 800 600"
                     className="cursor-pointer"
                     onClick={handleMapClick}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={() => setHoveredPermit(null)}
                   >
                     {/* Background Image */}
                     <image
@@ -334,28 +354,42 @@ export function MapWidget({
                     />
                     
                     {/* Permit Markers */}
-                    {filteredPermits.map((permit) => (
-                      <g key={permit.id}>
-                        <circle
-                          cx={permit.mapPositionX || 100}
-                          cy={permit.mapPositionY || 100}
-                          r="12"
-                          className={`${getStatusColor(permit.status)} cursor-pointer stroke-2 hover:scale-110 transition-transform`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePermitClick(permit);
-                          }}
-                        />
-                        <text
-                          x={permit.mapPositionX || 100}
-                          y={(permit.mapPositionY || 100) + 4}
-                          textAnchor="middle"
-                          className="text-white text-xs font-bold pointer-events-none"
-                        >
-                          {permit.id}
-                        </text>
-                      </g>
-                    ))}
+                    {filteredPermits.map((permit) => {
+                      const statusColor = getStatusColor(permit.status);
+                      const x = permit.mapPositionX || (100 + Math.random() * 600);
+                      const y = permit.mapPositionY || (100 + Math.random() * 400);
+                      
+                      return (
+                        <g key={permit.id}>
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={hoveredPermit?.id === permit.id ? "15" : "12"}
+                            fill={statusColor.fill}
+                            stroke={statusColor.stroke}
+                            strokeWidth="2"
+                            className="cursor-pointer transition-all duration-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePermitClick(permit);
+                            }}
+                            onMouseEnter={() => setHoveredPermit(permit)}
+                            onMouseLeave={() => setHoveredPermit(null)}
+                          />
+                          <text
+                            x={x}
+                            y={y + 4}
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="12"
+                            fontWeight="bold"
+                            className="pointer-events-none"
+                          >
+                            {permit.id}
+                          </text>
+                        </g>
+                      );
+                    })}
                     
                     {/* Work Location Markers */}
                     {workLocations.map((location) => (
@@ -407,22 +441,22 @@ export function MapWidget({
               <div className="mt-4 flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Aktiv</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm">Ausstehend</span>
+                  <span className="text-sm">In Bearbeitung</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm">Geplant</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
                   <span className="text-sm">Genehmigt</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-sm">Abgelaufen</span>
+                  <span className="text-sm">Dringend</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
+                  <div className="w-4 h-4 bg-emerald-500 rounded-full"></div>
                   <span className="text-sm">Abgeschlossen</span>
                 </div>
               </div>
@@ -438,110 +472,89 @@ export function MapWidget({
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {filteredPermits.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>Keine Genehmigungen gefunden</p>
-                  </div>
-                ) : (
-                  filteredPermits.map((permit) => (
-                    <div
-                      key={permit.id}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        selectedPermit?.id === permit.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => handlePermitClick(permit)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className={getStatusColor(permit.status)}>
-                              {getStatusText(permit.status)}
-                            </Badge>
-                            <span className="font-medium text-sm">{permit.permitId}</span>
-                          </div>
-                          <p className="text-xs text-gray-600 mb-1">{permit.description}</p>
-                          <p className="text-xs text-gray-500">{permit.location}</p>
-                          <p className="text-xs text-gray-500">{getPermitTypeLabel(permit.type)}</p>
+                {filteredPermits.map((permit) => (
+                  <div
+                    key={permit.id}
+                    className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handlePermitClick(permit)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${getStatusColorClass(permit.status)}`}></div>
+                          <span className="font-medium text-sm">{permit.permitId}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">#{permit.id}</span>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {getPermitTypeLabel(permit.type)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {permit.location}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <Badge variant="outline" className={`${getStatusColorClass(permit.status)} text-white border-white text-xs`}>
+                          {getStatusText(permit.status)}
+                        </Badge>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {getStatusIcon(permit.status)}
                         </div>
                       </div>
                     </div>
-                  ))
+                  </div>
+                ))}
+                {filteredPermits.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Keine Genehmigungen gefunden</p>
+                  </div>
                 )}
               </div>
             </CardContent>
           </Card>
-
-          {/* Selected Permit Details */}
-          {selectedPermit && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Status:</span>
-                    <Badge variant="outline" className={getStatusColor(selectedPermit.status)}>
-                      {getStatusIcon(selectedPermit.status)}
-                      <span className="ml-1">{getStatusText(selectedPermit.status)}</span>
-                    </Badge>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Typ:</span>
-                      <span>{getPermitTypeLabel(selectedPermit.type)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Antragsteller:</span>
-                      <span>{selectedPermit.requestorName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Abteilung:</span>
-                      <span>{selectedPermit.department}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Ort:</span>
-                      <span>{selectedPermit.location}</span>
-                    </div>
-                    {selectedPermit.startDate && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Startdatum:</span>
-                        <span>{new Date(selectedPermit.startDate).toLocaleDateString('de-DE')}</span>
-                      </div>
-                    )}
-                    {selectedPermit.endDate && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Enddatum:</span>
-                        <span>{new Date(selectedPermit.endDate).toLocaleDateString('de-DE')}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Eye className="w-3 h-3 mr-1" />
-                      Anzeigen
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Edit className="w-3 h-3 mr-1" />
-                      Bearbeiten
-                    </Button>
-                  </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Statistiken</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span>Gesamt:</span>
+                  <span className="font-medium">{filteredPermits.length}</span>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="flex justify-between text-sm">
+                  <span>In Bearbeitung:</span>
+                  <span className="font-medium text-green-600">
+                    {filteredPermits.filter(p => p.status === 'active').length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Geplant:</span>
+                  <span className="font-medium text-blue-600">
+                    {filteredPermits.filter(p => p.status === 'pending').length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Genehmigt:</span>
+                  <span className="font-medium text-yellow-600">
+                    {filteredPermits.filter(p => p.status === 'approved').length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Dringend:</span>
+                  <span className="font-medium text-red-600">
+                    {filteredPermits.filter(p => p.status === 'expired').length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Abgeschlossen:</span>
+                  <span className="font-medium text-emerald-600">
+                    {filteredPermits.filter(p => p.status === 'completed').length}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
