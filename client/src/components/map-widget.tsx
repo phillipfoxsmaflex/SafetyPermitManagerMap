@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { DatePicker } from '@/components/ui/date-picker';
 import { 
   MapPin, 
   Search, 
@@ -19,11 +20,13 @@ import {
   Filter,
   X,
   Layers,
-  Wrench
+  Wrench,
+  Calendar
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Permit, MapBackground, WorkLocation } from '@shared/schema';
 import { getStatusConfig } from '@/utils/status-config';
+import { isAfter, isBefore, isSameDay, startOfDay, endOfDay } from 'date-fns';
 
 interface MapWidgetProps {
   onPermitClick?: (permit: Permit) => void;
@@ -48,6 +51,8 @@ export function MapWidget({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>();
+  const [dateToFilter, setDateToFilter] = useState<Date | undefined>();
   const [showingCreateMode, setShowingCreateMode] = useState(false);
   const [newPermitPosition, setNewPermitPosition] = useState<{ x: number, y: number } | null>(null);
   const [hoveredPermit, setHoveredPermit] = useState<Permit | null>(null);
@@ -121,7 +126,27 @@ export function MapWidget({
     const matchesStatus = statusFilter === 'all' || permit.status === statusFilter;
     const matchesType = typeFilter === 'all' || permit.type === typeFilter;
     
-    return matchesSearch && matchesStatus && matchesType;
+    // Date filter logic
+    let matchesDate = true;
+    if (dateFromFilter || dateToFilter) {
+      const permitStartDate = permit.startDate ? new Date(permit.startDate) : null;
+      const permitEndDate = permit.endDate ? new Date(permit.endDate) : null;
+      
+      if (dateFromFilter && permitStartDate) {
+        matchesDate = matchesDate && !isBefore(permitStartDate, startOfDay(dateFromFilter));
+      }
+      if (dateFromFilter && permitEndDate) {
+        matchesDate = matchesDate && !isBefore(permitEndDate, startOfDay(dateFromFilter));
+      }
+      if (dateToFilter && permitStartDate) {
+        matchesDate = matchesDate && !isAfter(permitStartDate, endOfDay(dateToFilter));
+      }
+      if (dateToFilter && permitEndDate) {
+        matchesDate = matchesDate && !isAfter(permitEndDate, endOfDay(dateToFilter));
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
   });
 
   const handleMapClick = (event: React.MouseEvent<SVGElement>) => {
@@ -252,7 +277,7 @@ export function MapWidget({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <Label htmlFor="search">Suche</Label>
                 <div className="relative">
@@ -278,7 +303,6 @@ export function MapWidget({
                     <SelectItem value="active">Aktiv</SelectItem>
                     <SelectItem value="pending">Ausstehend</SelectItem>
                     <SelectItem value="approved">Genehmigt</SelectItem>
-                    <SelectItem value="expired">Abgelaufen</SelectItem>
                     <SelectItem value="completed">Abgeschlossen</SelectItem>
                   </SelectContent>
                 </Select>
@@ -301,7 +325,46 @@ export function MapWidget({
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div>
+                <Label htmlFor="date-from">Von Datum</Label>
+                <DatePicker
+                  date={dateFromFilter}
+                  onDateChange={setDateFromFilter}
+                  placeholder="Von..."
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="date-to">Bis Datum</Label>
+                <DatePicker
+                  date={dateToFilter}
+                  onDateChange={setDateToFilter}
+                  placeholder="Bis..."
+                />
+              </div>
             </div>
+            
+            {/* Filter Reset Button */}
+            {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFromFilter || dateToFilter) && (
+              <div className="flex justify-end mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setTypeFilter('all');
+                    setDateFromFilter(undefined);
+                    setDateToFilter(undefined);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Filter zurücksetzen
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
