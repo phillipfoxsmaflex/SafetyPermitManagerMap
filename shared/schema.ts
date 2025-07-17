@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -26,8 +26,8 @@ export const permits = pgTable("permits", {
   type: text("type").notNull(), // 'confined_space', 'hot_work', 'electrical', 'chemical', 'height'
   location: text("location").notNull(),
   workLocationId: integer("work_location_id").references(() => workLocations.id),
-  mapPositionX: integer("map_position_x"),
-  mapPositionY: integer("map_position_y"),
+  mapPositionX: real("map_position_x"),
+  mapPositionY: real("map_position_y"),
   description: text("description").notNull(),
   requestorId: integer("requestor_id").references(() => users.id),
   requestorName: text("requestor_name").notNull(),
