@@ -325,7 +325,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Stats - Mobile optimized */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-6">
           <Card>
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -353,22 +353,6 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-orange-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
                   <Clock className="text-warning-orange text-lg sm:text-xl" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div className="mb-2 sm:mb-0">
-                  <p className="text-xs sm:text-sm font-medium text-secondary-gray">Heute abgelaufen</p>
-                  <p className="text-xl sm:text-3xl font-bold text-alert-red">
-                    {statsLoading ? "..." : stats?.expiredToday || 0}
-                  </p>
-                </div>
-                <div className="bg-red-50 p-2 sm:p-3 rounded-lg self-end sm:self-auto">
-                  <AlertTriangle className="text-alert-red text-lg sm:text-xl" />
                 </div>
               </div>
             </CardContent>

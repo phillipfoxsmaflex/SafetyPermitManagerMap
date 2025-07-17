@@ -456,7 +456,7 @@ export function MapWidget({
               
               {/* Legend */}
               <div className="mt-4 flex flex-wrap gap-4">
-                {['active', 'pending', 'approved', 'expired', 'completed'].map(status => {
+                {['active', 'pending', 'approved', 'completed'].map(status => {
                   const config = getStatusConfig(status);
                   return (
                     <div key={status} className="flex items-center gap-2">
@@ -532,7 +532,7 @@ export function MapWidget({
                   <span>Gesamt:</span>
                   <span className="font-medium">{filteredPermits.length}</span>
                 </div>
-                {['active', 'pending', 'approved', 'expired', 'completed'].map(status => {
+                {['active', 'pending', 'approved', 'completed'].map(status => {
                   const config = getStatusConfig(status);
                   const count = filteredPermits.filter(p => p.status === status).length;
                   const textColorClass = config.mapColorClass.split(' ')[0].replace('bg-', 'text-');

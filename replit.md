@@ -42,11 +42,18 @@ A cutting-edge digital permit management system designed to streamline safety wo
 - Notification system for approvals and updates
 
 ## Recent Changes
+- **2025-01-17**: Dashboard-Bereinigung und Kartenlegende-Optimierung ✅
+  - "Heute abgelaufen" Kachel vom Dashboard entfernt
+  - Dashboard-Layout von 4 auf 3 Spalten reduziert (Aktiv, Ausstehend, Abgeschlossen)
+  - "Abgelaufen" Status aus Kartenlegende und Statistiken entfernt
+  - Genehmigungsseite zeigt nun alle 3 Genehmigungsebenen (Abteilungsleiter, Instandhaltung, Sicherheitsfachkraft)
+  - Sicherheitsfachkraft-Status wird immer angezeigt: "Genehmigt", "Ausstehend" oder "Nicht zugewiesen"
+  - Status-Konfiguration in utils/status-config.ts bereinigt
 - **2025-01-17**: Einheitliche Status-Konfiguration für alle Ansichten implementiert ✅
   - Zentrale Status-Konfiguration in utils/status-config.ts erstellt
   - Alle Status-Farben und -Bezeichnungen zwischen Karten- und Listenansicht synchronisiert
   - Kartenlegende und Statistiken-Sektion verwenden einheitliche Konfiguration
-  - Status-Bezeichnungen vereinheitlicht: "Aktiv", "Ausstehend", "Genehmigt", "Abgelaufen", "Abgeschlossen"
+  - Status-Bezeichnungen vereinheitlicht: "Aktiv", "Ausstehend", "Genehmigt", "Abgeschlossen"
   - permit-status-badge.tsx und map-widget.tsx nutzen zentrale Konfiguration
   - **BESTÄTIGT**: Alle Status-Anzeigen zeigen konsistente Farben und Labels
 - **2025-01-10**: Frontend-Umbenennung "Sicherheitsbeauftragter" → "Sicherheitsfachkraft" ✅

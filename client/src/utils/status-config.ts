@@ -17,14 +17,7 @@ export const getStatusConfig = (status: string) => {
         mapStroke: '#ea580c',
         mapColorClass: 'bg-orange-500 border-orange-600',
       };
-    case 'expired':
-      return {
-        label: 'Abgelaufen',
-        badgeClassName: 'bg-red-100 text-alert-red hover:bg-red-100',
-        mapFill: '#ef4444',
-        mapStroke: '#dc2626',
-        mapColorClass: 'bg-red-500 border-red-600',
-      };
+
     case 'completed':
       return {
         label: 'Abgeschlossen',
