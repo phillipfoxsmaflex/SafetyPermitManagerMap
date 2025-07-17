@@ -183,7 +183,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
 
   // Create/Update mutation
   const submitMutation = useMutation({
-    mutationFn: async (data: PermitFormData) => {
+    mutationFn: async (data: PermitFormData & { mapPosition?: string }) => {
       console.log("Processing submit data:", data);
       
       const submitData = {
@@ -214,8 +214,7 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
         workStartedAt: data.workStartedAt || null,
         workCompletedAt: data.workCompletedAt || null,
         status: mode === 'create' ? "draft" : data.status,
-        positionX: data.positionX,
-        positionY: data.positionY,
+        mapPosition: data.mapPosition || (permitMapPosition ? JSON.stringify(permitMapPosition) : null),
       };
 
       console.log("Final submit data:", submitData);
@@ -462,8 +461,6 @@ export function EditPermitModalUnified({ permit, open, onOpenChange, mode = 'edi
     const submitData = {
       ...data,
       mapPosition: permitMapPosition ? JSON.stringify(permitMapPosition) : null,
-      selectedHazards,
-      hazardNotes: JSON.stringify(hazardNotes)
     };
     
     submitMutation.mutate(submitData);
