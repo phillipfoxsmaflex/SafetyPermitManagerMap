@@ -27,10 +27,14 @@ export function MapPositionSelector({
     if (disabled || !onPositionChange) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
 
-    onPositionChange({ x, y });
+    // Transform pixel coordinates to SVG viewBox coordinates (0-800, 0-600)
+    const svgX = (clickX / rect.width) * 800;
+    const svgY = (clickY / rect.height) * 600;
+
+    onPositionChange({ x: svgX, y: svgY });
   };
 
   const handleBackgroundLoad = () => {
@@ -91,8 +95,8 @@ export function MapPositionSelector({
         <div
           className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
           style={{
-            left: `${selectedPosition.x}px`,
-            top: `${selectedPosition.y}px`,
+            left: `${(selectedPosition.x / 800) * 100}%`,
+            top: `${(selectedPosition.y / 600) * 100}%`,
           }}
         >
           <MapPin
