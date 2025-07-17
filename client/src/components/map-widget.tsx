@@ -413,7 +413,8 @@ export function MapWidget({
                     {/* Permit Markers */}
                     {filteredPermits.map((permit) => {
                       // Only show permits that have map positions
-                      if (!permit.mapPositionX || !permit.mapPositionY) {
+                      if (permit.mapPositionX === null || permit.mapPositionX === undefined || 
+                          permit.mapPositionY === null || permit.mapPositionY === undefined) {
                         return null;
                       }
                       
