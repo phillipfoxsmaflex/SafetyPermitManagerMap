@@ -242,6 +242,8 @@ export class DatabaseStorage implements IStorage {
         performerName: insertPermit.performerName || null,
         performerSignature: insertPermit.performerSignature || null,
         workLocationId: insertPermit.workLocationId || null,
+        mapPositionX: insertPermit.mapPositionX || null,
+        mapPositionY: insertPermit.mapPositionY || null,
         departmentHeadApproval: false,
         departmentHeadApprovalDate: null,
         maintenanceApproval: false,
