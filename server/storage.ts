@@ -1081,19 +1081,14 @@ export class DatabaseStorage implements IStorage {
         message: 'Test connection from permit management system'
       };
 
-      // Create URL with query parameters for GET request
-      const url = new URL(config[0].webhookUrl);
-      url.searchParams.append('test', 'true');
-      url.searchParams.append('timestamp', testPayload.timestamp);
-      url.searchParams.append('message', testPayload.message);
+      console.log('Full webhook URL with parameters:', config[0].webhookUrl);
 
-      console.log('Full webhook URL with parameters:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
+      const response = await fetch(config[0].webhookUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(testPayload),
         signal: AbortSignal.timeout(10000) // 10 second timeout
       });
 
