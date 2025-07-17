@@ -395,17 +395,17 @@ export function MapWidget({
                             onMouseLeave={() => setHoveredPermit(null)}
                           />
                           
-                          {/* Permit ID text */}
+                          {/* Permit Number text above the marker */}
                           <text
                             x={x}
-                            y={y + 4}
+                            y={y - 20}
                             textAnchor="middle"
-                            fill="white"
-                            fontSize="12"
+                            fill="black"
+                            fontSize="11"
                             fontWeight="bold"
                             className="pointer-events-none"
                           >
-                            {permit.id}
+                            {permit.permitId}
                           </text>
                         </g>
                       );
