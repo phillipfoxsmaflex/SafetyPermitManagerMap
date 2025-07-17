@@ -268,18 +268,18 @@ export default function Approvals() {
                 Instandhaltung/Engineering: {permit.maintenanceApproval ? 'Genehmigt' : 'Ausstehend'}
               </span>
             </div>
-            {permit.safetyOfficer && (
-              <div className={`flex items-center gap-2 p-2 rounded ${permit.safetyOfficerApproval ? 'bg-green-50' : 'bg-orange-50'}`}>
-                {permit.safetyOfficerApproval ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Clock className="h-4 w-4 text-orange-600" />
-                )}
-                <span className="text-sm">
-                  Sicherheitsfachkraft: {permit.safetyOfficerApproval ? 'Genehmigt' : 'Ausstehend'}
-                </span>
-              </div>
-            )}
+            <div className={`flex items-center gap-2 p-2 rounded ${permit.safetyOfficerApproval ? 'bg-green-50' : (permit.safetyOfficer ? 'bg-orange-50' : 'bg-gray-50')}`}>
+              {permit.safetyOfficerApproval ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : permit.safetyOfficer ? (
+                <Clock className="h-4 w-4 text-orange-600" />
+              ) : (
+                <Circle className="h-4 w-4 text-gray-400" />
+              )}
+              <span className="text-sm">
+                Sicherheitsfachkraft: {permit.safetyOfficerApproval ? 'Genehmigt' : (permit.safetyOfficer ? 'Ausstehend' : 'Nicht zugewiesen')}
+              </span>
+            </div>
           </div>
         </div>
 
