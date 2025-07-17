@@ -109,12 +109,17 @@ export function MapWidget({
 
   const getPermitTypeLabel = (type: string) => {
     const typeLabels: Record<string, string> = {
-      'hot_work': 'Heißarbeiten',
-      'confined_space': 'Enger Raum',
-      'electrical': 'Elektrische Arbeiten',
-      'chemical': 'Chemische Arbeiten',
-      'maintenance': 'Wartungsarbeiten',
-      'general': 'Allgemeine Genehmigung'
+      'general': 'Allgemeiner Erlaubnisschein',
+      'hot_work': 'Heißarbeiten (Schweißen, Schneiden, Löten)',
+      'height_work': 'Arbeiten in der Höhe (>2m Absturzgefahr)',
+      'confined_space': 'Arbeiten in engen Räumen/Behältern',
+      'electrical_work': 'Elektrische Arbeiten (Schaltanlagen, Kabel)',
+      'chemical_work': 'Arbeiten mit Gefahrstoffen',
+      'machinery_work': 'Arbeiten an Maschinen/Anlagen',
+      'excavation': 'Erdarbeiten/Grabungen',
+      'maintenance': 'Instandhaltungsarbeiten',
+      'cleaning': 'Reinigungs-/Wartungsarbeiten',
+      'other': 'Sonstige Arbeiten'
     };
     return typeLabels[type] || type;
   };
@@ -316,12 +321,17 @@ export function MapWidget({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Alle Typen</SelectItem>
-                    <SelectItem value="hot_work">Heißarbeiten</SelectItem>
-                    <SelectItem value="confined_space">Enger Raum</SelectItem>
-                    <SelectItem value="electrical">Elektrische Arbeiten</SelectItem>
-                    <SelectItem value="chemical">Chemische Arbeiten</SelectItem>
-                    <SelectItem value="maintenance">Wartungsarbeiten</SelectItem>
-                    <SelectItem value="general">Allgemeine Genehmigung</SelectItem>
+                    <SelectItem value="general">Allgemeiner Erlaubnisschein</SelectItem>
+                    <SelectItem value="hot_work">Heißarbeiten (Schweißen, Schneiden, Löten)</SelectItem>
+                    <SelectItem value="height_work">Arbeiten in der Höhe (&gt;2m Absturzgefahr)</SelectItem>
+                    <SelectItem value="confined_space">Arbeiten in engen Räumen/Behältern</SelectItem>
+                    <SelectItem value="electrical_work">Elektrische Arbeiten (Schaltanlagen, Kabel)</SelectItem>
+                    <SelectItem value="chemical_work">Arbeiten mit Gefahrstoffen</SelectItem>
+                    <SelectItem value="machinery_work">Arbeiten an Maschinen/Anlagen</SelectItem>
+                    <SelectItem value="excavation">Erdarbeiten/Grabungen</SelectItem>
+                    <SelectItem value="maintenance">Instandhaltungsarbeiten</SelectItem>
+                    <SelectItem value="cleaning">Reinigungs-/Wartungsarbeiten</SelectItem>
+                    <SelectItem value="other">Sonstige Arbeiten</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
