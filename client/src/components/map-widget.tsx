@@ -394,31 +394,34 @@ export function MapWidget({
                 </div>
               )}
               
-              <div className="bg-gray-50 rounded-lg border-2 border-gray-200 relative overflow-hidden">
+              <div className="bg-gray-50 rounded-lg border-2 border-gray-200 relative">
                 {currentBackground ? (
-                  <svg
-                    width="100%"
-                    height="600"
-                    viewBox="0 0 800 600"
-                    className="cursor-pointer"
-                    onClick={handleMapClick}
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={() => setHoveredPermit(null)}
-                  >
-                    {/* Background Image */}
-                    <image
-                      href={currentBackground.imagePath}
-                      width="800"
-                      height="600"
-                      preserveAspectRatio="xMidYMid slice"
-                      onError={(e) => {
-                        console.error('Failed to load map background image:', currentBackground.imagePath);
-                        console.error('Error event:', e);
-                      }}
-                      onLoad={() => {
-                        console.log('Successfully loaded map background image:', currentBackground.imagePath);
-                      }}
-                    />
+                  <div className="w-full overflow-hidden rounded-lg" style={{ aspectRatio: '4/3' }}>
+                    <svg
+                      width="100%"
+                      height="100%"
+                      viewBox="0 0 800 600"
+                      className="cursor-pointer block"
+                      preserveAspectRatio="xMidYMid meet"
+                      onClick={handleMapClick}
+                      onMouseMove={handleMouseMove}
+                      onMouseLeave={() => setHoveredPermit(null)}
+                      style={{ minHeight: '300px', maxHeight: '600px' }}
+                    >
+                      {/* Background Image */}
+                      <image
+                        href={currentBackground.imagePath}
+                        width="800"
+                        height="600"
+                        preserveAspectRatio="xMidYMid meet"
+                        onError={(e) => {
+                          console.error('Failed to load map background image:', currentBackground.imagePath);
+                          console.error('Error event:', e);
+                        }}
+                        onLoad={() => {
+                          console.log('Successfully loaded map background image:', currentBackground.imagePath);
+                        }}
+                      />
                     
                     {/* Permit Markers */}
                     {filteredPermits.map((permit) => {
@@ -515,6 +518,7 @@ export function MapWidget({
                       />
                     )}
                   </svg>
+                  </div>
                 ) : (
                   <div className="h-96 flex items-center justify-center bg-gray-100 rounded-lg">
                     <div className="text-center">
